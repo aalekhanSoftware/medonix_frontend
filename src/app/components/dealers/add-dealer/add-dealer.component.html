@@ -1,0 +1,109 @@
+<section class="register-wrapper">
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="title">Register Dealer</h1>
+        <p class="subtitle">Create your dealer account. Quick approval follows verification.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="$event.preventDefault()" novalidate class="form-grid">
+        <div class="grid two">
+          <div class="field">
+            <label for="firstName">First name</label>
+            <input id="firstName" type="text" formControlName="firstName" placeholder="John" />
+            <small class="error" *ngIf="f['firstName'].touched && f['firstName'].invalid">First name is required</small>
+          </div>
+
+          <div class="field">
+            <label for="lastName">Last name</label>
+            <input id="lastName" type="text" formControlName="lastName" placeholder="Doe" />
+            <small class="error" *ngIf="f['lastName'].touched && f['lastName'].invalid">Last name is required</small>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="email">Account email</label>
+            <input id="email" type="email" formControlName="email" placeholder="dealer@example.com" autocomplete="email" />
+            <small class="error" *ngIf="f['email'].touched && f['email'].invalid">Valid email is required</small>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" formControlName="password" placeholder="Min 8 characters" autocomplete="new-password" />
+            <small class="hint">Use at least 8 characters.</small>
+            <small class="error" *ngIf="f['password'].touched && f['password'].invalid">Password must be at least 8 characters</small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="customerName">Business name</label>
+          <input id="customerName" type="text" formControlName="customerName" placeholder="John Doe Trading Co." />
+          <small class="error" *ngIf="f['customerName'].touched && f['customerName'].invalid">Business name is required</small>
+        </div>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="gst">GSTIN</label>
+            <input id="gst" type="text" formControlName="gst" placeholder="29ABCDE1234F1Z5" />
+            <small class="hint">Format: 29ABCDE1234F1Z5</small>
+            <small class="error" *ngIf="f['gst'].touched && f['gst'].invalid">Enter a valid GSTIN</small>
+          </div>
+          <div class="field">
+            <label for="mobile">Mobile</label>
+            <input id="mobile" type="tel" formControlName="mobile" placeholder="9876543210" autocomplete="tel" />
+            <small class="error" *ngIf="f['mobile'].touched && f['mobile'].invalid">Enter a valid 10-digit mobile</small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dlNumber">DL Number</label>
+          <input id="dlNumber" type="text" formControlName="dlNumber" placeholder="License number" />
+          <small class="error" *ngIf="f['dlNumber'].touched && f['dlNumber'].invalid">DL Number is too long</small>
+        </div>
+
+        <div class="field">
+          <label for="address">Business address</label>
+          <textarea id="address" rows="3" formControlName="address" placeholder="123 Main Street, City"></textarea>
+          <small class="error" *ngIf="f['address'].touched && f['address'].invalid">Address is required</small>
+        </div>
+
+        <div class="field">
+          <label for="pincode">Pincode</label>
+          <input id="pincode" type="text" formControlName="pincode" placeholder="123456" maxlength="6" />
+          <small class="hint">Enter 6-digit pincode</small>
+          <small class="error" *ngIf="f['pincode'].touched && f['pincode'].invalid">
+            <span *ngIf="f['pincode'].errors?.['required']">Pincode is required</span>
+            <span *ngIf="f['pincode'].errors?.['pattern']">Enter a valid 6-digit pincode</span>
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="remarks">Remarks (optional)</label>
+          <textarea id="remarks" rows="2" formControlName="remarks" placeholder="VIP Customer"></textarea>
+        </div>
+
+        <div class="actions">
+          <button 
+            type="submit" 
+            [disabled]="isSubmitting || form.invalid" 
+            [class.submitting]="isSubmitting"
+            class="btn-submit"
+            aria-label="Submit dealer registration"
+            (touchstart)="$event.stopPropagation()"
+          >
+            <span class="btn-content" [class.hidden]="isSubmitting">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+              Submit registration
+            </span>
+            <span class="loader-wrapper" [class.visible]="isSubmitting">
+              <span class="spinner-ring"></span>
+              <span class="loader-text">Processing...</span>
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

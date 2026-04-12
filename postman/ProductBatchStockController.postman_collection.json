@@ -1,0 +1,302 @@
+{
+	"info": {
+		"_postman_id": "product-batch-stock-controller-api-collection",
+		"name": "Product Batch Stock Controller API",
+		"description": "API collection for Product Batch Stock management - Create, Update, Delete, Search, and Retrieve batch stock information",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Product Batch Stock",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"batchName\": \"BATCH-001\",\n  \"productId\": 1,\n  \"remainingQuantity\": 100.000,\n  \"blockedQuantity\": 10.000,\n  \"totalRemainingQuantity\": 110.000\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/create",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "create"]
+				},
+				"description": "Create a new product batch stock entry. Requires batchName and productId. Quantities are optional and default to 0."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Product Batch Stock",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1,\n  \"batchName\": \"BATCH-001-UPDATED\",\n  \"productId\": 1,\n  \"remainingQuantity\": 150.000,\n  \"blockedQuantity\": 15.000,\n  \"totalRemainingQuantity\": 165.000\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/update",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "update"]
+				},
+				"description": "Update an existing product batch stock entry. ID is required. All other fields are optional."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Product Batch Stock",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/delete",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "delete"]
+				},
+				"description": "Delete a product batch stock entry by ID. ID is required."
+			},
+			"response": []
+		},
+		{
+			"name": "Search Product Batch Stock - All",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"page\": 0,\n  \"size\": 10,\n  \"sortBy\": \"id\",\n  \"sortDir\": \"desc\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/search",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "search"]
+				},
+				"description": "Search all product batch stock entries with pagination. Returns paginated results."
+			},
+			"response": []
+		},
+		{
+			"name": "Search Product Batch Stock - With Search Term",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"search\": \"BATCH-001\",\n  \"page\": 0,\n  \"size\": 10,\n  \"sortBy\": \"id\",\n  \"sortDir\": \"desc\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/search",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "search"]
+				},
+				"description": "Search product batch stock entries with a search term (searches in batch name and product name)."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Batch Stock By ID",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/get-by-id",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "get-by-id"]
+				},
+				"description": "Get a specific product batch stock entry by ID. ID is required."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Product Batch Stock By Product",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"productId\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/get-by-product",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "get-by-product"]
+				},
+				"description": "Get all batch stock entries for a specific product by productId. Product ID is required. Returns a list of all batches for that product."
+			},
+			"response": []
+		},
+		{
+			"name": "Search Product Batch Stock - With Product Filter",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"productId\": 1,\n  \"search\": \"BATCH\",\n  \"page\": 0,\n  \"size\": 10,\n  \"sortBy\": \"batchName\",\n  \"sortDir\": \"asc\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/search",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "search"]
+				},
+				"description": "Search product batch stock entries filtered by productId with additional search term and custom sorting."
+			},
+			"response": []
+		},
+		{
+			"name": "Create Product Batch Stock - Minimal Required Fields",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"batchName\": \"BATCH-002\",\n  \"productId\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/create",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "create"]
+				},
+				"description": "Create a new product batch stock with only required fields (batchName and productId). Quantities will default to 0."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Product Batch Stock - Quantities Only",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"description": "JWT token for authentication"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1,\n  \"remainingQuantity\": 200.000,\n  \"blockedQuantity\": 20.000,\n  \"totalRemainingQuantity\": 220.000\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/product-batch-stock/update",
+					"host": ["{{base_url}}"],
+					"path": ["api", "product-batch-stock", "update"]
+				},
+				"description": "Update only the quantities of an existing product batch stock entry. ID is required."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "your_jwt_token_here",
+			"type": "string"
+		}
+	]
+}

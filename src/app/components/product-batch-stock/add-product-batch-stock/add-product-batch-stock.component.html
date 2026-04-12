@@ -1,0 +1,178 @@
+<div class="add-batch-stock-container">
+  <button class="btn btn-sm btn-secondary back-btn" routerLink="/product-batch-stock" (touchstart)="$event.stopPropagation()">
+    <i class="fas fa-arrow-left"></i> Back to Batch Stock
+  </button>
+
+  <div class="form-card">
+    <div class="card-header">
+      <h1 class="form-title">
+        <i class="fas" [ngClass]="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+        {{ isEdit ? 'Edit' : 'Add New' }} Product Batch Stock
+      </h1>
+      <p class="form-description">
+        {{ isEdit ? 'Update batch stock information for inventory management.' : 'Create a new batch stock entry to track product inventory by batch.' }}
+      </p>
+    </div>
+    
+    <form [formGroup]="batchStockForm" (ngSubmit)="onSubmit()" class="batch-stock-form" novalidate>
+      <div class="form-section">
+        <h2>Batch Information</h2>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="batchName">
+              <i class="fas fa-tag"></i> Batch Name <span class="required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="batchName"
+              formControlName="batchName" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('batchName')"
+              placeholder="Enter batch name (e.g., BATCH-001)"
+              maxlength="100"
+              (touchstart)="$event.stopPropagation()"
+              aria-describedby="batchName-error"
+            >
+            <div class="invalid-feedback" id="batchName-error" *ngIf="isFieldInvalid('batchName')">
+              {{ getFieldError('batchName') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="productId">
+              <i class="fas fa-box"></i> Product <span class="required">*</span>
+            </label>
+            <div class="select-group">
+              <app-searchable-select
+                id="productId"
+                formControlName="productId"
+                [options]="products"
+                labelKey="name"
+                valueKey="id"
+                [placeholder]="'Select Product'"
+                [searchPlaceholder]="'Search products...'"
+                [virtualScroll]="true"
+                [initialDisplayLimit]="50"
+                [class.is-invalid]="isFieldInvalid('productId')"
+                [disabled]="isEdit"
+                aria-describedby="productId-error"
+              ></app-searchable-select>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-primary refresh" 
+                (click)="refreshProducts()" 
+                [disabled]="isLoading"
+                title="Refresh Products"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Refresh products list"
+              >
+                <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback" id="productId-error" *ngIf="isFieldInvalid('productId')">
+              {{ getFieldError('productId') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Stock Quantities</h2>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="remainingQuantity">
+              <i class="fas fa-check-circle"></i> Remaining Quantity <span class="required">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                id="remainingQuantity"
+                formControlName="remainingQuantity" 
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('remainingQuantity')"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                (touchstart)="$event.stopPropagation()"
+                aria-describedby="remainingQuantity-error"
+              >
+            </div>
+            <div class="invalid-feedback" id="remainingQuantity-error" *ngIf="isFieldInvalid('remainingQuantity')">
+              {{ getFieldError('remainingQuantity') }}
+            </div>
+            <small class="form-text text-muted">Available quantity for sale</small>
+          </div>
+
+          <div class="form-group">
+            <label for="blockedQuantity">
+              <i class="fas fa-ban"></i> Blocked Quantity <span class="required">*</span>
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                id="blockedQuantity"
+                formControlName="blockedQuantity" 
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('blockedQuantity')"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                (touchstart)="$event.stopPropagation()"
+                aria-describedby="blockedQuantity-error"
+              >
+            </div>
+            <div class="invalid-feedback" id="blockedQuantity-error" *ngIf="isFieldInvalid('blockedQuantity')">
+              {{ getFieldError('blockedQuantity') }}
+            </div>
+            <small class="form-text text-muted">Quantity that is blocked/QC failed</small>
+          </div>
+
+          <div class="form-group">
+            <label for="totalRemainingQuantity">
+              <i class="fas fa-calculator"></i> Total Quantity
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                id="totalRemainingQuantity"
+                formControlName="totalRemainingQuantity" 
+                class="form-control"
+                readonly
+                [value]="getTotalQuantity()"
+                aria-label="Total quantity (calculated automatically)"
+              >
+            </div>
+            <small class="form-text text-muted">Automatically calculated: Remaining + Blocked</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button" 
+          class="btn btn-sm btn-secondary"
+          (click)="onCancel()"
+          [disabled]="isSaving"
+          (touchstart)="$event.stopPropagation()"
+          aria-label="Cancel and go back"
+        >
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button
+          type="submit" 
+          class="btn btn-sm btn-primary"
+          [disabled]="batchStockForm.invalid || isSaving"
+          (touchstart)="$event.stopPropagation()"
+          aria-label="Save batch stock"
+        >
+          <i class="fas" [ngClass]="isSaving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ isSaving ? 'Saving...' : (isEdit ? 'Update Batch Stock' : 'Save Batch Stock') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-loader [show]="isLoading || isSaving"></app-loader>

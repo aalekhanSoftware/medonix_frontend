@@ -1,0 +1,171 @@
+<div class="purchase-container">
+  <app-loader [show]="isLoading"></app-loader>
+  
+  <section class="search-section card" aria-labelledby="search-sale-returns-heading">
+    <h2 id="search-sale-returns-heading">Search Sale Returns</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" role="search" aria-label="Sale return search form">
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="invoice-search" class="sr-only">Search by invoice number</label>
+          <input 
+            id="invoice-search"
+            type="text" 
+            formControlName="search" 
+            class="form-control" 
+            placeholder="Search by invoice number..."
+            aria-label="Search by invoice number">
+          <label for="batch-search" class="sr-only">Search by batch number</label>
+          <input 
+            id="batch-search"
+            type="text" 
+            formControlName="batchNumber" 
+            class="form-control" 
+            placeholder="Search by Batch Number..."
+            aria-label="Search by batch number">
+        </div>
+        <div class="form-group" *ngIf="canManagePurchases">
+          <div class="product-select-group">
+            <app-searchable-select
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Customers', value: '' }"
+              [searchPlaceholder]="'Search customers...'"
+              [virtualScroll]="true"
+              [initialDisplayLimit]="100"
+            ></app-searchable-select>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-primary refresh"
+              style="margin-top: 3px;"
+              (click)="refreshCustomers()" 
+              [disabled]="isLoadingCustomers"
+              title="Refresh Customers"
+              (touchstart)="$event.stopPropagation()"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="start-date" class="sr-only">Start date</label>
+          <input 
+            id="start-date"
+            type="date" 
+            formControlName="startDate" 
+            class="form-control" 
+            placeholder="Start Date"
+            aria-label="Start date"
+            (touchstart)="$event.stopPropagation()">
+        </div>
+        
+        <div class="form-group">
+          <label for="end-date" class="sr-only">End date</label>
+          <input 
+            id="end-date"
+            type="date" 
+            formControlName="endDate" 
+            class="form-control" 
+            placeholder="End Date"
+            aria-label="End date"
+            (touchstart)="$event.stopPropagation()">
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary" (touchstart)="$event.stopPropagation()">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()" (touchstart)="$event.stopPropagation()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button 
+            *ngIf="canManagePurchases" 
+            type="button" 
+            class="search-btn btn btn-sm btn-success export-btn" 
+            (click)="exportExcel()"
+            [disabled]="isExportButtonDisabled()"
+            title="Export sale returns to Excel"
+            (touchstart)="$event.stopPropagation()">
+            <i class="fas fa-file-excel"></i> Export
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <div class="action-buttons" *ngIf="canManagePurchases">
+    <button 
+      routerLink="/sale/return/create" 
+      class="btn btn-sm btn-primary"
+      aria-label="Add new sale return"
+      (touchstart)="$event.stopPropagation()">
+      <i class="fas fa-plus" aria-hidden="true"></i> Add Sale Return
+    </button>
+  </div>
+
+  <section class="purchases-list card" aria-labelledby="sale-returns-heading">
+    <h2 id="sale-returns-heading">Sale Returns</h2>
+
+    <div class="table-responsive">
+      <table class="table" role="table" aria-label="Sale returns list">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Invoice No.</th>
+            <th scope="col">Customer Name</th>
+            <th scope="col">Sale Return Date</th>
+            <th scope="col">Total Amount</th>
+            <th scope="col" *ngIf="canManagePurchases">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let saleReturn of saleReturns; let index = index" role="row">
+            <td data-label="No">{{ startIndex + index + 1 }}</td>
+            <td data-label="Invoice No."><strong>{{ saleReturn.invoiceNumber }}</strong></td>
+            <td data-label="Customer Name">{{ saleReturn.customerName }}</td>
+            <td data-label="Sale Return Date">{{ saleReturn.saleReturnDate | date:'dd-MM-yyyy' }}</td>
+            <td data-label="Total Amount"><strong>{{ saleReturn.totalSaleAmount || 0 }}</strong></td>
+            <td class="actions" data-label="Actions" *ngIf="canManagePurchases">
+              <button 
+                class="btn-icon pdf" 
+                (click)="generatePdf(saleReturn.id, saleReturn.invoiceNumber)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Export sale return as PDF">
+                <i class="fas fa-file-pdf" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon edit" 
+                (click)="viewDetails(saleReturn?.id)"
+                [disabled]="!saleReturn?.id"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="View sale return details">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon delete" 
+                (click)="deleteSaleReturn(saleReturn.id)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Delete sale return">
+                <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalAmountSum]="totalSaleReturnAmountSum"
+      [totalAmountLabel]="'Total Sale Return Amount'"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </section>
+</div>
+

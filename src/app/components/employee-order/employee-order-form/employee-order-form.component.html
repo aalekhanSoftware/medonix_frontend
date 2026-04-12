@@ -1,0 +1,137 @@
+<div class="employee-order-form-container">
+  <app-loader [show]="isLoading"></app-loader>
+  
+  <div class="form-card">
+    <div class="card-header">
+      <h2 class="form-title">
+        <i class="fas fa-tasks"></i> 
+        {{ isEditMode ? 'Edit Employee Order' : 'Create Employee Order' }}
+      </h2>
+    </div>
+
+    <form [formGroup]="employeeOrderForm" (ngSubmit)="onSubmit()" class="employee-order-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="productId">
+            <i class="fas fa-box"></i> Product <span class="required">*</span>
+          </label>
+          <div class="product-select-group">
+            <app-searchable-select
+              formControlName="productId"
+              [options]="products"
+              labelKey="name"
+              valueKey="id"
+              [placeholder]="'Select Product'"
+              [searchPlaceholder]="'Search products...'"
+            ></app-searchable-select>
+            <button 
+              type="button" 
+              class="btn-icon refresh" 
+              (click)="refreshProducts()" 
+              [disabled]="isLoadingProducts"
+              title="Refresh Products"
+            >
+              <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('productId')">
+            {{ getFieldError('productId') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="employeeIds">
+            <i class="fas fa-users"></i> Employees <span class="required">*</span>
+          </label>
+          <div class="employee-select-group">
+            <app-searchable-select
+              formControlName="employeeIds"
+              [options]="employees"
+              labelKey="name"
+              valueKey="id"
+              [placeholder]="'Select Employees'"
+              [searchPlaceholder]="'Search employees...'"
+              [multiple]="true"
+            ></app-searchable-select>
+            <button 
+              type="button" 
+              class="btn-icon refresh" 
+              (click)="loadEmployees()" 
+              [disabled]="isLoadingEmployees"
+              title="Refresh Employees"
+            >
+              <i class="fas" [ngClass]="isLoadingEmployees ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('employeeIds')">
+            {{ getFieldError('employeeIds') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="quantity">
+            <i class="fas fa-sort-amount-up"></i> Quantity <span class="required">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="quantity"
+            formControlName="quantity"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('quantity')"
+            min="1"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('quantity')">
+            {{ getFieldError('quantity') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="status">
+            <i class="fas fa-info-circle"></i> Status
+          </label>
+          <select 
+            id="status"
+            formControlName="status"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('status')"
+          >
+            <option value="O">Open</option>
+            <option value="I">In Progress</option>
+            <option value="C">Completed</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+            {{ getFieldError('status') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="remarks">
+          <i class="fas fa-comment"></i> Remarks
+        </label>
+        <textarea 
+          id="remarks"
+          formControlName="remarks"
+          class="form-control"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" routerLink="/employee-order">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="employeeOrderForm.invalid || isLoading"
+        >
+          <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : (isEditMode ? 'fa-save' : 'fa-plus')"></i>
+          {{ isLoading ? 'Processing...' : (isEditMode ? 'Update' : 'Create') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div> 

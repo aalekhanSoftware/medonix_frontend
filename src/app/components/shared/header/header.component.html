@@ -1,0 +1,220 @@
+<header class="header">
+  <nav class="nav-container">
+    <div class="nav-top">
+      <div class="logo">
+        <img 
+          *ngIf="clientLogoImage" 
+          [src]="clientLogoImage" 
+          [alt]="clientName || 'Logo'"
+          class="logo-image"
+        >
+        <span *ngIf="!clientLogoImage && clientName">{{ clientName }}</span>
+        <span *ngIf="!clientLogoImage && !clientName">Medonix</span>
+      </div>
+      
+      <div class="user-info" *ngIf="isAuthenticated">
+        <span class="user-roles">{{ getUserRoles() }}</span>
+      </div>
+      
+      <button class="mobile-menu-toggle" (click)="toggleMobileMenu()" *ngIf="isAuthenticated">
+        <i class="fas" [class.fa-bars]="!isMobileMenuOpen" [class.fa-times]="isMobileMenuOpen"></i>
+      </button>
+    </div>
+
+    <div class="nav-content" [class.show]="isMobileMenuOpen" *ngIf="isAuthenticated">
+      <div class="client-name" *ngIf="clientName || clientLogoImage">
+        <img 
+          *ngIf="clientLogoImage" 
+          [src]="clientLogoImage" 
+          [alt]="clientName || 'Logo'"
+          class="logo-image"
+        >
+        <span *ngIf="!clientLogoImage && clientName">{{ clientName }}</span>
+      </div>
+      <ul class="nav-links">
+        <!-- Master Menu -->
+        <li class="dropdown" *ngIf="hasMasterMenuItems()">
+          <a (click)="toggleMasterMenu($event)" [class.active]="isMasterActive()">
+            <i class="fas fa-th-large"></i> Master
+            <i class="fas fa-chevron-down"></i>
+          </a>
+          <ul class="dropdown-menu" [class.show]="showMasterMenu">
+            <li *ngIf="permissions.canViewCategory">
+              <a routerLink="/category" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-tags"></i> Category
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewProduct">
+              <a routerLink="/product" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-box"></i> Product
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewCustomer">
+              <a routerLink="/customer" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-users"></i> Vendor / Dealer
+              </a>
+            </li>
+            <!-- <li *ngIf="permissions.canViewEmployee">
+              <a routerLink="/employee" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-user-tie"></i> Employee
+              </a>
+            </li> -->
+            <!-- <li *ngIf="isAdmin()">
+              <a routerLink="/employee" routerLinkActive="active">Employee</a>
+            </li> -->
+            <li *ngIf="permissions.canViewEmployee">
+              <a routerLink="/employee-master" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-id-badge"></i> Employee master
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewEmployee">
+              <a routerLink="/expense-master" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-receipt"></i> Expense master
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewTransport">
+              <a routerLink="/transport-master" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-truck"></i> Transport
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewCustomerPrice"> 
+              <a routerLink="/customer-price" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-money-bill-wave"></i> Customer Price
+              </a>
+            </li>
+            <li *ngIf="isAdmin() || isStaffAdmin()">
+              <a routerLink="/product-batch-stock" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-boxes"></i> Batch Wise Product
+              </a>
+            </li>
+            <!-- <li *ngIf="isAdmin()">
+              <a routerLink="/users" routerLinkActive="active">Users</a>
+            </li> -->
+            <!-- <li *ngIf="permissions.canViewFollowup">
+              <a routerLink="/followup" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-university"></i>Followup
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPayment">
+              <a routerLink="/payment-history" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-money-bill-wave"></i> Payment
+              </a>
+            </li> -->
+          </ul>
+        </li>
+        
+        <!-- Transaction Menu -->
+        <li class="dropdown" *ngIf="hasTransactionMenuItems()">
+          <a (click)="toggleTransactionMenu($event)" [class.active]="isTransactionActive()">
+            <i class="fas fa-exchange-alt"></i> Transaction
+            <i class="fas fa-chevron-down"></i>
+          </a>
+          <ul class="dropdown-menu" [class.show]="showTransactionMenu">
+            <li *ngIf="permissions.canViewPurchase || permissions.canViewSale">
+              <a routerLink="/transaction/reports" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-chart-bar"></i> Reports
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPurchase || permissions.canViewSale">
+              <a routerLink="/transaction/chart" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-chart-line"></i> Chart
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPurchase">
+              <a routerLink="/purchase" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-shopping-cart"></i> Purchase
+              </a>  
+            </li>
+            <li *ngIf="permissions.canViewPurchase">
+              <a routerLink="/purchase-challan" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-file-invoice"></i> Purchase Challan
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPurchase">
+              <a routerLink="/purchase-order" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-clipboard-list"></i> Purchase Order
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPurchase">
+              <a routerLink="/purchase-order/pending-item" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-clock"></i> PO Pending Items
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPurchaseReturn">
+              <a routerLink="/purchase/return" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-undo"></i> Purchase Return
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewSale">
+              <a routerLink="/sale" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-hand-holding-usd"></i> Sale
+              </a>
+            </li>         
+            <li *ngIf="permissions.canViewSaleReturn">
+              <a routerLink="/sale/return" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-undo"></i> Sale Return
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewLedger">
+              <a routerLink="/ledger" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-file-invoice-dollar"></i> Ledger
+              </a>
+            </li>
+            <li *ngIf="permissions.canViewPayment">
+              <a routerLink="/payment-history" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-money-bill-wave"></i> Payment
+              </a>
+            </li>
+          </ul>
+        </li>
+        
+        <!-- Dispatch Quotation Menu -->
+        <li class="dropdown" *ngIf="hasDispatchQuotationMenuItems()">
+          <a (click)="toggleDispatchQuotationMenu($event)" [class.active]="isDispatchQuotationActive()">
+            <i class="fas fa-exchange-alt"></i> Dispatch Order
+            <i class="fas fa-chevron-down"></i>
+          </a>
+          <ul class="dropdown-menu" [class.show]="showDispatchQuotationMenu">            
+            <li *ngIf="permissions.canViewQuotation">
+              <a routerLink="/quotation" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-hand-holding-usd"></i> Order
+              </a>
+            </li> 
+            <li *ngIf="permissions.canViewDispatchQuotation">
+              <a routerLink="/quotation/dispatch-list" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-shopping-cart"></i> Dispatch Quotation
+              </a>
+            </li>   
+            <li *ngIf="permissions.canViewPendingItem">
+              <a routerLink="/quotation/pending-item" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-shopping-cart"></i> Pending Item
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Employee Menu -->
+        <!-- <li class="dropdown" *ngIf="hasEmployeeMenuItems()">
+          <a (click)="toggleEmployeeMenu($event)" [class.active]="isEmployeeActive()">
+            <i class="fas fa-users"></i> Employee
+            <i class="fas fa-chevron-down"></i>
+          </a>
+          <ul class="dropdown-menu" [class.show]="showQuotationMenu">
+            <li><a routerLink="/quotation" routerLinkActive="active">Quotation List</a></li>
+            <li><a routerLink="/quotation/create" routerLinkActive="active">Create Quotation</a></li>
+            <li><a routerLink="/quotation/order" routerLinkActive="active">Order</a></li>
+          </ul>
+        </li>
+        <li *ngIf="canViewMenu('attendance')">
+          <a routerLink="/attendance" routerLinkActive="active">Attendance</a>
+        </li> -->
+      </ul>
+
+      <div class="nav-actions">
+        <button class="btn btn-logout" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>

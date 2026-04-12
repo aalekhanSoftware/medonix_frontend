@@ -1,0 +1,206 @@
+<div class="payment-history-container">
+  <app-loader [show]="loading"></app-loader>
+  
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="title-section">
+      <div class="icon-wrapper">
+        <i class="fas fa-history"></i>
+      </div>
+      <h1 class="page-title">Payment History</h1>
+    </div>
+    <button class="btn btn-primary add-btn" (click)="onAddNew()">
+      <i class="fas fa-plus"></i>
+      <span>Add Payment</span>
+    </button>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="filter-card">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+      <div class="filter-grid">
+        <!-- Search Input -->
+        <div class="filter-item">
+          <div class="input-wrapper">
+            <i class="fas fa-search input-icon"></i>
+            <input 
+              type="text" 
+              formControlName="search" 
+              placeholder="Search payment history..." 
+              class="form-input with-icon"
+            >
+          </div>
+        </div>
+        
+        <!-- Customer Selection -->
+        <div class="filter-item">
+          <app-searchable-select 
+            formControlName="customerId" 
+            [options]="customers" 
+            labelKey="name" 
+            valueKey="id"
+            [placeholder]="'Select Customer'" 
+            [searchPlaceholder]="'Search customers...'">
+          </app-searchable-select>
+        </div>
+        
+        <!-- Start Date -->
+        <div class="filter-item">
+          <div class="input-wrapper">
+            <input 
+              type="date" 
+              formControlName="startDate" 
+              class="form-input date-input"
+              placeholder="Start Date"
+            >
+          </div>
+        </div>
+        
+        <!-- End Date -->
+        <div class="filter-item">
+          <div class="input-wrapper">
+            <input 
+              type="date" 
+              formControlName="endDate" 
+              class="form-input date-input"
+              placeholder="End Date"
+            >
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="filter-item filter-actions">
+          <button type="submit" class="btn btn-search" [disabled]="loading">
+            <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+            <span>Search</span>
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-clear" 
+            (click)="resetSearchForm()" 
+            *ngIf="isSearchActive()"
+          >
+            <i class="fas fa-times"></i>
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Date</span>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-user"></i>
+                <span>Customer</span>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-rupee-sign"></i>
+                <span>Amount</span>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-credit-card"></i>
+                <span>Type</span>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transaction</span>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-comment"></i>
+                <span>Remarks</span>
+              </div>
+            </th>
+            <th>
+              <div class="th-content">
+                <i class="fas fa-cogs"></i>
+                <span>Actions</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of paymentHistories" class="data-row">
+            <td>
+              <span class="date-badge">{{ payment.date }}</span>
+            </td>
+            <td>
+              <span class="customer-name">{{ payment.customerName }}</span>
+            </td>
+            <td>
+              <span class="amount-value">₹{{ payment.amount | number:'1.2-2' }}</span>
+            </td>
+            <td>
+              <span class="type-badge" [ngClass]="payment.type === 'C' ? 'cash' : 'bank'">
+                <i class="fas" [ngClass]="payment.type === 'C' ? 'fa-money-bill-wave' : 'fa-university'"></i>
+                {{ getTypeLabel(payment.type) }}
+              </span>
+            </td>
+            <td>
+              <span class="transaction-badge" [ngClass]="payment.isReceived ? 'received' : 'paid'">
+                <i class="fas" [ngClass]="payment.isReceived ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+                {{ getTransactionTypeLabel(payment.isReceived) }}
+              </span>
+            </td>
+            <td>
+              <span class="remarks-text">{{ payment.remarks || '-' }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon btn-edit" (click)="onEdit(payment)" title="Edit Payment">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon btn-delete" (click)="onDelete(payment)" title="Delete Payment">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Empty State -->
+          <tr *ngIf="paymentHistories.length === 0 && !loading" class="empty-row">
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No payment histories found</p>
+                <span>Try adjusting your search or add a new payment</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Section -->
+  <div class="pagination-wrapper">
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="perPageRecord"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-pagination>
+  </div>
+</div>

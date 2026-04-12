@@ -1,0 +1,151 @@
+<div class="expense-master-list">
+  <div class="search-section card">
+    <h1 class="page-title">Expense master</h1>
+    <p class="page-subtitle">
+      Review spending records, filter by reason, and open an entry to adjust people or amounts tied to your team.
+    </p>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" novalidate>
+      <div class="search-controls">
+        <div class="search-input-wrapper">
+          <label for="ex-search" class="sr-only">Search expenses</label>
+          <input
+            id="ex-search"
+            type="text"
+            class="form-control"
+            placeholder="Search across expense text"
+            formControlName="search"
+            autocomplete="off"
+            aria-label="Search expenses"
+          />
+        </div>
+        <div class="filter-field">
+          <label for="ex-reason" class="filter-label">Reason contains</label>
+          <input
+            id="ex-reason"
+            type="text"
+            class="form-control"
+            formControlName="reason"
+            placeholder="e.g. Travel"
+            aria-label="Filter by reason"
+          />
+        </div>
+        <div class="filter-field">
+          <label for="ex-type" class="filter-label">Transaction type</label>
+          <select id="ex-type" class="form-control" formControlName="isExpense" aria-label="Filter by transaction type">
+            <option value="">All</option>
+            <option value="true">Expense</option>
+            <option value="false">Income</option>
+          </select>
+        </div>
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary" aria-label="Apply search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <span class="btn-text">Search</span>
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="reset($event)" aria-label="Reset filters">
+            <i class="fas fa-undo" aria-hidden="true"></i>
+            <span class="btn-text">Reset</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="action-buttons">
+    <!-- <input
+      #excelFileInput
+      type="file"
+      class="sr-only"
+      accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+      (change)="onExcelFileSelected($event)"
+      aria-hidden="true"
+      tabindex="-1"
+    />
+    <button
+      type="button"
+      class="btn btn-sm btn-secondary"
+      (click)="onImportExcelClick()"
+      [disabled]="isImporting || isLoading"
+      aria-label="Import expenses from Excel"
+    >
+      <i class="fas" [ngClass]="isImporting ? 'fa-spinner fa-spin' : 'fa-file-excel'" aria-hidden="true"></i>
+      <span class="btn-text">{{ isImporting ? 'Importing…' : 'Import Excel' }}</span>
+    </button> -->
+    <button type="button" class="btn btn-sm btn-primary" (click)="goToCreate()" [disabled]="isImporting" aria-label="Add expense">
+      <i class="fas fa-plus" aria-hidden="true"></i>
+      <span class="btn-text">Add expense</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <app-loader [show]="isLoading"></app-loader>
+    <div class="table-responsive" [class.loading]="isLoading">
+      <table class="table" role="table" aria-label="Expense master list">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col"><strong>Employees</strong></th>
+            <th scope="col"><strong>Amount</strong></th>
+            <th scope="col"><strong>Type</strong></th>
+            <th scope="col"><strong>Reason</strong></th>
+            <th scope="col"><strong>Expense date</strong></th>
+            <th scope="col" class="d-none d-md-table-cell"><strong>Other</strong></th>
+            <th scope="col" class="d-none d-md-table-cell"><strong>Remarks</strong></th>
+            <!-- <th scope="col" class="d-none d-lg-table-cell"><strong>Created</strong></th> -->
+            <th scope="col"><strong>Actions</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows; let i = index">
+            <td>{{ startIndex + i + 1 }}</td>
+            <td class="cell-employees">{{ employeeDisplay(row) }}</td>
+            <td class="cell-amount">{{ formatAmount(row.amount) }}</td>
+            <td>{{ expenseTypeLabel(row) }}</td>
+            <td>{{ row.reason }}</td>
+            <td class="cell-date">{{ formatExpenseDate(row.expenseDate) }}</td>
+            <td class="d-none d-md-table-cell text-muted">{{ row.other || '—' }}</td>
+            <td class="d-none d-md-table-cell text-muted">{{ row.remarks || '—' }}</td>
+            <!-- <td class="d-none d-lg-table-cell">{{ row.createdAt ? (row.createdAt | date : 'mediumDate') : '—' }}</td> -->
+            <td class="actions">
+              <button
+                type="button"
+                class="btn-icon edit"
+                (click)="onEdit(row)"
+                title="Edit expense"
+                [attr.aria-label]="'Edit expense ' + row.reason"
+              >
+                <i class="fas fa-edit" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="btn-icon delete"
+                (click)="deleteRow(row.id!, row.reason)"
+                title="Delete expense"
+                [attr.aria-label]="'Delete expense ' + row.reason"
+              >
+                <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && rows.length === 0">
+            <td colspan="9" class="text-center">
+              <p class="no-results">No expenses found. Try another search or record a new expense.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalAmountSum]="totalExpenseAmountSum"
+      [totalAmountLabel]="'Total Expense Amount'"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </div>
+</div>

@@ -1,0 +1,189 @@
+<div class="dealer-quotation-container">
+    <div class="form-card">
+      <div class="card-header">
+        <div class="header-content">
+          <div class="title-section">
+            <i class="fas fa-shopping-cart"></i>
+            <h2 class="form-title">Dealer Direct Order</h2>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-sm btn-secondary back-btn" routerLink="/quotation">
+              <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <span class="dealer-badge">
+              <i class="fas fa-store"></i> Dealer Portal
+            </span>
+          </div>
+        </div>
+      </div>
+  
+      <form [formGroup]="quotationForm" (ngSubmit)="onSubmit()" (keydown.enter)="$event.preventDefault()"
+        class="quotation-form" (touchstart)="handleTouchStart($event)" (touchmove)="handleTouchMove($event)"
+        (touchend)="handleTouchEnd($event)">
+  
+        <!-- Customer Selection Section -->
+        <div class="customer-selection-section">
+          <div class="section-header">
+            <h3><i class="fas fa-user-tie"></i> Select Customer</h3>
+          </div>
+          <div class="customer-select-wrapper">
+            <div class="form-field-container">
+              <div class="select-group">
+                <app-searchable-select 
+                  [options]="customers" 
+                  [labelKey]="'name'" 
+                  [valueKey]="'id'" 
+                  [placeholder]="'Select Customer'" 
+                  [searchPlaceholder]="'Search customers...'"
+                  [virtualScroll]="true"
+                  [initialDisplayLimit]="100"
+                  [(ngModel)]="selectedCustomerId"
+                  (selectionChange)="onCustomerSelect($event)"
+                  [ngModelOptions]="{standalone: true}">
+                </app-searchable-select>
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-icon refresh" 
+                  (click)="refreshCustomers()"
+                  [disabled]="isLoadingCustomers" 
+                  title="Refresh Customers"
+                  (touchstart)="$event.preventDefault()">
+                  <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Products with Prices Section -->
+        <div class="products-prices-section" *ngIf="selectedCustomerId">
+          <div class="section-header">
+            <h3><i class="fas fa-tags"></i> Products with Prices</h3>
+            <div class="search-controls">
+              <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input 
+                  type="text" 
+                  class="form-control search-input" 
+                  placeholder="Search products..."
+                  [(ngModel)]="searchTerm"
+                  (ngModelChange)="onSearchChange($event)"
+                  [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+          </div>
+  
+          <div class="table-responsive" *ngIf="!isLoadingProductsWithPrices">
+            <table class="table products-prices-table">
+              <thead>
+                <tr>
+                  <th class="product-name-col">Product Name</th>
+                  <th class="product-code-col">Product Code</th>
+                  <th class="hsn-code-col">HSN Code</th>
+                  <th class="sale-amount-col">Sale Amount</th>
+                  <th class="effective-price-col">Effective Price</th>
+                  <th class="price-source-col">Price Source</th>
+                  <th class="action-col">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of productsWithPrices" class="product-price-row" [ngClass]="getPriceSourceColor(product.priceSource)">
+                  <td class="product-name-col">
+                    <div class="product-name">{{ product.productName }}</div>
+                  </td>
+                  <td class="product-code-col">
+                    <div class="product-code">{{ product.productCode }}</div>
+                  </td>
+                  <td class="hsn-code-col">
+                    <div class="hsn-code">{{ product.hsnCode }}</div>
+                  </td>
+                  <td class="sale-amount-col">
+                    <div class="sale-amount">
+                      <span class="currency">₹</span>
+                      <span class="value">{{ product.saleAmount | number:'1.2-2' }}</span>
+                    </div>
+                  </td>
+                  <td class="effective-price-col">
+                    <div class="effective-price-input-wrapper">
+                      <span class="currency-symbol">₹</span>
+                      <input 
+                        type="number" 
+                        class="form-control effective-price-input"
+                        [value]="product.effectivePrice"
+                        (blur)="updateEffectivePrice(product, $any($event.target).value)"
+                        (keyup.enter)="updateEffectivePrice(product, $any($event.target).value)"
+                        step="0.01"
+                        min="0"
+                        [disabled]="updatingPrices[product.productId]">
+                      <span class="price-update-loader" *ngIf="updatingPrices[product.productId]">
+                        <i class="fas fa-spinner fa-spin"></i>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="price-source-col">
+                    <span class="price-source-badge" [ngClass]="getPriceSourceColor(product.priceSource)">
+                      <i class="fas" [ngClass]="product.priceSource === 'customer_price' ? 'fa-user-check' : 'fa-box'"></i>
+                      {{ getPriceSourceLabel(product.priceSource) }}
+                    </span>
+                  </td>
+                  <td class="action-col">
+                    <div class="action-buttons">
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-primary update-btn"
+                        (click)="updateEffectivePrice(product, product.effectivePrice)"
+                        [disabled]="updatingPrices[product.productId] || deletingPrices[product.productId]"
+                        title="Update Price"
+                        (touchstart)="$event.preventDefault()">
+                        <i class="fas" [ngClass]="updatingPrices[product.productId] ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                      </button>
+                      <button 
+                        *ngIf="product.customerPriceId && product.priceSource === 'customer_price'"
+                        type="button" 
+                        class="btn btn-sm btn-danger delete-btn"
+                        (click)="deleteCustomerPrice(product)"
+                        [disabled]="deletingPrices[product.productId] || updatingPrices[product.productId]"
+                        title="Delete Customer Price"
+                        (touchstart)="$event.preventDefault()">
+                        <i class="fas" [ngClass]="deletingPrices[product.productId] ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="productsWithPrices.length === 0" class="no-data-row">
+                  <td colspan="7" class="no-data-cell">
+                    <div class="no-data-message">
+                      <i class="fas fa-inbox"></i>
+                      <p>No products found</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+  
+          <!-- Pagination -->
+          <app-pagination
+            *ngIf="totalPages > 0 && !isLoadingProductsWithPrices"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            [totalElements]="totalElements"
+            [pageSizeOptions]="[10, 25, 50, 100]"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+          </app-pagination>
+  
+          <!-- Loading State -->
+          <div class="loading-state" *ngIf="isLoadingProductsWithPrices">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Loading products with prices...</p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <app-loader *ngIf="isLoading"></app-loader>
+  

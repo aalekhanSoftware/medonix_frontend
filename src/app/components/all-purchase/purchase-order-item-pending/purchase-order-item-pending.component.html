@@ -1,0 +1,174 @@
+<section class="po-pending-container">
+  <header class="header">
+    <div>
+      <h1>Pending Purchase Order Items</h1>
+      <p class="lede">Review and act on items that are still pending across purchase orders.</p>
+    </div>
+  </header>
+
+  <section class="search-card" aria-labelledby="filters-heading">
+    <div class="search-card-header">
+      <h2 id="filters-heading">Filters</h2>
+      <p class="muted">Refine by order, product, or customer to focus on what matters.</p>
+    </div>
+    <form [formGroup]="searchForm" (ngSubmit)="onSubmit($event)" class="search-form" aria-label="Pending purchase order item filters">
+    
+      <div class="form-group">
+        <label>Product</label>
+        <div class="product-select-group">
+          <app-searchable-select 
+            formControlName="productId" 
+            [options]="products" 
+            labelKey="name"
+            valueKey="id" 
+            [defaultOption]="{ label: 'All Products', value: '' }"
+            [searchPlaceholder]="'Search products...'"
+            [virtualScroll]="true"
+            [initialDisplayLimit]="50"
+          ></app-searchable-select>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary refresh" 
+            (click)="refreshProducts()"
+
+            [disabled]="isLoadingProducts" 
+            title="Refresh Products"
+          >
+            <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Customer</label>
+        <div class="product-select-group">
+          <app-searchable-select
+            formControlName="customerId"
+            [options]="customers"
+            labelKey="name"
+            valueKey="id"
+            [defaultOption]="{ label: 'All Customers', value: '' }"
+            [searchPlaceholder]="'Search customers...'"
+            [virtualScroll]="true"
+            [initialDisplayLimit]="100"
+          ></app-searchable-select>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary refresh"
+            style="margin-top: 3px;"
+            (click)="refreshCustomers()"
+
+            [disabled]="isLoadingCustomers"
+            title="Refresh Customers"
+          >
+            <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="buttons">
+      <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
+      <button type="button" class="btn btn-primary" (click)="onSubmit($event)" [disabled]="loading">
+        {{ loading ? 'Searching...' : 'Search' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="results-card" aria-labelledby="results-heading">
+    <div class="results-card-header">
+      <h2 id="results-heading">Results</h2>
+      <p class="muted">Track quantity, fulfillment progress, and amounts for each pending item.</p>
+    </div>
+
+    <div class="table-container" *ngIf="!loading && pendingItems.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Get Qty</th>
+            <th>Pending Qty</th>
+            <th>Unit Price</th>
+            <th>Price</th>
+            <th>Tax %</th>
+            <th>Tax</th>
+            <th>Final</th>
+            <th>Customer</th>
+            <th>Remarks</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of pendingItems; let i = index">
+            <td [innerHTML]="sanitizeHtml(item.productName)"></td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.getQuantity ?? 0 }}</td>
+            <td>{{ item.quantity - (item.getQuantity || 0) }}</td>
+            <td>₹{{ item.unitPrice | number:'1.2-2' }}</td>
+            <td>₹{{ item.price | number:'1.2-2' }}</td>
+            <td>{{ item.taxPercentage | number:'1.0-2' }}%</td>
+            <td>₹{{ item.taxAmount | number:'1.2-2' }}</td>
+            <td><strong>₹{{ item.finalPrice | number:'1.2-2' }}</strong></td>
+            <td>{{ item.customerName || '-' }}</td>
+            <td>{{ item.remarks || '-' }}</td>
+            <td class="action-cell">
+              <button 
+                class="btn-icon edit" 
+                (click)="editPurchaseOrder(item.orderId)"
+    
+                title="Open purchase order"
+              >
+                <i class="fas fa-external-link-alt"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="loading" *ngIf="loading">
+      <p>Loading pending purchase items...</p>
+    </div>
+
+    <div class="no-results" *ngIf="!loading && pendingItems.length === 0">
+      <p>No pending purchase order items found.</p>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && pendingItems.length > 0 && totalPages > 1">
+      <div class="page-info">
+        Showing {{ currentPage + 1 }} of {{ totalPages }} pages ({{ totalItems }} total items)
+      </div>
+      <div class="pagination-controls">
+        <button 
+          class="page-button" 
+          [disabled]="currentPage === 0"
+          (click)="onPageChange(currentPage - 1)"
+
+        >
+          Previous
+        </button>
+        
+        <button 
+          class="page-button" 
+          *ngFor="let page of getPageNumbers()" 
+          [class.active]="page === currentPage"
+          (click)="onPageChange(page)"
+
+        >
+          {{ page + 1 }}
+        </button>
+        
+        <button 
+          class="page-button" 
+          [disabled]="currentPage === totalPages - 1"
+          (click)="onPageChange(currentPage + 1)"
+
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </section>
+</section>
+

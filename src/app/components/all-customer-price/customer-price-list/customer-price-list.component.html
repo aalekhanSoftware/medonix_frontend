@@ -1,0 +1,132 @@
+<div class="customer-price-container">
+  <app-loader [show]="isLoading"></app-loader>
+  
+  <div class="search-section card">
+    <h2>Search Customer Prices</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+      <div class="search-controls">
+        <div class="form-group">
+          <input 
+            type="text" 
+            formControlName="search" 
+            class="form-control" 
+            placeholder="Search by customer name or product name..."
+          >
+        </div>
+        <div class="form-group">
+          <div class="product-select-group">
+            <app-searchable-select
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Customers', value: '' }"
+              [searchPlaceholder]="'Search customers...'"
+            ></app-searchable-select>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-primary refresh"
+              style="margin-top: 3px;"
+              (click)="refreshCustomers()" 
+              [disabled]="isLoadingCustomers"
+              title="Refresh Customers"
+              (touchstart)="$event.preventDefault()"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="select-group">
+            <app-searchable-select 
+              formControlName="productId" 
+              [options]="products" 
+              [labelKey]="'name'"
+              [valueKey]="'id'" 
+              [placeholder]="'All Products'" 
+              [searchPlaceholder]="'Search products...'"
+              [defaultOption]="{ label: 'All Products', value: '' }"
+              [focusWidthPx]="400"
+            ></app-searchable-select>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-primary refresh" 
+              (click)="refreshProducts()"
+              [disabled]="isLoadingProducts" 
+              title="Refresh Products"
+              (touchstart)="$event.preventDefault()"
+            >
+              <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <button (click)="navigateToAdd()" class="btn btn-sm btn-primary mb-2">
+    <i class="fas fa-plus"></i> Add Customer Price
+  </button>
+
+  <div class="customer-prices-list card">
+    <h2>Customer Prices</h2>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Customer Name</th>
+            <th>Product Name</th>
+            <th>Price</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let customerPrice of customerPrices; let index = index">
+            <td>{{ startIndex + index + 1 }}</td>
+            <td>{{ customerPrice.customerName }}</td>
+            <td>{{ customerPrice.productName }}</td>
+            <td>{{ customerPrice.price | number:'1.2-2' }}</td>
+            <td>{{ customerPrice.createdAt }}</td>
+            <td>{{ customerPrice.updatedAt }}</td>
+            <td class="actions">
+              <button 
+                type="button" 
+                class="btn-icon delete"
+                (click)="deleteCustomerPrice(customerPrice)"
+                [disabled]="deletingPrices[customerPrice.id]"
+                title="Delete Customer Price"
+                (touchstart)="$event.preventDefault()">
+                <i class="fas" [ngClass]="deletingPrices[customerPrice.id] ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="customerPrices.length === 0 && !isLoading">
+            <td colspan="7" class="text-center">No customer prices found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </div>
+</div>

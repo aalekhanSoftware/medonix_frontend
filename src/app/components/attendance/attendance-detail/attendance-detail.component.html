@@ -1,0 +1,201 @@
+<div class="attendance-detail-container">
+  <app-loader [show]="isLoading"></app-loader>
+
+  <div class="employee-info card">
+    <div class="card-header">
+      <h2>
+        <i class="fas fa-user"></i> Employee Details
+      </h2>
+      <button routerLink="/attendance" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+    </div>
+
+    <div class="employee-details" *ngIf="employee">
+      <div class="detail-row">
+        <div class="detail-item">
+          <label>Name:</label>
+          <span>{{employee?.name}}</span>
+        </div>
+        <div class="detail-item">
+          <label>Email:</label>
+          <span>{{employee.email || 'N/A'}}</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-item">
+          <label>Mobile:</label>
+          <span>{{employee.mobileNumber || 'N/A'}}</span>
+        </div>
+        <div class="detail-item">
+          <label>Department:</label>
+          <span>{{employee.department || 'N/A'}}</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-item">
+          <label>Designation:</label>
+          <span>{{employee.designation || 'N/A'}}</span>
+        </div>
+        <div class="detail-item">
+          <label>Status:</label>
+          <span class="status-badge" [ngClass]="{'active': employee.status === 'A'}">
+            {{employee.status === 'A' ? 'Active' : 'Inactive'}}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="attendance-records card">
+    <div class="header-actions">
+      <div class="header-left">
+        <h2>
+          <i class="fas fa-clock"></i> Attendance Records
+        </h2>
+        <br>
+        <div class="date-filter">
+          <div class="date-inputs">
+            <div class="form-group">
+              <label>
+                <i class="fas fa-calendar-alt"></i> From Date
+              </label>
+              <input 
+                type="date" 
+                [formControl]="startDate"
+                class="form-control"
+              >
+            </div>
+            <div class="form-group">
+              <label>
+                <i class="fas fa-calendar-alt"></i> To Date
+              </label>
+              <input 
+                type="date" 
+                [formControl]="endDate"
+                class="form-control"
+              >
+            </div>
+            <div class="button-group">
+              <button 
+                class="btn btn-primary" 
+                (click)="downloadAttendance()"
+                [disabled]="isLoading || !startDate.value"
+              >
+                <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-download'"></i>
+                {{ isLoading ? 'Downloading...' : 'Download' }}
+              </button>
+              
+              <button 
+                class="btn btn-secondary" 
+                (click)="printAttendance()"
+                [disabled]="isLoading || !startDate.value"
+              >
+                <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-print'"></i>
+                {{ isLoading ? 'Processing...' : 'Print' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="calendar-wrapper">
+      <app-calendar-view
+        [attendanceRecords]="attendanceRecords"
+        [currentMonth]="getCurrentMonth()"
+      ></app-calendar-view>
+    </div>
+
+    <button 
+      [ngClass]="{'show': selectedAttendances.length > 0}"
+      class="btn btn-danger delete-btn"
+      (click)="deleteSelected()"
+    >
+      <i class="fas fa-trash"></i> Delete Selected ({{selectedAttendances.length}})
+    </button>
+    <div class="table-wrapper">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                <input 
+                  type="checkbox" 
+                  [checked]="selectAll"
+                  (change)="toggleSelectAll()"
+                >
+              </th>
+              <th>Date</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Regular Hours</th>
+              <th>Regular Pay</th>
+              <th>Overtime Hours</th>
+              <th>Overtime Pay</th>
+              <th>Total Pay</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let record of attendanceRecords">
+              <td>
+                <input 
+                  type="checkbox"
+                  [checked]="selectedAttendances.includes(record.id)"
+                  (change)="toggleSelection(record.id)"
+                >
+              </td>
+              <td>{{record.startDateTime | date:'dd-MM-yyyy'}}</td>
+              <td>{{record.startDateTime | date:'HH:mm'}}</td>
+              <td>{{record.endDateTime | date:'HH:mm'}}</td>
+              <td>{{record.regularHours}}</td>
+              <td>{{record.regularPay}}</td>
+              <td>{{record.overtimeHours}}</td>
+              <td>{{record.overtimePay}}</td>
+              <td>{{record.totalPay}}</td>
+              <td>{{record.remarks}}</td>
+            </tr>
+            <tr *ngIf="!attendanceRecords?.length">
+              <td colspan="6" class="text-center">No attendance records found</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td><b>Total</b></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>{{totalRegularHours}}</td>
+              <td>{{totalRegularPay}}</td>
+              <td>{{totalOvertimeHours}}</td>
+              <td>{{totalOvertimePay}}</td>
+              <td>{{totalOfTotalPay}}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </div>
+
+  <app-confirm-modal
+    [show]="showDeleteModal"
+    title="Confirm Delete"
+    [message]="'Are you sure you want to delete ' + selectedAttendances.length + ' attendance record(s)?'"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  ></app-confirm-modal>
+</div>

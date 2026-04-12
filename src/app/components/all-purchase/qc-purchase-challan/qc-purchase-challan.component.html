@@ -1,0 +1,153 @@
+<div class="qc-purchase-container">
+  <button class="btn btn-sm btn-secondary back-btn" routerLink="/purchase-challan">
+    <i class="fas fa-arrow-left"></i> Back to Purchase Challans
+  </button>
+
+  <div class="form-card">
+    <div class="card-header">
+      <div class="header-main">
+        <h2 class="form-title">
+          <i class="fas fa-clipboard-check"></i> Purchase Challan QC
+        </h2>
+        <span
+          class="status-chip header-status"
+          [class.pass]="isAllQcPassed"
+          [class.pending]="!isAllQcPassed"
+        >
+          {{ isAllQcPassed ? 'All Passed' : 'Pending' }}
+        </span>
+      </div>
+
+      <div class="purchase-meta" *ngIf="purchaseChallanDetails">
+        <div class="meta-item">
+          <span>Challan</span>
+          <strong>{{ purchaseChallanDetails.invoiceNumber }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Challan Date</span>
+          <strong>{{ purchaseChallanDetails.challanDate | date:'dd-MM-yyyy' }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Total Amount</span>
+          <strong>{{ purchaseChallanDetails.totalAmount | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!isLoading; else loadingTpl">
+      <div class="qc-content" *ngIf="purchaseChallanDetails; else emptyPurchaseTpl">
+        <div class="qc-summary">
+          <div class="summary-row">
+            <div class="summary-item">
+              <span>Total Items</span>
+              <strong>{{ itemsFormArray.length }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>QC Status</span>
+              <span class="status-chip" [class.pass]="isAllQcPassed" [class.pending]="!isAllQcPassed">
+                {{ isAllQcPassed ? 'All Passed' : 'Pending' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <form [formGroup]="qcForm" (ngSubmit)="onFormSubmit($event)" class="qc-form" novalidate>
+          <div class="products-section" formArrayName="items" *ngIf="itemsFormArray.length > 0; else noItemsTpl">
+            <div class="table-responsive">
+              <table class="table products-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Batch Number</th>
+                    <th>QC Pass</th>
+                    <th>Remarks</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let group of itemsFormArray.controls; let i = index; trackBy: trackByItemIndex" [formGroupName]="i">
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                      <div class="product-cell">
+                        <div class="product-name">
+                          {{ group.get('productName')?.value || 'N/A' }}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="quantity">{{ group.get('quantity')?.value }}</span>
+                    </td>
+                    <td>
+                      <span class="batch">{{ group.get('batchNumber')?.value || '-' }}</span>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <input
+                          type="number"
+                          class="form-control"
+                          formControlName="qcPass"
+                          min="0"
+                          [max]="group.get('quantity')?.value"
+                          step="0.01"
+                          inputmode="decimal"
+                          (blur)="onQcPassBlur(i)"
+                          (keydown)="onQcPassKeydown($event, i)"
+                        >
+                        <div class="invalid-feedback" *ngIf="isQcPassInvalid(i)">
+                          QC pass must be between 0 and {{ group.get('quantity')?.value }}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="remarks-cell">
+                        {{ group.get('remarks')?.value || '-' }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="status-cell">
+                        <span
+                            class="status-chip"
+                            [class.pass]="isItemQcPassed(group)"
+                            [class.pending]="!isItemQcPassed(group)"
+                            >
+                            {{ isItemQcPassed(group) ? 'Pass' : 'Pending' }}
+                        </span>
+                        <span class="saving-indicator" *ngIf="savingItemId === group.get('challanItemId')?.value">
+                          <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <ng-template #noItemsTpl>
+            <div class="empty-state">
+              <i class="fas fa-box-open"></i>
+              <p>No items found for this purchase challan.</p>
+            </div>
+          </ng-template>
+        </form>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Loading purchase challan details...</span>
+  </div>
+</ng-template>
+
+<ng-template #emptyPurchaseTpl>
+  <div class="empty-state">
+    <i class="fas fa-file-invoice"></i>
+    <p>Purchase challan details not available.</p>
+  </div>
+</ng-template>
+

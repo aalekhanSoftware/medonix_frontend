@@ -1,0 +1,206 @@
+<div class="quotation-container">
+    <app-loader [show]="isLoading"></app-loader>
+    
+    <div class="search-section card">
+      <h2>Search Quotation</h2>
+      <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+        <div class="search-controls">
+          <div class="form-group">
+            <input 
+              type="text" 
+              formControlName="search" 
+              class="form-control" 
+              placeholder="Search by invoice number..."
+            >
+          </div>
+          <div class="form-group">
+            <div class="product-select-group">
+              <app-searchable-select
+                formControlName="customerId"
+                [options]="customers"
+                labelKey="name"
+                valueKey="id"
+                [defaultOption]="{ label: 'All Customers', value: '' }"
+                [searchPlaceholder]="'Search customers...'"
+                [virtualScroll]="true"
+                [initialDisplayLimit]="100"
+              ></app-searchable-select>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-primary refresh"
+                style="margin-top: 3px;"
+                (click)="refreshCustomers()" 
+                [disabled]="isLoadingCustomers"
+                title="Refresh Customers"
+              >
+                <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <div class="product-select-group">
+              <app-searchable-select
+                formControlName="quotationStatus"
+                [options]="statusOptions"
+                labelKey="label"
+                valueKey="value"
+                [multiple]="true"
+                [defaultOption]="{ label: 'All Status', value: '' }"
+                [searchPlaceholder]="'Search status...'"
+              ></app-searchable-select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <input 
+              type="date" 
+              formControlName="startDate" 
+              class="form-control" 
+              placeholder="Start Date"
+            >
+          </div>
+          <div class="form-group">
+            <input 
+              type="date" 
+              formControlName="endDate" 
+              class="form-control" 
+              placeholder="End Date"
+            >
+          </div>
+          <div class="button-group">
+            <button type="submit" class="search-btn btn btn-sm btn-primary">
+              <i class="fas fa-search"></i> Search
+            </button>
+            <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="quotations-list card">
+      <h2>Quotations</h2>
+  
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Invoice No.</th>
+              <th>Customer Name</th>
+              <th>Quotation Date</th>
+              <th>Valid Until</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let quotation of quotations; let index = index">
+              <td>{{ startIndex + index + 1 }}</td>
+              <td>{{ quotation.quoteNumber }}</td>
+              <td>{{ quotation.customerName }}
+                <button class="btn-icon whatsapp" title="Open WhatsApp" (click)="openWhatsApp(quotation.contactNumber)">
+                  <i class="fab fa-whatsapp"></i>
+                </button>
+              </td>
+              <td>{{ quotation.quoteDate |  date:'dd-MM-yyyy' }}</td>
+              <td>{{ quotation.validUntil |  date:'dd-MM-yyyy' }}</td>
+              <td>
+                <div class="status-container">
+                  <span class="status-badge" [ngClass]="getStatusClass(quotation.status)">
+                    <i class="fas" [ngClass]="getStatusIcon(quotation.status)"></i>
+                    {{ getStatusLabel(quotation.status) }}
+                  </span>
+                  <button 
+                    class="btn-icon status-change" 
+                    (click)="toggleStatusDropdown(quotation)"
+                    *ngIf="canChangeStatus(quotation.status)"
+                    [disabled]="quotation.isUpdating"
+                  >
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <div class="status-dropdown" *ngIf="quotation.showStatusDropdown">
+                    <div 
+                      class="status-option" 
+                      *ngFor="let option of getAvailableStatusOptions(quotation.status)"
+                      (click)="updateStatus(quotation, option.value)"
+                      [class.disabled]="option.disabled"
+                    >
+                      <i class="fas" [ngClass]="getStatusIcon(option.value)"></i>
+                      {{ option.label }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="actions">                
+                <!-- <button 
+                  class="btn-icon edit" 
+                  (click)="generateDispatchPdf(quotation.id!, quotation)"
+                  title="Generate Dispatch"
+                  [disabled]="quotation.isPrinting"
+                >
+                  <i class="fas" [ngClass]="quotation.isPrinting ? 'fa-spinner fa-spin' : ' fa-file-pdf'"></i>
+                </button> -->
+                <button *ngIf="canEditQuotation() && (quotation.status == 'D' || quotation.status == 'Q' || quotation.status == 'A' || quotation.status == 'C' || quotation.status == 'PC')"
+                  class="btn-icon edit" 
+                  (click)="editQuotation(quotation.id!)"
+                  title="Edit quotation"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                
+                <button *ngIf="canDispatchQuotation()"
+                  class="btn-icon edit" 
+                  (click)="printQuotationPdf(quotation.id!, quotation)"
+                  title="Dispatch quotation preview"
+                >
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button *ngIf="canDispatchQuotation()"
+                  class="btn-icon edit" 
+                  (click)="dispatchQuotation(quotation.id!)"
+                  title="Dispatch quotation"
+                >
+                  <i class="fas fa-truck-loading"></i>
+                </button>
+                <button *ngIf="canEditQuotation()"
+                  class="btn-icon print" 
+                  (click)="generatePdf(quotation.id!, quotation)"
+                  title="Print quotation"
+                  [disabled]="quotation.isPrinting"
+                >
+                  <i class="fas" [ngClass]="quotation.isPrinting ? 'fa-spinner fa-spin' : 'fa-print'"></i>
+                </button>
+                <button *ngIf="canEditQuotation() && (quotation.status == 'D' || quotation.status == 'Q' || quotation.status == 'A' || quotation.status == 'C' || quotation.status == 'PC')"
+                  class="btn-icon delete" 
+                  (click)="deleteQuotation(quotation.id!)"
+                  title="Delete quotation"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <app-pagination
+        *ngIf="totalPages > 0"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalElements]="totalElements"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
+      
+    </div>
+  </div>
+  
+  <!-- <app-sale-modal 
+    *ngIf="selectedQuotation"
+    [purchase]="selectedQuotation"
+    (saleCreated)="loadQuotations()"
+  ></app-sale-modal> -->
+  

@@ -1,0 +1,24 @@
+<div class="calendar-container">
+  <div class="calendar-header">
+    <div class="weekday" *ngFor="let day of weekDays">{{day}}</div>
+  </div>
+  <div class="calendar-body">
+    <div class="week" *ngFor="let week of calendar">
+      <div 
+        class="day" 
+        *ngFor="let day of week"
+        [ngClass]="{
+          'empty': !day,
+          'has-attendance': day?.attendance,
+          'wednesday': day?.date.getDay() === 3
+        }"
+        [title]="getTooltipText(day)"
+      >
+        <span class="date">{{day?.date | date:'d'}}</span>
+        <span class="time" *ngIf="day?.attendance">
+          {{day.attendance.startTime}}
+        </span>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,104 @@
+.calendar-container {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 1rem auto;
+  max-width: 600px;
+  width: 100%;
+
+  .calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+
+    .weekday {
+      text-align: center;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 6px;
+      font-size: 0.75rem;
+    }
+  }
+
+  .calendar-body {
+    display: grid;
+    gap: 4px;
+
+    .week {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+
+      .day {
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        padding: 4px;
+        font-size: 0.75rem;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border);
+
+        &.empty {
+          background: transparent;
+          border: none;
+        }
+
+        &.has-attendance {
+          background-color: var(--accent1);
+          color: white;
+          border-color: var(--accent1);
+
+          .time {
+            color: rgba(255, 255, 255, 0.9);
+          }
+        }
+
+        &.wednesday:not(.has-attendance) {
+          border-color: var(--primary);
+          background-color: var(--primary-light);
+          color: var(--primary);
+        }
+
+        .date {
+          font-weight: 500;
+          font-size: 0.875rem;
+        }
+
+        .time {
+          font-size: 0.65rem;
+          margin-top: 2px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-container {
+    margin: 1rem;
+    padding: 0.75rem;
+    aspect-ratio: auto;
+    
+    .calendar-header .weekday {
+      padding: 4px;
+      font-size: 0.75rem;
+    }
+    
+    .calendar-body .week .day {
+      font-size: 0.75rem;
+      
+      .date {
+        font-size: 0.875rem;
+      }
+      
+      .time {
+        font-size: 0.7rem;
+      }
+    }
+  }
+} 

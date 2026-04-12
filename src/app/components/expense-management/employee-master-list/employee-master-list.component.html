@@ -1,0 +1,107 @@
+<div class="employee-master-list">
+  <div class="search-section card">
+    <h1 class="page-title">Employee master</h1>
+    <p class="page-subtitle">Search and manage people available for expense allocation. Names and status stay in sync with your backend.</p>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" novalidate>
+      <div class="search-controls">
+        <div class="search-input-wrapper">
+          <label for="em-search" class="sr-only">Search employees</label>
+          <input
+            id="em-search"
+            type="text"
+            class="form-control"
+            placeholder="Search by name or keyword"
+            formControlName="search"
+            autocomplete="off"
+            aria-label="Search employees"
+          />
+        </div>
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary" aria-label="Apply search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <span class="btn-text">Search</span>
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="reset($event)" aria-label="Reset filters">
+            <i class="fas fa-undo" aria-hidden="true"></i>
+            <span class="btn-text">Reset</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="action-buttons">
+    <button type="button" class="btn btn-sm btn-primary" (click)="goToCreate()" aria-label="Add employee">
+      <i class="fas fa-plus" aria-hidden="true"></i>
+      <span class="btn-text">Add employee</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <app-loader [show]="isLoading"></app-loader>
+    <div class="table-responsive" [class.loading]="isLoading">
+      <table class="table" role="table" aria-label="Employee master list">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col"><strong>Name</strong></th>
+            <th scope="col" class="d-none d-md-table-cell"><strong>Remarks</strong></th>
+            <th scope="col"><strong>Status</strong></th>
+            <th scope="col" class="d-none d-lg-table-cell"><strong>Created</strong></th>
+            <th scope="col" class="d-none d-xl-table-cell"><strong>Created by</strong></th>
+            <th scope="col"><strong>Actions</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows; let i = index">
+            <td>{{ startIndex + i + 1 }}</td>
+            <td>{{ row.name }}</td>
+            <td class="d-none d-md-table-cell text-muted">{{ row.remarks || '—' }}</td>
+            <td>
+              <span [class]="'status-badge ' + (row.status === 'A' ? 'active' : 'inactive')">
+                {{ row.status === 'A' ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="d-none d-lg-table-cell">{{ row.createdAt ? (row.createdAt | date : 'mediumDate') : '—' }}</td>
+            <td class="d-none d-xl-table-cell">{{ row.createdBy || '—' }}</td>
+            <td class="actions">
+              <button
+                type="button"
+                class="btn-icon edit"
+                (click)="onEdit(row)"
+                title="Edit employee"
+                [attr.aria-label]="'Edit ' + row.name"
+              >
+                <i class="fas fa-edit" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                class="btn-icon delete"
+                (click)="deleteRow(row.id!, row.name)"
+                title="Delete employee"
+                [attr.aria-label]="'Delete ' + row.name"
+              >
+                <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && rows.length === 0">
+            <td colspan="7" class="text-center">
+              <p class="no-results">No employees match your filters. Adjust search or add someone new.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </div>
+</div>

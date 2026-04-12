@@ -1,0 +1,133 @@
+<div class="expense-master-form-container">
+  <div class="card">
+    <h2>{{ isEditMode ? 'Edit expense' : 'Add expense' }}</h2>
+    <p class="form-hint">
+      {{
+        isEditMode
+          ? 'Adjust expense details with a clear date and context. Changes apply immediately after you save.'
+          : 'Capture amount, reason, and expense date, then attach one or more employees who share this cost.'
+      }}
+    </p>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label>Employees <span class="req">*</span></label>
+          <div class="select-row">
+            <app-searchable-select
+              formControlName="employeeIds"
+              [options]="employees"
+              labelKey="name"
+              valueKey="id"
+              [placeholder]="'Select employees'"
+              [searchPlaceholder]="'Search by name...'"
+              [multiple]="true"
+              [virtualScroll]="true"
+              [initialDisplayLimit]="100"
+            ></app-searchable-select>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-refresh"
+              (click)="loadEmployees()"
+              [disabled]="isLoadingEmployees"
+              title="Refresh employee list"
+              aria-label="Refresh employee list"
+            >
+              <i class="fas" [ngClass]="isLoadingEmployees ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('employeeIds')">
+            {{ getFieldError('employeeIds') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Amount <span class="req">*</span></label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="amount"
+            placeholder="0.00"
+            step="0.01"
+            min="0.01"
+            inputmode="decimal"
+          />
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('amount')">{{ getFieldError('amount') }}</div>
+        </div>
+
+        <div class="form-group">
+          <label>Expense date <span class="req">*</span></label>
+          <input
+            type="date"
+            class="form-control"
+            formControlName="expenseDate"
+            aria-label="Expense date"
+          />
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('expenseDate')">
+            {{ getFieldError('expenseDate') }}
+          </div>
+        </div>
+
+        <div class="form-group reason-select">
+          <label>Reason <span class="req">*</span></label>
+          <app-searchable-select
+            formControlName="reason"
+            [options]="reasonOptionsForDisplay"
+            labelKey="name"
+            valueKey="id"
+            [placeholder]="'Select reason'"
+            [searchPlaceholder]="'Search reasons...'"
+            [multiple]="false"
+          ></app-searchable-select>
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('reason')">{{ getFieldError('reason') }}</div>
+        </div>
+
+        <div class="form-group">
+          <label>Transaction type</label>
+          <div class="toggle-wrapper">
+            <span class="toggle-label" [class.active]="form.get('isExpense')?.value">
+              <i class="fas fa-arrow-up"></i> Expense
+            </span>
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="isExpense" id="isExpense" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label" [class.active]="!form.get('isExpense')?.value">
+              <i class="fas fa-arrow-down"></i> Income
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group span-2">
+          <label>Other <span class="optional">(optional)</span></label>
+          <textarea
+            rows="2"
+            class="form-control"
+            formControlName="other"
+            placeholder="Additional note or context if needed"
+          ></textarea>
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('other')">{{ getFieldError('other') }}</div>
+        </div>
+
+        <div class="form-group span-2">
+          <label>Remarks <span class="optional">(optional)</span></label>
+          <textarea
+            rows="3"
+            class="form-control"
+            formControlName="remarks"
+            placeholder="Extra context only if your team needs it"
+          ></textarea>
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('remarks')">{{ getFieldError('remarks') }}</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ isEditMode ? 'Save changes' : 'Create expense' }}
+        </button>
+        <a routerLink="/expense-master" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+  <app-loader [show]="isLoading"></app-loader>
+</div>

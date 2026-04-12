@@ -1,0 +1,131 @@
+<div class="transport-master-list">
+  <div class="search-section card">
+    <h1 class="page-title">Transport Masters</h1>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" novalidate>
+      <div class="search-controls">
+        <div class="search-input-wrapper">
+          <label for="transport-search" class="sr-only">Search Transport Masters</label>
+          <input 
+            id="transport-search"
+            type="text" 
+            class="form-control" 
+            placeholder="Search by name, GST, mobile" 
+            formControlName="search"
+            aria-label="Search transport masters by name, GST, or mobile number"
+            autocomplete="off"
+          />
+        </div>
+        <div class="button-group">
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            aria-label="Search transport masters"
+            (touchstart)="$event.preventDefault()"
+            (touchend)="onSearch($event)"
+          >
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <span class="btn-text">Search</span>
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="reset($event)"
+            aria-label="Reset search filters"
+            (touchstart)="$event.preventDefault()"
+            (touchend)="reset($event)"
+          >
+            <i class="fas fa-undo" aria-hidden="true"></i>
+            <span class="btn-text">Reset</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="action-buttons">
+    <button 
+      type="button"
+      class="btn btn-sm btn-primary" 
+      (click)="goToCreateTransport()"
+      aria-label="Add new transport master"
+      (touchstart)="$event.preventDefault()"
+      (touchend)="goToCreateTransport(); $event.preventDefault()"
+    >
+      <i class="fas fa-plus" aria-hidden="true"></i> 
+      <span class="btn-text">Add Transport</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <app-loader [show]="isLoading"></app-loader>
+    <div class="table-responsive" [class.loading]="isLoading">
+      <table class="table" role="table" aria-label="Transport Masters List">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col"><strong>Name</strong></th>
+            <th scope="col"><strong>Mobile</strong></th>
+            <th scope="col"><strong>GST</strong></th>
+            <th scope="col"><strong>Remarks</strong></th>
+            <th scope="col"><strong>Status</strong></th>
+            <th scope="col"><strong>Actions</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of transports; let i = index">
+            <td>{{ startIndex + i + 1 }}</td>
+            <td>{{ t.name }}</td>
+            <td>{{ t.mobile }}</td>
+            <td>{{ t.gst }}</td>
+            <td>{{ t.remarks }}</td>
+            <td>
+              <span [class]="'status-badge ' + (t.status === 'A' ? 'active' : 'inactive')">
+                {{ t.status === 'A' ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button 
+                class="btn-icon edit" 
+                [routerLink]="['/transport-master/edit']"
+                (click)="$event.preventDefault(); onEdit(t.id)"
+                title="Edit Transport Master"
+                [attr.aria-label]="'Edit transport master ' + t.name"
+                (touchstart)="$event.preventDefault()"
+                (touchend)="$event.preventDefault(); onEdit(t.id)"
+              >
+                <i class="fas fa-edit" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon delete" 
+                (click)="delete(t.id)" 
+                title="Delete Transport Master"
+                [attr.aria-label]="'Delete transport master ' + t.name"
+                (touchstart)="$event.preventDefault()"
+                (touchend)="$event.preventDefault(); delete(t.id)"
+              >
+                <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && transports.length === 0">
+            <td colspan="7" class="text-center">
+              <p class="no-results">No transports found</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </div>
+</div>
+
+

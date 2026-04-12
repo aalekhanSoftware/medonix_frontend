@@ -1,0 +1,185 @@
+<div class="add-payment-container">
+  <!-- Back Button -->
+  <button class="back-btn" routerLink="/payment-history">
+    <i class="fas fa-arrow-left"></i>
+    <span>Back to Payment History</span>
+  </button>
+
+  <!-- Form Card -->
+  <div class="form-card">
+    <!-- Card Header -->
+    <div class="card-header">
+      <div class="header-icon">
+        <i class="fas" [ngClass]="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+      </div>
+      <div class="header-text">
+        <h1 class="form-title">{{ isEdit ? 'Edit' : 'Create New' }} Payment</h1>
+        <p class="form-subtitle">{{ isEdit ? 'Update the payment details below' : 'Fill in the payment details below' }}</p>
+      </div>
+    </div>
+
+    <!-- Form Content -->
+    <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="$event.preventDefault()" class="payment-form">
+      <div class="form-grid">
+        <!-- Date Field -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Date</span>
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <input 
+              type="date" 
+              formControlName="date" 
+              class="form-input"
+              [class.is-invalid]="submitted && form.get('date')?.invalid"
+            >
+          </div>
+          <div class="error-message" *ngIf="submitted && form.get('date')?.hasError('required')">
+            <i class="fas fa-exclamation-circle"></i>
+            Date is required
+          </div>
+        </div>
+
+        <!-- Customer Selection -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-user"></i>
+            <span>Customer</span>
+            <span class="required">*</span>
+          </label>
+          <div class="input-with-action">
+            <app-searchable-select 
+              formControlName="customerId" 
+              [options]="customers" 
+              labelKey="name" 
+              valueKey="id"
+              [placeholder]="'Select Customer'" 
+              [searchPlaceholder]="'Search customers...'"
+              [class.is-invalid]="submitted && form.get('customerId')?.invalid">
+            </app-searchable-select>
+            <button 
+              type="button" 
+              class="btn-refresh" 
+              (click)="refreshCustomers()" 
+              [disabled]="isLoadingCustomers" 
+              title="Refresh Customers"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="submitted && form.get('customerId')?.hasError('required')">
+            <i class="fas fa-exclamation-circle"></i>
+            Customer is required
+          </div>
+        </div>
+
+        <!-- Amount Field -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-rupee-sign"></i>
+            <span>Amount</span>
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrapper currency-input">
+            <span class="currency-symbol">₹</span>
+            <input 
+              type="number" 
+              formControlName="amount" 
+              class="form-input with-prefix"
+              min="0.01" 
+              step="0.01"
+              [class.is-invalid]="submitted && form.get('amount')?.invalid"
+              placeholder="0.00"
+            >
+          </div>
+          <div class="error-message" *ngIf="submitted && form.get('amount')?.hasError('required')">
+            <i class="fas fa-exclamation-circle"></i>
+            Amount is required
+          </div>
+          <div class="error-message" *ngIf="submitted && form.get('amount')?.hasError('min')">
+            <i class="fas fa-exclamation-circle"></i>
+            Amount must be greater than 0
+          </div>
+        </div>
+
+        <!-- Payment Type -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-credit-card"></i>
+            <span>Payment Type</span>
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <select 
+              formControlName="type" 
+              class="form-input form-select"
+              [class.is-invalid]="submitted && form.get('type')?.invalid"
+            >
+              <option value="">Select Type</option>
+              <option *ngFor="let option of typeOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div class="error-message" *ngIf="submitted && form.get('type')?.hasError('required')">
+            <i class="fas fa-exclamation-circle"></i>
+            Payment type is required
+          </div>
+        </div>
+
+        <!-- Transaction Type (Toggle) -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Transaction Type</span>
+          </label>
+          <div class="toggle-wrapper">
+            <span class="toggle-label" [class.active]="!form.get('isReceived')?.value">
+              <i class="fas fa-arrow-up"></i> Paid
+            </span>
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="isReceived" id="isReceived">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label" [class.active]="form.get('isReceived')?.value">
+              <i class="fas fa-arrow-down"></i> Received
+            </span>
+          </div>
+        </div>
+
+        <!-- Remarks Field -->
+        <div class="form-group full-width">
+          <label class="form-label">
+            <i class="fas fa-comment-alt"></i>
+            <span>Remarks</span>
+            <span class="optional">(Optional)</span>
+          </label>
+          <div class="input-wrapper">
+            <textarea 
+              formControlName="remarks" 
+              class="form-input form-textarea"
+              rows="3" 
+              placeholder="Add any additional notes or remarks..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="resetFormToDefaults()" [disabled]="loading">
+          <i class="fas fa-undo"></i>
+          <span>Reset</span>
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading">
+          <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          <span>{{ isEdit ? (loading ? 'Updating...' : 'Update Payment') : (loading ? 'Saving...' : 'Save Payment') }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-loader *ngIf="loading"></app-loader>

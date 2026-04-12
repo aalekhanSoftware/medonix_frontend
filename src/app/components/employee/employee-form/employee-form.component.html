@@ -1,0 +1,250 @@
+<div class="employee-form-container">
+  <app-loader [show]="isLoading"></app-loader>
+  
+  <div class="form-card">
+    <div class="card-header">
+      <h2 class="form-title">
+        <i class="fas fa-user"></i> 
+        {{ isEditMode ? 'Edit Employee' : 'Create Employee' }}
+      </h2>
+    </div>
+
+    <form [formGroup]="employeeForm" (ngSubmit)="onSubmit()" class="employee-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">
+            <i class="fas fa-user"></i> Name <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="name"
+            formControlName="name"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('name')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+            {{ getFieldError('name') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="mobileNumber">
+            <i class="fas fa-phone"></i> Mobile Number 
+          </label>
+          <input 
+            type="text" 
+            id="mobileNumber"
+            formControlName="mobileNumber"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('mobileNumber')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('mobileNumber')">
+            {{ getFieldError('mobileNumber') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="aadharNumber">
+            <i class="fas fa-id-card"></i> Aadhar Number 
+          </label>
+          <input 
+            type="text" 
+            id="aadharNumber"
+            formControlName="aadharNumber"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('aadharNumber')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('aadharNumber')">
+            {{ getFieldError('aadharNumber') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">
+            <i class="fas fa-envelope"></i> Email 
+          </label>
+          <input 
+            type="email" 
+            id="email"
+            formControlName="email"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('email')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+            {{ getFieldError('email') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="designation">
+            <i class="fas fa-briefcase"></i> Designation 
+          </label>
+          <input 
+            type="text" 
+            id="designation"
+            formControlName="designation"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('designation')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('designation')">
+            {{ getFieldError('designation') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="department">
+            <i class="fas fa-building"></i> Department 
+          </label>
+          <input 
+            type="text" 
+            id="department"
+            formControlName="department"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('department')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('department')">
+            {{ getFieldError('department') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="status">
+            <i class="fas fa-toggle-on"></i> Status
+          </label>
+          <select 
+            id="status"
+            formControlName="status"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('status')"
+          >
+            <option value="A">Active</option>
+            <option value="I">Inactive</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+            {{ getFieldError('status') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="regularPay">
+            <i class="fa-solid fa-coins"></i> Regular Hours Price 
+          </label>
+          <input 
+            type="number" 
+            id="regularPay"
+            formControlName="regularPay"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('regularPay')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('regularPay')">
+            {{ getFieldError('regularPay') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="overtimePay">
+            <i class="fa-solid fa-coins"></i> Overtime Hours Price 
+          </label>
+          <input 
+            type="number" 
+            id="overtimePay"
+            formControlName="overtimePay"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('overtimePay')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('overtimePay')">
+            {{ getFieldError('overtimePay') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="wageType">
+            <i class="fas fa-money-bill"></i> Wage Type <span class="required">*</span>
+          </label>
+          <select 
+            id="wageType"
+            formControlName="wageType"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('wageType')"
+          >
+            <option value="HOURLY">Hourly</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('wageType')">
+            {{ getFieldError('wageType') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regularHours">
+            <i class="fas fa-clock"></i> Regular Hours <span class="required">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="regularHours"
+            formControlName="regularHours"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('regularHours')"
+            min="0"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('regularHours')">
+            {{ getFieldError('regularHours') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="startTime">
+            <i class="fas fa-hourglass-start"></i> Start Time <span class="required">*</span>
+          </label>
+          <input 
+            type="time" 
+            id="startTime"
+            formControlName="startTime"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('startTime')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('startTime')">
+            {{ getFieldError('startTime') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="address">
+          <i class="fas fa-map-marker-alt"></i> Address 
+        </label>
+        <textarea 
+          id="address"
+          formControlName="address"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('address')"
+          rows="3"
+        ></textarea>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('address')">
+          {{ getFieldError('address') }}
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-sm btn-secondary" routerLink="/employee">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-sm btn-primary"
+          [disabled]="employeeForm.invalid || isLoading"
+        >
+          <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : (isEditMode ? 'fa-save' : 'fa-plus')"></i>
+          {{ isLoading ? 'Processing...' : (isEditMode ? 'Update' : 'Create') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div> 

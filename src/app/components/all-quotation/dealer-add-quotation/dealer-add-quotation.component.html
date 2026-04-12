@@ -1,0 +1,213 @@
+<div class="dealer-quotation-container">
+  <div class="form-card">
+    <div class="card-header">
+      <div class="header-content">
+        <div class="title-section">
+          <i class="fas fa-shopping-cart"></i>
+          <h2 class="form-title">Dealer Direct Order</h2>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-sm btn-secondary back-btn" routerLink="/quotation">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <span class="dealer-badge">
+            <i class="fas fa-store"></i> Dealer Portal
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="quotationForm" (ngSubmit)="onSubmit()" (keydown.enter)="$event.preventDefault()"
+      class="quotation-form" (touchstart)="handleTouchStart($event)" (touchmove)="handleTouchMove($event)"
+      (touchend)="handleTouchEnd($event)">
+
+      <!-- Products Section -->
+      <div class="products-section" formArrayName="items">
+        <div class="products-header">
+          <h3><i class="fas fa-boxes-stacked"></i> Order Products</h3>
+          <button type="button" class="btn btn-sm btn-primary add-product-btn" (click)="addItem()">
+            <i class="fas fa-plus"></i> Add Product
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <div class="products-table-scroll-inner">
+            <cdk-virtual-scroll-viewport itemSize="52" class="products-table-viewport" [style.height.px]="getViewportHeight()">
+              <table class="table products-table">
+                <thead>
+                  <tr>
+                    <th class="product-col">Product</th>
+                    <th class="qty-col">Quantity</th>
+                    <th class="price-col">Unit Price</th>
+                    <th class="remarks-col">Remarks</th>
+                    <th class="calc-col">Item Price</th>
+                    <th class="calc-col">Tax Amount</th>
+                    <th class="calc-col">Final Price</th>
+                    <th class="action-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *cdkVirtualFor="let item of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="item" class="product-row">
+                <!-- Product Selection -->
+                <td class="product-col">
+                  <div class="form-field-container">
+                    <div class="select-group">
+                      <app-searchable-select [formControlName]="'productId'" [options]="products" labelKey="displayName"
+                        [valueKey]="'id'" [placeholder]="'Select Product'" [searchPlaceholder]="'Search products...'"
+                        [class.is-invalid]="isItemFieldInvalid(i, 'productId')"
+                        (selectionChange)="onProductSelect(i, $event)" [focusWidthPx]="700"
+                        [virtualScroll]="true" [initialDisplayLimit]="50" [maxHeight]="'320px'" [searchMode]="'jump'"></app-searchable-select>
+                      <button type="button" class="btn btn-sm btn-icon refresh" (click)="refreshProducts()"
+                        [disabled]="isLoadingProducts" title="Refresh Products"
+                        (touchstart)="$event.stopPropagation()">
+                        <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Quantity -->
+                <td class="qty-col">
+                  <div class="input-group">
+                    <input type="number" formControlName="quantity" class="form-control"
+                      [class.is-invalid]="isItemFieldInvalid(i, 'quantity')" min="0.001" step="0.001"
+                      (touchstart)="$event.stopPropagation()">
+                  </div>
+                </td>
+
+                <!-- Unit Price (Readonly - from customer price API) -->
+                <td class="price-col">
+                  <div class="input-group readonly-field">
+                    <span class="currency-symbol">₹</span>
+                    <input type="number" formControlName="unitPrice" class="form-control" readonly
+                      title="Customer price"
+                      [class.loading]="isLoadingPrices[i]">
+                    <span class="price-loader" *ngIf="isLoadingPrices[i]">
+                      <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Remarks -->
+                <td class="remarks-col">
+                  <input type="text" formControlName="remarks" class="form-control" placeholder="Optional remarks"                  
+                  (keydown)="onRemarksKeydown($event, i)">
+                </td>
+
+                <!-- Item Price -->
+                <td class="calc-col">
+                  <div class="calculated-value">
+                    <span class="currency">₹</span>
+                    <span class="value">{{ getFormattedPrice(i) }}</span>
+                  </div>
+                </td>
+
+                <!-- Tax Amount -->
+                <td class="calc-col">
+                  <div class="calculated-value tax-value">
+                    <span class="currency">₹</span>
+                    <span class="value">{{ getFormattedTaxAmount(i) }}</span>
+                    <span class="percentage">({{ item.get('taxPercentage')?.value }}%)</span>
+                  </div>
+                </td>
+
+                <!-- Final Price -->
+                <td class="calc-col">
+                  <div class="calculated-value final-value">
+                    <span class="currency">₹</span>
+                    <span class="value">{{ getFormattedFinalPrice(i) }}</span>
+                  </div>
+                </td>
+
+                <!-- Actions -->
+                <td class="action-col">
+                  <button type="button" (click)="removeItem(i)" class="btn btn-sm btn-danger delete-btn"
+                    [disabled]="itemsFormArray.length === 1" (touchstart)="$event.stopPropagation()"
+                    title="Remove product">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+              <tr class="totals-row">
+                <td colspan="4" class="totals-label">
+                  <strong><i class="fas fa-calculator"></i> Order Totals</strong>
+                </td>
+                <td class="calc-col">
+                  <div class="total-value">
+                    <span class="label">Subtotal:</span>
+                    <span class="amount">₹{{ totals.price | number:'1.2-2' }}</span>
+                  </div>
+                </td>
+                <td class="calc-col">
+                  <div class="total-value">
+                    <span class="label">Tax:</span>
+                    <span class="amount">₹{{ totals.tax | number:'1.2-2' }}</span>
+                  </div>
+                </td>
+                <td class="calc-col">
+                  <div class="total-value grand-total">
+                    <span class="label">Grand Total:</span>
+                    <span class="amount">₹{{ totals.finalPrice | number:'1.2-2' }}</span>
+                  </div>
+                </td>
+                <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </cdk-virtual-scroll-viewport>
+        </div>
+        </div>
+        <div class="add-product-footer">
+          <button type="button" class="btn btn-sm btn-primary add-product-btn" (click)="addItem()">
+            <i class="fas fa-plus"></i> Add Product
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Section: Remarks + Summary + Actions -->
+      <div class="bottom-section">
+        <!-- Remarks -->
+        <div class="remarks-wrapper">
+          <div class="form-group">
+            <label>
+              <i class="fas fa-comment"></i> Order Remarks
+            </label>
+            <textarea formControlName="remarks" class="form-control" rows="2"
+              placeholder="Optional remarks for this order..."></textarea>
+          </div>
+        </div>
+
+        <!-- Summary & Actions -->
+        <div class="summary-actions-wrapper">
+          <div class="order-summary-inline">
+            <div class="summary-item">
+              <i class="fas fa-box"></i>
+              <span class="summary-label">Products:</span>
+              <strong class="summary-value">{{ itemsFormArray.length }}</strong>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item highlight">
+              <i class="fas fa-indian-rupee-sign"></i>
+              <span class="summary-label">Total:</span>
+              <strong class="summary-value">₹{{ totals.finalPrice | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="loading">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+            <button type="submit" class="btn btn-primary submit-btn" [disabled]="quotationForm.invalid || loading">
+              <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+              {{ loading ? 'Placing Order...' : 'Place Order' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-loader [show]="isLoading || isLoadingProducts" [message]="(isLoading || isLoadingProducts) ? 'Loading...' : undefined"></app-loader>

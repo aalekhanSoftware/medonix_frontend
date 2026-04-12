@@ -1,0 +1,42 @@
+<div class="employee-master-form-container">
+  <div class="card">
+    <h2>{{ isEditMode ? 'Edit employee' : 'Add employee' }}</h2>
+    <p class="form-hint">
+      {{
+        isEditMode
+          ? 'Update how this person appears when you attach them to expenses.'
+          : 'Create a record you can link to one or more expense entries.'
+      }}
+    </p>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name <span class="req">*</span></label>
+          <input type="text" class="form-control" formControlName="name" placeholder="Full name" />
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('name')">{{ getFieldError('name') }}</div>
+        </div>
+        <div class="form-group">
+          <label>Status <span class="req">*</span></label>
+          <select class="form-control" formControlName="status">
+            <option value="A">Active</option>
+            <option value="I">Inactive</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label>Remarks <span class="optional">(optional)</span></label>
+          <textarea rows="3" class="form-control" formControlName="remarks" placeholder="Internal note — only if you need it"></textarea>
+          <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('remarks')">{{ getFieldError('remarks') }}</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ isEditMode ? 'Save changes' : 'Create employee' }}
+        </button>
+        <a routerLink="/employee-master" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+  <app-loader [show]="isLoading"></app-loader>
+</div>

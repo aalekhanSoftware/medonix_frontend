@@ -1,0 +1,51 @@
+.customer-select-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+  app-searchable-select {
+    flex: 1;
+  }
+
+  .btn-icon.refresh {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    color: var(--secondary);
+    background-color: rgba(var(--secondary-rgb), 0.1);
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--secondary);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-select-group {
+    .btn-icon.refresh {
+      padding: 6px;
+      
+      i {
+        font-size: 14px;
+      }
+    }
+  }
+} 

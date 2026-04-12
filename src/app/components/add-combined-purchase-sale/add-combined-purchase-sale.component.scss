@@ -1,0 +1,476 @@
+.combined-form-container {
+  padding: 1.5rem;
+  margin: 0 auto;
+  max-width: 1400px;
+}
+
+.back-btn {
+  margin-bottom: 1.5rem;
+  
+  i {
+    margin-right: 0.5rem;
+  }
+}
+
+.form-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  background-color: var(--primary);
+  padding: 1.5rem;
+  
+  .form-title {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.combined-form {
+  padding: 1.5rem;
+
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
+}
+
+.section-card {
+  background: var(--background-light);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  .section-title {
+    color: var(--primary);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    i {
+      font-size: 1.1em;
+    }
+  }
+}
+
+.form-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 992px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.form-row {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  width: 90%;
+
+  input,
+  select,
+  app-searchable-select {
+    width: 90%;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      color: var(--primary);
+    }
+
+    .required {
+      color: var(--danger);
+      margin-left: 4px;
+    }
+  }
+
+  .input-group {
+    input[formControlName="purchaseUnitPrice"] {
+      transition: background-color 0.3s ease;
+      
+      &.auto-filled {
+        animation: highlight-background 1s ease;
+      }
+    }
+  }
+}
+
+.product-select-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  width: 100%;
+  
+  app-searchable-select {
+    flex: 1;
+    
+    ::ng-deep {
+      .select-container {
+        height: 42px;
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+
+        .select-trigger {
+        }
+      }
+    }
+  }
+
+  .btn-icon.refresh {
+    background-color: var(--background);
+    color: var(--primary);
+    width: 42px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+      background-color: var(--primary);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+}
+
+.input-group {
+  width: 100%;
+  
+  .input-group-text {
+    
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    background-color: var(--background-light);
+    border-right: 0;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+  }
+
+  .form-control {
+    width: 90% !important;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+
+.form-control {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background-color: var(--input-bg, #fff);
+  color: var(--text-primary);
+  min-width: 252px;
+  
+  &:hover {
+    border-color: var(--primary-dark);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+  }
+
+  &.is-invalid {
+    border-color: var(--danger, #dc3545);
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+    }
+  }
+}
+
+.invalid-feedback {
+  display: block;
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 1.1em;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .combined-form-container {
+    padding: 1rem;
+  }
+
+  .section-card {
+    padding: 1rem;
+  }
+
+  .form-control, 
+  .input-group-text {
+    height: 40px;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+.form-row.two-columns {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+
+  .form-group {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.purchase-sale-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .purchase-section,
+  .sale-section {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    
+    .section-title {
+      color: var(--primary);
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+  }
+
+  .form-column {
+    display: grid;
+    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+  }
+}
+
+.form-control {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background-color: var(--input-bg, #fff);
+  color: var(--text-primary);
+  
+  
+  &:hover {
+    border-color: var(--primary-dark);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+  }
+
+  &.is-invalid {
+    border-color: var(--danger, #dc3545);
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+    }
+  }
+}
+
+.input-group {
+  .input-group-text {
+    
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    background-color: var(--background-light);
+    border-right: 0;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+  }
+
+  .form-control {
+    width: 90% !important;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left-width: 1px;
+
+    &:focus {
+      border-left-width: 2px;
+      ~ .input-group-text {
+        border-color: var(--primary);
+      }
+    }
+  }
+}
+
+.product-select-group {
+  app-searchable-select {
+    ::ng-deep {
+      .select-container {
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: var(--primary-dark);
+        }
+
+        &:focus-within {
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        }
+      }
+    }
+  }
+}
+
+.section-card {
+  border-radius: var(--border-radius);
+}
+
+.purchase-section,
+.sale-section {
+  border-radius: var(--border-radius);
+}
+
+.input-group {
+  input[formControlName="purchaseUnitPrice"] {
+    transition: all 0.3s ease;
+    
+    &.ng-touched:not(:focus) {
+      background-color: rgba(var(--primary-rgb), 0.05);
+    }
+  }
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(var(--primary-rgb), 0.1);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.auto-filled {
+  animation: highlight 1s ease;
+}
+
+@keyframes highlight-background {
+  0% {
+    background-color: rgba(var(--primary-rgb), 0.1);
+  }
+  50% {
+    background-color: rgba(var(--primary-rgb), 0.1);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.discount-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group {
+    margin-bottom: 0;
+    
+    .input-group {
+      .form-control {
+        
+        &:read-only {
+          background-color: var(--background-light);
+          cursor: not-allowed;
+        }
+      }
+      
+      .input-group-text {
+        min-width: 40px;
+        justify-content: center;
+      }
+    }
+  }
+}

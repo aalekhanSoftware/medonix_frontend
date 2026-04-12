@@ -1,0 +1,180 @@
+<div class="pending-item-container">
+  <div class="header">
+    <h2>Pending Items</h2>
+  </div>
+
+  <div class="search-card">
+    <form [formGroup]="searchForm" (ngSubmit)="onSubmit($event)" class="search-form">
+      <div class="form-group">
+        <label>Product</label>
+        <div class="product-select-group">
+          <app-searchable-select 
+            formControlName="productId" 
+            [options]="products" 
+            labelKey="name"
+            valueKey="id" 
+            [defaultOption]="{ label: 'All Products', value: '' }"
+            [searchPlaceholder]="'Search products...'"
+          ></app-searchable-select>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary refresh" 
+            (click)="refreshProducts()"
+            (touchstart)="$event.preventDefault()"
+            [disabled]="isLoadingProducts" 
+            title="Refresh Products"
+          >
+            <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="!isDealerUser">
+        <label>Customer</label>
+        <div class="product-select-group">
+          <app-searchable-select
+            formControlName="customerId"
+            [options]="customers"
+            labelKey="name"
+            valueKey="id"
+            [defaultOption]="{ label: 'All Customers', value: '' }"
+            [searchPlaceholder]="'Search customers...'"
+          ></app-searchable-select>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary refresh"
+            style="margin-top: 3px;"
+            (click)="refreshCustomers()"
+            (touchstart)="$event.preventDefault()"
+            [disabled]="isLoadingCustomers"
+            title="Refresh Customers"
+          >
+            <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="buttons">
+      <button type="button" class="btn btn-secondary" (click)="resetForm()" (touchstart)="$event.preventDefault()">Reset</button>
+      <button type="button" class="btn btn-primary" (click)="onSubmit($event)" [disabled]="loading" (touchstart)="$event.preventDefault()">
+        {{ loading ? 'Searching...' : 'Search' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="results-card">
+    <div class="table-container" *ngIf="!loading && pendingItems.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Pending Roll Qty</th>
+            <th>Customer</th>
+            <th></th>
+            <th>Contact</th>
+            <th>Quote Number</th>
+            <th>Quote Date</th>
+            <th>Remarks</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of pendingItems; let i = index">
+            <td [innerHTML]="sanitizeHtml(item.productName)"></td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.pendingQuantity }}</td>
+            <td>{{ item.customerName }}</td>
+            <td>
+              <div *ngIf="item.contactNumber" style="display: flex; gap: 0.5rem;">
+                <button 
+                  class="btn-icon whatsapp" 
+                  title="Open WhatsApp" 
+                  (click)="openWhatsApp(item.contactNumber)"
+                  (touchstart)="$event.preventDefault()"
+                >
+                  <i class="fab fa-whatsapp"></i>
+                </button>
+                <button 
+                  class="btn-icon call" 
+                  title="Call" 
+                  (click)="makeCall(item.contactNumber)"
+                  (touchstart)="$event.preventDefault()"
+                >
+                  <i class="fas fa-phone"></i>
+                </button>
+              </div>
+            </td>
+            <td>{{ item.contactNumber }}</td>
+            <td>{{ item.quoteNumber }}</td>
+            <td>{{ item.quoteDate }}</td>
+            <td>{{ item.remarks }}</td>
+            <td class="action-cell">
+              <button 
+                class="btn-icon edit" 
+                (click)="editQuotation(item.quotationId)"
+                (touchstart)="$event.preventDefault()"
+                title="Edit quotation"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button 
+                *ngIf="canDispatchQuotation()"
+                class="btn-icon dispatch" 
+                (click)="dispatchQuotation(item.quotationId)"
+                (touchstart)="$event.preventDefault()"
+                title="Dispatch quotation"
+              >
+                <i class="fas fa-truck-loading"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="loading" *ngIf="loading">
+      <p>Loading pending items...</p>
+    </div>
+
+    <div class="no-results" *ngIf="!loading && pendingItems.length === 0">
+      <p>No pending items found.</p>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && pendingItems.length > 0 && totalPages > 1">
+      <div class="page-info">
+        Showing {{ currentPage + 1 }} of {{ totalPages }} pages ({{ totalItems }} total items)
+      </div>
+      <div class="pagination-controls">
+        <button 
+          class="page-button" 
+          [disabled]="currentPage === 0"
+          (click)="onPageChange(currentPage - 1)"
+          (touchstart)="$event.preventDefault()"
+        >
+          Previous
+        </button>
+        
+        <button 
+          class="page-button" 
+          *ngFor="let page of getPageNumbers()" 
+          [class.active]="page === currentPage"
+          (click)="onPageChange(page)"
+          (touchstart)="$event.preventDefault()"
+        >
+          {{ page + 1 }}
+        </button>
+        
+        <button 
+          class="page-button" 
+          [disabled]="currentPage === totalPages - 1"
+          (click)="onPageChange(currentPage + 1)"
+          (touchstart)="$event.preventDefault()"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

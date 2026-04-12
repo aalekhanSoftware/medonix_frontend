@@ -1,0 +1,383 @@
+{
+  "info": {
+    "_postman_id": "quotation-sales-api-collection",
+    "name": "Quotation & Sales APIs (with discount)",
+    "description": "Postman collection for Quotation and Sales APIs updated with Sale/SaleItem-style discount (line-level discountPercentage, discountAmount, discountPrice; header price, discountAmount). Includes: create/update quotation, detail, delete, generate-pdf, generate-dispatch-slip, update-status; quotation-items status, dispatch, created-roll, search, quantity, pending-item search; sales createFromQuotationItems.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "{{access_token}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Quotations",
+      "description": "Create, update, search, detail, PDF, dispatch slip, status, delete. Request/response include price, discountAmount (header) and items with discountPercentage, discountAmount, discountPrice.",
+      "item": [
+        {
+          "name": "Create Quotation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/create",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "create" ]
+            },
+            "description": "Create a new quotation. Items support discountPercentage and discountAmount (line-level discount like SaleItem).",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Customer Name\",\n  \"quoteDate\": \"2024-01-15\",\n  \"validUntil\": \"2024-02-15\",\n  \"remarks\": \"Sample quotation\",\n  \"quotationDiscountPercentage\": 0,\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 10.0,\n      \"unitPrice\": 150.0,\n      \"discountPercentage\": 0,\n      \"discountAmount\": 0,\n      \"remarks\": \"Sample\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Quotation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/update",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "update" ]
+            },
+            "description": "Update quotation. Items can include discountPercentage and discountAmount.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotationId\": 1,\n  \"customerName\": \"Customer Name\",\n  \"quoteDate\": \"2024-01-15\",\n  \"validUntil\": \"2024-02-15\",\n  \"remarks\": \"Updated\",\n  \"quotationDiscountPercentage\": 0,\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 10.0,\n      \"unitPrice\": 150.0,\n      \"discountPercentage\": 5,\n      \"discountAmount\": 0\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Quotations",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/search",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "search" ]
+            },
+            "description": "Search quotations.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPage\": 0,\n  \"perPageRecord\": 10,\n  \"search\": \"QT-2024\",\n  \"customerId\": 1,\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Quotation Detail",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/detail",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "detail" ]
+            },
+            "description": "Get quotation details. Response includes price, discountAmount (header) and per-item discountPercentage, discountAmount, discountPrice.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Quotation PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/generate-pdf",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "generate-pdf" ]
+            },
+            "description": "Generate PDF for quotation (includes discount columns).",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Dispatch Slip PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/generate-dispatch-slip",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "generate-dispatch-slip" ]
+            },
+            "description": "Generate dispatch slip PDF.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Quotation Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/update-status",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "update-status" ]
+            },
+            "description": "Update quotation status.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"status\": \"A\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Quotation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotations/delete",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotations", "delete" ]
+            },
+            "description": "Delete quotation.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotationId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] }
+    },
+    {
+      "name": "Quotation Items",
+      "description": "Update status, dispatch, created roll; search; update quantity; search pending items. Item responses include discountPercentage, discountAmount, discountPrice.",
+      "item": [
+        {
+          "name": "Update Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotation-items/status",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotation-items", "status" ]
+            },
+            "description": "Update quotation item status.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"quotationItemStatus\": \"B\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Dispatch",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotation-items/dispatch",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotation-items", "dispatch" ]
+            },
+            "description": "Update quotation item dispatch flag.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"isDispatch\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Created Roll",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotation-items/created-roll",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotation-items", "created-roll" ]
+            },
+            "description": "Update quotation item created roll.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"createdRoll\": 10.0\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Quotation Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotation-items/search",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotation-items", "search" ]
+            },
+            "description": "Search quotation items. Response includes discountPercentage, discountAmount, discountPrice.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotationId\": 1,\n  \"productId\": 1,\n  \"page\": 0,\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Quantity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotation-items/quantity",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotation-items", "quantity" ]
+            },
+            "description": "Update quotation item quantity (recalculates line discount from existing discountPercentage/discountAmount).",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"quantity\": 15.0\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pending Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/quotation-items/pending-item/search",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "quotation-items", "pending-item", "search" ]
+            },
+            "description": "Search pending quotation items (status B, created_roll set, quantity != created_roll).",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 1,\n  \"productId\": 1,\n  \"quotationId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] }
+    },
+    {
+      "name": "Sales",
+      "description": "Create sale from quotation items. Sale and SaleItem get discount fields from QuotationItem (discountPercentage, discountAmount, discountPrice).",
+      "item": [
+        {
+          "name": "Create From Quotation Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sales/createFromQuotationItems",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "api", "sales", "createFromQuotationItems" ]
+            },
+            "description": "Create sale from selected quotation items. Copies line-level discount (discountPercentage, discountAmount, discountPrice) from QuotationItem to SaleItem; sale header gets price and discountAmount aggregates.",
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotationItemIds\": [ 1, 2, 3 ],\n  \"packagingAndForwadingCharges\": 0,\n  \"transportMasterId\": null,\n  \"caseNumber\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] }
+    }
+  ]
+}

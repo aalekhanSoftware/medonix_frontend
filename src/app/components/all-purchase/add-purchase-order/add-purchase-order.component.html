@@ -1,0 +1,360 @@
+<div class="add-purchase-container">
+  <button class="btn btn-sm btn-secondary back-btn" routerLink="/purchase-order">
+    <i class="fas fa-arrow-left"></i> Back to Purchase Orders
+  </button>
+
+  <div class="form-card">
+    <div class="card-header">
+      <h2 class="form-title">
+        <i class="fas fa-file-invoice"></i> {{ isEdit ? 'Edit Purchase Order' : 'Add New Purchase Order' }}
+      </h2>
+    </div>
+    
+    <form [formGroup]="purchaseOrderForm" (ngSubmit)="onSubmit()" class="purchase-form">
+      <!-- Header Section -->
+      <div class="header-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerId">
+              <i class="fas fa-user"></i> Select Customer <span class="required">*</span>
+            </label>
+            <div class="select-group">
+              <app-searchable-select
+                formControlName="customerId"
+                [options]="customers"
+                labelKey="name"
+                valueKey="id"
+                [placeholder]="'Select Customer'"
+                [searchPlaceholder]="'Search customers...'"
+                [class.is-invalid]="isFieldInvalid('customerId')"
+                [searchMode]="'jump'"
+              ></app-searchable-select>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-primary refresh" 
+                (click)="refreshCustomers()" 
+                [disabled]="isLoadingCustomers"
+                title="Refresh Customers"
+
+              >
+                <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('customerId')">
+              Customer is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="orderDate">
+              <i class="fas fa-calendar"></i> Order Date <span class="required">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="orderDate" 
+              formControlName="orderDate" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('orderDate')"
+            >
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('orderDate')">
+              Order date is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="invoiceNumber">
+              <i class="fas fa-file-invoice"></i> Order Number <span class="required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="invoiceNumber" 
+              formControlName="invoiceNumber" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('invoiceNumber')"
+              readonly
+            >
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('invoiceNumber')">
+              Order number is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="packagingAndForwadingCharges">
+              <i class="fas fa-box"></i> Packaging & Forwarding Charges <span class="required">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input 
+                type="number" 
+                id="packagingAndForwadingCharges" 
+                formControlName="packagingAndForwadingCharges" 
+                class="form-control"
+                min="0"
+                step="0.01"
+                placeholder="Enter packaging and forwarding charges"
+                [class.is-invalid]="isFieldInvalid('packagingAndForwadingCharges')"
+              >
+            </div>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('packagingAndForwadingCharges')">
+              Packaging and forwarding charges is required and must be 0 or greater
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Section -->
+      <section class="products-section" formArrayName="products" aria-labelledby="products-heading">
+        <div class="products-header">
+          <h3 id="products-heading"><i class="fas fa-boxes" aria-hidden="true"></i> Products</h3>
+          <div>
+            <button type="button" class="btn btn-success me-2" *ngIf="isEdit && purchaseOrderForm.get('id')?.value && hasConvertibleItems()" (click)="convertToPurchase()">
+              <i class="fa-solid fa-shopping-cart"></i> Convert to Purchase
+            </button>
+            <button type="button" class="btn btn-sm btn-primary" (click)="addProduct()" (touchstart)="$event.stopPropagation()">
+              <i class="fas fa-plus"></i> Add Product
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <div class="products-table-scroll-inner">
+            <cdk-virtual-scroll-viewport itemSize="52" class="products-table-viewport" [style.height.px]="getViewportHeight()">
+              <table class="table products-table">
+                <thead>
+                  <tr>
+                    <th class="select-col" *ngIf="hasConvertibleItems()">Select</th>
+                    <th class="product-name-col">Product Name</th>
+                    <th>Quantity</th>
+                    <th>Get Quantity</th>
+                    <th class="rate-col">Rate</th>
+                    <th>Price</th>
+                    <th>Tax Amount</th>
+                    <th>Remarks</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product">
+                <td class="select-col" *ngIf="hasConvertibleItems()">
+                  <div *ngIf="isConvertibleItem(i)">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isSelected(i)" 
+                      (change)="toggleSelection(i, $event)"
+                      [attr.aria-label]="'Select item ' + (i + 1) + ' for purchase conversion'"
+                      title="Select for purchase conversion">
+                  </div>
+                </td>
+                <td class="product-name-col">
+                  <div class="form-field-container">
+                    <div class="select-group">
+                      <app-searchable-select
+                        [focusWidthPx]="600"
+                        formControlName="productId"
+                        [options]="products"
+                        labelKey="name"
+                        valueKey="id"
+                        [placeholder]="'Select Product'"
+                        [searchPlaceholder]="'Search products...'"
+                        [virtualScroll]="true"
+                        [initialDisplayLimit]="50"
+                        [maxHeight]="'320px'"
+                        [class.is-invalid]="isProductFieldInvalid(i, 'productId')"
+                        [disabled]="hasItemPurchaseLink(i)"
+                        [searchMode]="'jump'"
+                      ></app-searchable-select>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-primary refresh" 
+                        (click)="refreshProducts()"
+                        [disabled]="isLoadingProducts" 
+                        title="Refresh Products"
+                        (touchstart)="$event.stopPropagation()"
+                      >
+                        <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+                      </button>
+                    </div>
+                    <div class="invalid-feedback" *ngIf="isProductFieldInvalid(i, 'productId')">
+                      Please select a product
+                    </div>
+                    <!-- <div class="mt-1" *ngIf="isEdit && getItemPurchaseIds(i).length > 0">
+                      <small class="text-muted">Purchases:</small>
+                      <span class="badge bg-light text-dark ms-1" *ngFor="let pid of getItemPurchaseIds(i)">#{{ pid }}</span>
+                    </div> -->
+                    <!-- <div class="mt-1" *ngIf="isEdit && getItemPurchaseItemIds(i).length > 0">
+                      <small class="text-muted">Purchase items:</small>
+                      <span class="badge bg-light text-dark ms-1" *ngFor="let piid of getItemPurchaseItemIds(i)">#{{ piid }}</span>
+                    </div> -->
+                  </div>
+                </td>
+                <td>
+                  <div class="form-field-container">
+                    <input 
+                      type="number" 
+                      formControlName="quantity" 
+                      class="form-control"
+                      [class.is-invalid]="isProductFieldInvalid(i, 'quantity')"
+                      placeholder="Qty"
+                      min="1"
+                      [readonly]="hasItemPurchaseLink(i)"
+                    >
+                    <div class="invalid-feedback" *ngIf="isProductFieldInvalid(i, 'quantity')">
+                      Quantity must be 1 or greater
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-field-container">
+                    <input 
+                      type="number" 
+                      formControlName="getQuantity" 
+                      class="form-control"
+                      [class.is-invalid]="isProductFieldInvalid(i, 'getQuantity')"
+                      placeholder="Get Qty"
+                      min="0"
+                      step="1"
+                      (focus)="onGetQuantityFocus(i)"
+                      (change)="onGetQuantityChange(i, $event)"
+                      [readonly]="false"
+                    >
+                    <div class="invalid-feedback" *ngIf="productsFormArray.at(i).get('getQuantity')?.errors?.['min']">
+                      Get Quantity must be 0 or greater
+                    </div>
+                  </div>
+                </td>
+                <td class="rate-col">
+                  <div class="form-field-container">
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        formControlName="unitPrice" 
+                        class="form-control"
+                        [class.is-invalid]="isProductFieldInvalid(i, 'unitPrice')"
+                        placeholder="Price"
+                        min="0.01"
+                        step="0.01"
+                        [readonly]="hasItemPurchaseLink(i)"
+                      >
+                    </div>
+                    <div class="invalid-feedback" *ngIf="isProductFieldInvalid(i, 'unitPrice')">
+                      Unit price must be greater than 0
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="price" 
+                      class="form-control"
+                      readonly
+                      [value]="getFormattedPrice(i)"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="taxAmount" 
+                      class="form-control"
+                      readonly
+                      [value]="getFormattedTaxAmount(i)"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="form-field-container">
+                    <input 
+                      type="text" 
+                      formControlName="remarks" 
+                      class="form-control"
+                      (keydown)="onRemarksKeydown($event, i)"
+                      placeholder="Remarks"
+                      [readonly]="hasItemPurchaseLink(i)"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-danger" 
+                    (click)="removeProduct(i)"
+                    [disabled]="productsFormArray.length === 1 || hasItemPurchaseLink(i)"
+                    title="Remove Product"
+                    (touchstart)="$event.stopPropagation()"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+                  </tr>
+                </tbody>
+              </table>
+            </cdk-virtual-scroll-viewport>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-primary" (click)="addProduct()" (touchstart)="$event.stopPropagation()">
+          <i class="fas fa-plus"></i> Add Product
+        </button>
+      </section>
+
+      <!-- Purchase Order Summary -->
+      <section class="purchase-summary" aria-label="Purchase Order Summary">
+        <div class="summary-item">
+          <span>Total Products:</span>
+          <strong>{{ productsFormArray.length }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Total Price:</span>
+          <strong>₹{{ totalAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Total Tax Amount:</span>
+          <strong>₹{{ totalTaxAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Packaging & Forwarding Charges:</span>
+          <strong>₹{{ (purchaseOrderForm.get('packagingAndForwadingCharges')?.value || 0) | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item total">
+          <span>Grand Total:</span>
+          <strong>₹{{ grandTotal | number:'1.2-2' }}</strong>
+        </div>
+      </section>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button
+          type="button" 
+          class="btn btn-sm btn-secondary"
+          (click)="resetForm()"
+          [disabled]="loading"
+        >
+          <i class="fas fa-undo"></i> Reset
+        </button>
+        <button
+          type="submit" 
+          class="btn btn-sm btn-primary"
+          [disabled]="purchaseOrderForm.invalid || loading"
+        >
+          <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ loading ? 'Saving...' : 'Save Purchase Order' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-loader *ngIf="loading"></app-loader>
+
+<app-packaging-charges-modal
+  [show]="showPackagingChargesModal"
+  [defaultCharges]="purchaseOrderForm.get('packagingAndForwadingCharges')?.value || 0"
+  [requireInvoiceNumber]="true"
+  [orderId]="purchaseOrderForm.get('id')?.value"
+  [openedFromPurchaseOrder]="true"
+  [customerId]="purchaseOrderForm.get('customerId')?.value"
+  (confirm)="onPackagingChargesConfirm($event)"
+  (cancel)="onPackagingChargesCancel()"
+></app-packaging-charges-modal>

@@ -1,0 +1,69 @@
+// Primary Colors - Deep navy-teal
+$primary: #003a58;       // Deep navy-teal
+$primary-light: #2a5f79; // Harmonized lighter shade
+$primary-lighter: #4f7f94; // Even lighter shade
+$primary-lightest: #a6c0cd; // Soft pastel for backgrounds
+$primary-dark: #00263a;  // Darker shade for emphasis
+
+// Secondary Colors - Vibrant teal accent
+$secondary: #00999c;      // Vibrant teal accent
+$secondary-light: #26b3b5; // Harmonized lighter teal
+$secondary-lighter: #6bcfd1; // Even lighter teal
+$secondary-lightest: #b9ebec; // Soft UI fills
+$secondary-dark: #007275;  // Darker teal for contrast
+
+// Neutral Colors - Cool, professional grays tuned for the theme
+$neutral-dark: #3b4248;
+$neutral-medium: #8a949c;
+$neutral-light: #b3bcc2;
+$neutral-lighter: #d7dee2;
+$neutral-lightest: #f4f7f9;
+
+// Additional Professional Colors
+$accent: #264b55;       // Deep teal-gray for headings/links
+$success: #1e9e68;      // Accessible success
+$warning: #c98200;      // Refined amber
+$error: #c23b3b;        // Refined error
+$info: #2aa6c2;         // Info complementary to secondary
+
+// Legacy/Backward Compatibility Variables
+$background: $neutral-lightest;   // Light background
+$text-primary: $neutral-dark;     // Primary text
+$text-secondary: $neutral-medium; // Secondary text
+$supporting: $neutral-light;      // Supporting elements
+
+:root {
+  // Primary Colors
+  --primary: #{$primary};
+  --primary-light: #{$primary-light};
+  --primary-lighter: #{$primary-lighter};
+  --primary-lightest: #{$primary-lightest};
+  --primary-dark: #{$primary-dark};
+  
+  // Secondary Colors
+  --secondary: #{$secondary};
+  --secondary-light: #{$secondary-light};
+  --secondary-lighter: #{$secondary-lighter};
+  --secondary-lightest: #{$secondary-lightest};
+  --secondary-dark: #{$secondary-dark};
+  
+  // Neutral Colors
+  --neutral-dark: #{$neutral-dark};
+  --neutral-medium: #{$neutral-medium};
+  --neutral-light: #{$neutral-light};
+  --neutral-lighter: #{$neutral-lighter};
+  --neutral-lightest: #{$neutral-lightest};
+  
+  // Additional Professional Colors
+  --accent: #{$accent};
+  --success: #{$success};
+  --warning: #{$warning};
+  --error: #{$error};
+  --info: #{$info};
+  
+  // Legacy/Backward Compatibility
+  --background: #{$background};
+  --text-primary: #{$text-primary};
+  --text-secondary: #{$text-secondary};
+  --supporting: #{$supporting};
+} 

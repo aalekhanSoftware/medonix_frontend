@@ -1,0 +1,184 @@
+<div class="batch-stock-container">
+  <app-loader [show]="isLoading"></app-loader>
+  
+  <section class="search-section card" aria-labelledby="search-batch-stock-heading">
+    <h1 id="search-batch-stock-heading">
+      <i class="fas fa-boxes"></i> Product Batch Stock Management
+    </h1>
+    <p class="section-description">
+      Manage batch-wise product stock inventory with comprehensive filtering and search capabilities.
+    </p>
+    
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" role="search" aria-label="Batch stock search form">
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="batch-search" class="sr-only">Search batch stock</label>
+          <input 
+            id="batch-search"
+            type="text" 
+            formControlName="search" 
+            class="form-control" 
+            placeholder="Search by batch name or product name..."
+            aria-label="Search batch stock"
+            (touchstart)="$event.stopPropagation()">
+        </div>
+        
+        <div class="form-group">
+          <label for="product-filter" class="sr-only">Filter by product</label>
+          <div class="product-select-group">
+            <app-searchable-select
+              id="product-filter"
+              formControlName="productId"
+              [options]="products"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Products', value: '' }"
+              [placeholder]="'Filter by Product'"
+              [searchPlaceholder]="'Search products...'"
+              [class.is-invalid]="false"
+            ></app-searchable-select>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-primary refresh"
+              (click)="refreshProducts()" 
+              [disabled]="isLoadingProducts"
+              title="Refresh Products"
+              (touchstart)="$event.stopPropagation()"
+              aria-label="Refresh products list"
+            >
+              <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button 
+            type="submit" 
+            class="search-btn btn btn-sm btn-primary"
+            (touchstart)="$event.stopPropagation()"
+            aria-label="Search batch stock"
+          >
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button 
+            type="button" 
+            class="search-btn btn btn-sm btn-secondary" 
+            (click)="resetForm()"
+            (touchstart)="$event.stopPropagation()"
+            aria-label="Reset search filters"
+          >
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button 
+            *ngIf="canManageStock" 
+            type="button" 
+            class="search-btn btn btn-sm btn-success" 
+            (click)="addBatchStock()"
+            (touchstart)="$event.stopPropagation()"
+            aria-label="Add new batch stock"
+          >
+            <i class="fas fa-plus"></i> Add Batch Stock
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="batch-stock-list card" aria-labelledby="batch-stock-heading">
+    <h2 id="batch-stock-heading">
+      <i class="fas fa-list"></i> Batch Stock Inventory
+    </h2>
+    <p class="results-info" *ngIf="totalElements > 0">
+      Showing <strong>{{ startIndex + 1 }}</strong> to <strong>{{ endIndex }}</strong> of <strong>{{ totalElements }}</strong> batch stock entries
+    </p>
+    <p class="no-results" *ngIf="totalElements === 0 && !isLoading">
+      No batch stock entries found. <span *ngIf="canManageStock">Click "Add Batch Stock" to create a new entry.</span>
+    </p>
+
+    <div class="table-responsive" *ngIf="totalElements > 0">
+      <table class="table" role="table" aria-label="Batch stock inventory list">
+        <thead>
+          <tr>
+            <th scope="col" (click)="onSort('id')" class="sortable">
+              <span>No</span>
+              <i class="fas" [ngClass]="getSortIcon('id')" aria-hidden="true"></i>
+            </th>
+            <th scope="col" (click)="onSort('batchName')" class="sortable">
+              <span>Batch Name</span>
+              <i class="fas" [ngClass]="getSortIcon('batchName')" aria-hidden="true"></i>
+            </th>
+            <th scope="col" (click)="onSort('productId')" class="sortable">
+              <span>Product Name</span>
+              <i class="fas" [ngClass]="getSortIcon('productId')" aria-hidden="true"></i>
+            </th>
+            <th scope="col" (click)="onSort('remainingQuantity')" class="sortable">
+              <span>Remaining Quantity</span>
+              <i class="fas" [ngClass]="getSortIcon('remainingQuantity')" aria-hidden="true"></i>
+            </th>
+            <th scope="col" (click)="onSort('blockedQuantity')" class="sortable">
+              <span>Blocked Quantity</span>
+              <i class="fas" [ngClass]="getSortIcon('blockedQuantity')" aria-hidden="true"></i>
+            </th>
+            <th scope="col" (click)="onSort('totalRemainingQuantity')" class="sortable">
+              <span>Total Quantity</span>
+              <i class="fas" [ngClass]="getSortIcon('totalRemainingQuantity')" aria-hidden="true"></i>
+            </th>
+            <th scope="col" *ngIf="canManageStock">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let batchStock of batchStocks; let index = index" role="row">
+            <td data-label="No">
+              <strong>{{ startIndex + index + 1 }}</strong>
+            </td>
+            <td data-label="Batch Name">
+              <strong>{{ batchStock.batchName }}</strong>
+            </td>
+            <td data-label="Product Name">
+              {{ batchStock.productName || getProductName(batchStock.productId) }}
+            </td>
+            <td data-label="Remaining Quantity">
+              <span class="quantity-badge remaining">{{ formatNumber(batchStock.remainingQuantity) }}</span>
+            </td>
+            <td data-label="Blocked Quantity">
+              <span class="quantity-badge blocked">{{ formatNumber(batchStock.blockedQuantity) }}</span>
+            </td>
+            <td data-label="Total Quantity">
+              <strong class="quantity-badge total">{{ formatNumber(batchStock.totalRemainingQuantity) }}</strong>
+            </td>
+            <td class="actions" data-label="Actions" *ngIf="canManageStock">
+              <button 
+                class="btn-icon edit" 
+                (click)="editBatchStock(batchStock.id!)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Edit batch stock entry"
+                title="Edit"
+              >
+                <i class="fas fa-edit" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon delete" 
+                (click)="deleteBatchStock(batchStock.id!)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Delete batch stock entry"
+                title="Delete"
+              >
+                <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </section>
+</div>

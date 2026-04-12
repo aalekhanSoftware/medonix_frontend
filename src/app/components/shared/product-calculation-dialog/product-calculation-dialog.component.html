@@ -1,0 +1,154 @@
+<div class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-calculator"></i>
+        Product Calculation - <span [innerHTML]="product.name"></span>
+      </h3>
+      <!-- <button class="close-button" (click)="closeDialog()">
+        <i class="fas fa-times"></i>
+      </button> -->
+    </div>
+
+    <div class="modal-content">
+      <!-- Add calculation base dropdown before the table -->
+      <div class="calculation-base-section mb-3" *ngIf="product.type !== 'POLY_CARBONATE'">
+        <label class="form-label">Calculation Base:</label>
+        <select class="form-select" [(ngModel)]="calculationBase" [ngModelOptions]="{standalone: true}">
+          <option *ngFor="let option of calculationBaseOptions" [value]="option.value" [disabled]="option.value === 'N' && !canSelectNOS">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <form [formGroup]="calculationForm">
+        <div class="calculation-table">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ calculationType === 'MM' ? 'Size in MM' : 'Feet' }}</th>
+                <th *ngIf="calculationType !== 'MM'">Inch</th>
+                <th>{{ calculationType === 'MM' ? 'Size in R.Feet' : 'Nos' }}</th>
+                <th>{{ calculationType === 'MM' ? 'Nos' : 'Running Feet' }}</th>
+                <th>{{ calculationType === 'MM' ? 'R.' : 'Sq.' }}Feet</th>
+                <!-- <th>Sq. Meter</th> -->
+                <th *ngIf="product.type !== 'POLY_CARBONATE'">Weight</th>
+                <th *ngIf="product.type === 'POLY_CARBONATE' && calculationType === 'MM'">Sq. Feet</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="calculations">
+              <tr *ngFor="let row of calculationsArray.controls; let i = index" [formGroupName]="i">
+                <td class="table-col">
+                  <ng-container *ngIf="calculationType === 'SQ_FEET'">
+                    <input type="number" formControlName="feet" class="form-control" min="0">
+                    <div *ngIf="row.get('feet')?.invalid && row.get('feet')?.touched" class="error">
+                      <span *ngIf="row.get('feet')?.errors?.['required']" class="ps-3">Feet is required.</span>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="calculationType === 'MM'">
+                    <input type="number" formControlName="mm" class="form-control" min="0">
+                    <div *ngIf="row.get('mm')?.invalid && row.get('mm')?.touched" class="error">
+                      <span *ngIf="row.get('mm')?.errors?.['required']" class="ps-3">MM is required.</span>
+                    </div>
+                  </ng-container>
+                </td>
+                <td class="table-col" *ngIf="calculationType === 'SQ_FEET'">
+                  <input type="number" formControlName="inch" class="form-control" min="0">
+                  <div *ngIf="row.get('inch')?.invalid && row.get('inch')?.touched" class="error">
+                    <span *ngIf="row.get('inch')?.errors?.['required']" class="ps-3">Inch is required.</span>
+                  </div>
+                  <div *ngIf="row.errors?.['bothZero'] && (row.get('feet')?.touched || row.get('inch')?.touched)" class="error">
+                    <span class="ps-3">Either feet or inch must be greater than 0.</span>
+                  </div>
+                </td>
+                <td class="table-col">
+                  <ng-container *ngIf="calculationType === 'SQ_FEET'">
+                    <input type="number" formControlName="nos" class="form-control" min="1">
+                    <div *ngIf="row.get('nos')?.invalid && row.get('nos')?.touched" class="error">
+                      <span *ngIf="row.get('nos')?.errors?.['required']" class="ps-3">NOS is required.</span>
+                      <span *ngIf="row.get('nos')?.errors?.['min']">Value must be greater than 0.</span>
+                    </div>
+                  </ng-container>
+                  <ng-container *ngIf="calculationType === 'MM'">
+                    <input type="number" [value]="row.get('size_in_rfeet')?.value" formControlName="size_in_rfeet" class="form-control" readonly>
+                  </ng-container>
+                </td>
+                <td class="table-col">
+                  <ng-container *ngIf="calculationType === 'SQ_FEET'">
+                    <input type="number" formControlName="runningFeet" class="form-control" readonly>
+                  </ng-container>
+                  <ng-container *ngIf="calculationType === 'MM'">
+                    <input type="number" formControlName="nos" class="form-control">
+                  </ng-container>
+                </td>
+                <td class="table-col">
+                  <ng-container *ngIf="calculationType === 'SQ_FEET'">
+                    <input type="number" formControlName="sqFeet" class="form-control" readonly>
+                  </ng-container>
+                  <ng-container *ngIf="calculationType === 'MM'">
+                    <input type="number" formControlName="runningFeet" class="form-control" readonly>
+                  </ng-container>
+                </td>
+                <!-- <td class="table-col">
+                  <ng-container *ngIf="calculationType === 'SQ_FEET'">
+                    <input type="number" formControlName="meter" class="form-control" readonly>
+                  </ng-container>
+                  <ng-container *ngIf="calculationType === 'MM'">
+                    <input type="number" formControlName="meter" class="form-control" readonly>
+                  </ng-container>
+                </td> -->
+                <td class="table-col" *ngIf="product.type !== 'POLY_CARBONATE'">
+                  <input type="number" [value]="row.get('weight')?.value " formControlName="weight" class="form-control" readonly>
+                </td>
+                <td class="table-col" *ngIf="product.type.toUpperCase() == 'POLY_CARBONATE' && calculationType === 'MM'">
+                  <input type="number" [value]="row.get('sqFeet')?.value | number:'1.3-3'" formControlName="sqFeet" class="form-control" readonly>
+                </td>
+                <td class="pt-0">
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-danger delete-btn" 
+                    (click)="removeRow(i)"
+                    [disabled]="calculationsArray.length === 1"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="bottom-border">
+              <tr>
+                <td>{{ calculationType !== 'MM' ? sqftTotals.totalFeet : mmTotals.totalSizeInMM }}</td>
+                <td *ngIf="calculationType !== 'MM'">{{ sqftTotals.totalInch }}</td>
+                <td>{{ calculationType !== 'MM' ? sqftTotals.totalNos : mmTotals.totalSizeInRunningFeet }}</td>
+                <td>{{ calculationType !== 'MM' ? (sqftTotals.totalRunningFeet ? (sqftTotals.totalRunningFeet | number:'1.3-3') : '0') : mmTotals.totalNos || '0' }}</td>
+                <td>{{ calculationType !== 'MM' ? (sqftTotals.totalSqFeet ? (sqftTotals.totalSqFeet | number:'1.3-3') : '0') : mmTotals.totalRunningFeet || '0' }}</td>
+                <!-- <td>{{ calculationType === 'MM' ? 
+                  (mmTotals.totalMeter | number:'1.3-3') : 
+                  (sqftTotals.totalMeter | number:'1.3-3') }}</td> -->
+                <td *ngIf="product.type !== 'POLY_CARBONATE'">{{ calculationType !== 'MM' ? (sqftTotals.totalWeight | number:'1.3-3') : (mmTotals.totalWeight | number:'1.3-3') }}</td>
+                <td *ngIf="product.type.toUpperCase() == 'POLY_CARBONATE' && calculationType === 'MM'">{{ calculationType !== 'MM' ? (sqftTotals.totalSqFeet | number:'1.3-3') : (mmTotals.totalSqFeet | number:'1.3-3') }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="dialog-actions">
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="closeDialog()">
+              Cancel
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary me-2" (click)="addRow()">
+              <i class="fas fa-plus"></i> Add <U>R</U>ow
+            </button>
+            <button type="button" class="btn btn-sm btn-primary" [disabled]="isFormArrayInvalid()" (click)="onSave()">
+              <i class="fas fa-save"></i> Save Calculation
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

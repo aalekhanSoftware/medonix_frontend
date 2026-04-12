@@ -1,0 +1,118 @@
+@mixin tableStyles {
+  .table-responsive {
+    overflow-x: auto;
+    margin: 0 -1px;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+
+      th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        background-color: var(--background);
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      td {
+        color: var(--text-secondary);
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+
+        .btn-icon {
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &.edit {
+            background-color: var(--primary-light);
+            color: var(--primary);
+
+            &:hover {
+              background-color: var(--primary);
+              color: white;
+            }
+          }
+
+          &.delete {
+            background-color: var(--danger-light);
+            color: var(--danger);
+
+            &:hover {
+              background-color: var(--danger);
+              color: white;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@mixin paginationStyles {
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+
+    .pagination-info {
+      color: var(--text-secondary);
+    }
+
+    .pagination {
+      display: flex;
+      gap: 5px;
+
+      .btn-page {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        background: white;
+        color: var(--text-secondary);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover:not(:disabled) {
+          border-color: var(--primary);
+          color: var(--primary);
+        }
+
+        &.active {
+          background: var(--primary);
+          border-color: var(--primary);
+          color: white;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+} 

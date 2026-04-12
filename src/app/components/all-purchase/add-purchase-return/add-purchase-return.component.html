@@ -1,0 +1,377 @@
+<div class="add-purchase-container">
+  <button class="btn btn-sm btn-secondary back-btn" routerLink="/purchase">
+    <i class="fas fa-arrow-left"></i> Back to Purchases
+  </button>
+
+  <div class="form-card">
+    <div class="card-header">
+      <div class="header-main">
+        <h2 class="form-title">
+          <i class="fas fa-undo-alt"></i> Purchase Return
+        </h2>
+
+        <div class="purchase-meta" *ngIf="purchaseDetails">
+          <div class="meta-item">
+            <span>Invoice</span>
+            <strong>{{ purchaseDetails.invoiceNumber }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>Purchase Date</span>
+            <strong>{{ purchaseDetails.purchaseDate | date:'dd-MM-yyyy' }}</strong>
+          </div>
+          <div class="meta-item">
+            <span>Customer</span>
+            <strong>{{ purchaseDetails.customerName }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!isLoading; else loadingTpl">
+      <div class="qc-content" *ngIf="purchaseDetails; else emptyPurchaseTpl">
+        <form [formGroup]="returnForm" (ngSubmit)="onSubmit()" class="purchase-form" novalidate>
+          <div class="header-section">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="purchaseReturnDate">
+                  <i class="fas fa-calendar"></i> Purchase Return Date
+                </label>
+                <input
+                  type="date"
+                  id="purchaseReturnDate"
+                  formControlName="purchaseReturnDate"
+                  class="form-control"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="invoiceNumber">
+                  <i class="fas fa-file-invoice"></i> Return Invoice Number
+                </label>
+                <input
+                  type="text"
+                  id="invoiceNumber"
+                  formControlName="invoiceNumber"
+                  class="form-control"
+                  placeholder="Enter return invoice number"
+                  readonly
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="packagingAndForwadingCharges">
+                  <i class="fas fa-box"></i> Packaging & Forwarding Charges <span class="required">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <input 
+                    type="number" 
+                    id="packagingAndForwadingCharges" 
+                    formControlName="packagingAndForwadingCharges" 
+                    class="form-control"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter packaging and forwarding charges"
+                    [class.is-invalid]="returnForm.get('packagingAndForwadingCharges')?.invalid && returnForm.get('packagingAndForwadingCharges')?.touched"
+                  >
+                </div>
+                <div class="invalid-feedback" *ngIf="returnForm.get('packagingAndForwadingCharges')?.invalid && returnForm.get('packagingAndForwadingCharges')?.touched">
+                  Packaging and forwarding charges is required and must be 0 or greater
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="products-section" formArrayName="items" *ngIf="itemsFormArray.length > 0; else noItemsTpl">
+            <div class="table-responsive">
+              <div class="products-table-scroll-inner">
+                <cdk-virtual-scroll-viewport itemSize="52" class="products-table-viewport" [style.height.px]="getViewportHeight()">
+                  <table class="table products-table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Batch Number</th>
+                        <th>QC Pass</th>
+                        <th>Unit Price (₹)</th>
+                        <th>Subtotal</th>
+                        <th>Discount Type</th>
+                        <th>Discount %</th>
+                        <th>Discount Amount</th>
+                        <th>After Discount</th>
+                        <th>Tax Amount</th>
+                        <th>Purchase Return Quantity</th>
+                        <th>Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *cdkVirtualFor="let group of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="group">
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                      <div class="product-cell">
+                        <div class="product-name">
+                          {{ group.get('productName')?.value || 'N/A' }}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="quantity">{{ group.get('quantity')?.value }}</span>
+                    </td>
+                    <td>
+                      <div class="form-field-container batch-autocomplete-container" style="position: relative;">
+                        <input 
+                          type="text" 
+                          formControlName="batchNumber" 
+                          class="form-control"
+                          placeholder="Batch Number"
+                          autocomplete="off"
+                          (focus)="onBatchFocus(i)"
+                          (input)="onBatchInput(i, $event)"
+                          (blur)="onBatchBlur(i)"
+                        >
+                        <div 
+                          class="batch-dropdown" 
+                          *ngIf="activeBatchDropdownIndex === i && filteredBatchNumbers.length > 0"
+                          (mousedown)="$event.preventDefault()"
+                        >
+                          <div 
+                            class="batch-option" 
+                            *ngFor="let batch of filteredBatchNumbers" 
+                            (click)="selectBatch(i, batch)"
+                          >
+                            {{ batch }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="quantity">{{ group.get('qcPass')?.value ?? 0 }}</span>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <div class="input-group">
+                          <!-- <span class="input-group-text">₹</span> -->
+                          <input
+                            type="number"
+                            class="form-control"
+                            formControlName="unitPrice"
+                            readonly
+                            min="0"
+                            step="0.01"
+                            placeholder="0"
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-group">
+                        <input
+                          type="number"
+                          class="form-control"
+                          formControlName="price"
+                          readonly
+                          [value]="getFormattedPrice(i)"
+                          title="Subtotal (before discount)"
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <div class="discount-type-selector">
+                          <div class="form-check form-check-inline">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              formControlName="discountType"
+                              [value]="'percentage'"
+                              [id]="'discountTypePercentage' + i"
+                              (change)="onDiscountTypeChange(i)"
+                            >
+                            <label class="form-check-label" [for]="'discountTypePercentage' + i">%</label>
+                          </div>
+                          <div class="form-check form-check-inline">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              formControlName="discountType"
+                              [value]="'amount'"
+                              [id]="'discountTypeAmount' + i"
+                              (change)="onDiscountTypeChange(i)"
+                            >
+                            <label class="form-check-label" [for]="'discountTypeAmount' + i">₹</label>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <div class="input-group" *ngIf="itemsFormArray.at(i).get('discountType')?.value === 'percentage'">
+                          <!-- <span class="input-group-text">%</span> -->
+                          <input
+                            type="number"
+                            formControlName="discountPercentage"
+                            class="form-control"
+                            placeholder="0.00"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                          >
+                        </div>
+                        <div class="input-group" *ngIf="itemsFormArray.at(i).get('discountType')?.value !== 'percentage'">
+                          <span class="form-control" style="background-color: #f8f9fa; color: #6c757d;">-</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <div class="input-group" *ngIf="itemsFormArray.at(i).get('discountType')?.value === 'amount'">
+                          <!-- <span class="input-group-text">₹</span> -->
+                          <input
+                            type="number"
+                            formControlName="discountAmount"
+                            class="form-control"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                          >
+                        </div>
+                        <div class="input-group" *ngIf="itemsFormArray.at(i).get('discountType')?.value !== 'amount'">
+                          <span class="input-group-text">₹</span>
+                          <div
+                            class="form-control discount-amount-display"
+                            style="background-color: #e9ecef; cursor: default; display: flex; align-items: center;"
+                            title="Calculated from discount % (read-only)"
+                          >{{ getFormattedDiscountAmount(i) }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-group">
+                        <input
+                          type="number"
+                          formControlName="discountPrice"
+                          class="form-control discount-price-display"
+                          readonly
+                          [value]="getFormattedDiscountPrice(i)"
+                          title="Price after discount"
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-group">
+                        <input
+                          type="number"
+                          formControlName="taxAmount"
+                          class="form-control"
+                          readonly
+                          [value]="getFormattedTaxAmount(i)"
+                          title="Tax calculated on discounted price"
+                        >
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <input
+                          type="number"
+                          class="form-control"
+                          formControlName="returnQuantity"
+                          min="0"
+                          [max]="getMaxReturnQuantity(group)"
+                          step="0.01"
+                          inputmode="decimal"
+                          [disabled]="getMaxReturnQuantity(group) <= 0"
+                        >
+                        <div class="invalid-feedback" *ngIf="isReturnQuantityInvalid(i)">
+                          Return quantity must be between 0 and {{ getMaxReturnQuantity(group) }}
+                        </div>
+                        <div class="invalid-feedback" *ngIf="getMaxReturnQuantity(group) <= 0">
+                          Return not allowed: available return quantity is 0
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-field-container">
+                        <input
+                          type="text"
+                          class="form-control"
+                          formControlName="remarks"
+                          placeholder="Remarks"
+                        >
+                      </div>
+                    </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </cdk-virtual-scroll-viewport>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noItemsTpl>
+            <div class="empty-state">
+              <i class="fas fa-box-open"></i>
+              <p>No items found for this purchase.</p>
+            </div>
+          </ng-template>
+
+          <div class="purchase-summary">
+            <div class="summary-item">
+              <span>Total Return Quantity</span>
+              <strong>{{ getTotalReturnQuantity() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Subtotal:</span>
+              <strong>₹{{ getTotalAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="summary-item" *ngIf="getTotalDiscountAmount() > 0">
+              <span>Total Discount:</span>
+              <strong class="discount-amount">-₹{{ getTotalDiscountAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Tax Amount:</span>
+              <strong>₹{{ getTotalTaxAmount() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Total After Discount &amp; Tax:</span>
+              <strong>₹{{ getTotalFinalPrice() | number:'1.2-2' }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Packaging &amp; Forwarding Charges:</span>
+              <strong>₹{{ (returnForm.get('packagingAndForwadingCharges')?.value || 0) | number:'1.2-2' }}</strong>
+            </div>
+            <div class="summary-item total">
+              <span>Grand Total:</span>
+              <strong>₹{{ getGrandTotal() | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn btn-sm btn-primary"
+              [disabled]="returnForm.invalid || isSaving"
+            >
+              <i class="fas" [ngClass]="isSaving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+              {{ isSaving ? 'Saving...' : 'Save Purchase Return' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Loading purchase details...</span>
+  </div>
+</ng-template>
+
+<ng-template #emptyPurchaseTpl>
+  <div class="empty-state">
+    <i class="fas fa-file-invoice"></i>
+    <p>Purchase details not available.</p>
+  </div>
+</ng-template>

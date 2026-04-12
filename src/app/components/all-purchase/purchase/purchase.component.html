@@ -1,0 +1,173 @@
+<div class="purchase-container">
+  <app-loader [show]="isLoading"></app-loader>
+
+  <section class="search-section card" aria-labelledby="search-purchases-heading">
+    <h2 id="search-purchases-heading">Search Purchases</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" role="search" aria-label="Purchase search form">
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="invoice-search" class="sr-only">Search by invoice number</label>
+          <input 
+            id="invoice-search"
+            type="text" 
+            formControlName="search" 
+            class="form-control" 
+            placeholder="Search by invoice number..."
+            aria-label="Search by invoice number">
+          <label for="batch-search" class="sr-only">Search by batch number</label>
+          <input 
+            id="batch-search"
+            type="text" 
+            formControlName="batchNumber" 
+            class="form-control" 
+            placeholder="Search by Batch Number..."
+            aria-label="Search by batch number">
+        </div>
+        <div class="form-group" *ngIf="canManagePurchases">
+          <div class="product-select-group">
+            <app-searchable-select formControlName="customerId" [options]="customers" labelKey="name" valueKey="id"
+              [defaultOption]="{ label: 'All Customers', value: '' }"
+              [searchPlaceholder]="'Search customers...'"></app-searchable-select>
+            <button type="button" class="btn btn-sm btn-primary refresh" style="margin-top: 3px;"
+              (click)="refreshCustomers()" [disabled]="isLoadingCustomers" title="Refresh Customers">
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="start-date" class="sr-only">Start date</label>
+          <input 
+            id="start-date"
+            type="date" 
+            formControlName="startDate" 
+            class="form-control" 
+            placeholder="Start Date"
+            aria-label="Start date"
+            (touchstart)="$event.stopPropagation()">
+        </div>
+        <div class="form-group">
+          <label for="end-date" class="sr-only">End date</label>
+          <input 
+            id="end-date"
+            type="date" 
+            formControlName="endDate" 
+            class="form-control" 
+            placeholder="End Date"
+            aria-label="End date"
+            (touchstart)="$event.stopPropagation()">
+        </div>
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button 
+            *ngIf="canManagePurchases" 
+            type="button" 
+            class="search-btn btn btn-sm btn-success export-btn" 
+            (click)="exportExcel()"
+            [disabled]="isExportButtonDisabled()"
+            title="Export purchases to Excel">
+            <i class="fas fa-file-excel"></i> Export
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+  <div class="action-header" *ngIf="canManagePurchases">
+    <button 
+      (click)="clearLocalStorage()" 
+      class="btn btn-sm btn-primary mb-2"
+      aria-label="Add new purchase">
+      <i class="fas fa-plus" aria-hidden="true"></i> Add Purchase
+    </button>
+  </div>
+  <section class="purchases-list card" aria-labelledby="purchases-heading">
+    <h2 id="purchases-heading">Purchases</h2>
+
+    <div class="table-responsive">
+      <table class="table" role="table" aria-label="Purchases list">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Invoice No.</th>
+            <th scope="col">Customer Name</th>
+            <th scope="col">Purchase Date</th>
+            <th scope="col">Total Purchase Amount</th>
+            <th scope="col">QC Status</th>
+            <th scope="col" *ngIf="canManagePurchases">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let purchase of purchases; let index = index" role="row">
+            <td data-label="No">{{ startIndex + index + 1 }}</td>
+            <td data-label="Invoice No."><strong>{{ purchase.invoiceNumber }}</strong></td>
+            <td data-label="Customer Name">{{ purchase.customerName }}</td>
+            <td data-label="Purchase Date">{{ purchase.purchaseDate | date:'dd-MM-yyyy' }}</td>
+            <td data-label="Total Purchase Amount"><strong>{{ purchase.totalPurchaseAmount ?? 0 }}</strong></td>
+            <td data-label="QC Status">
+              <span class="status-chip" 
+                    [class.pass]="purchase.isQcPass" 
+                    [class.pending]="!purchase.isQcPass"
+                    [attr.aria-label]="purchase.isQcPass ? 'QC Pass' : 'QC Pending'">
+                {{ purchase.isQcPass ? 'Pass' : 'Pending' }}
+              </span>
+            </td>
+            <td class="actions" data-label="Actions" *ngIf="canManagePurchases">
+              <button 
+                class="btn-icon edit" 
+                (click)="editPurchase(purchase.id!)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="View purchase details">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon pdf"
+                (click)="generatePdf(purchase.id!, purchase.invoiceNumber)" 
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Export purchase as PDF">
+                <i class="fas fa-file-pdf" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon add-return" 
+                (click)="openReturn(purchase.id!)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Add purchase return">
+                <i class="fas fa-undo" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon qc" 
+                (click)="openQc(purchase.id!)" 
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Purchase quality check">
+                <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+              </button>
+              <button 
+                class="btn-icon delete" 
+                (click)="deletePurchase(purchase.id!)"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Delete purchase">
+                <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination 
+      *ngIf="totalPages > 0" 
+      [currentPage]="currentPage" 
+      [pageSize]="pageSize"
+      [totalElements]="totalElements" 
+      [pageSizeOptions]="pageSizeOptions" 
+      [totalAmountSum]="totalPurchaseAmountSum"
+      [totalAmountLabel]="'Total Purchase Amount'"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"></app-pagination>
+  </section>
+</div>
+
+<app-sale-modal *ngIf="selectedPurchase" [purchase]="selectedPurchase" (saleCreated)="loadPurchases()"></app-sale-modal>

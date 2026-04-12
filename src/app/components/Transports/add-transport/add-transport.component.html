@@ -1,0 +1,51 @@
+<div class="transport-master-form-container">
+  <div class="card">
+    <h2>{{ isEditMode ? 'Edit Transport' : 'Add Transport' }}</h2>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name <span class="req">*</span></label>
+          <input type="text" class="form-control" formControlName="name" placeholder="Transport name" />
+        </div>
+        <div class="form-group">
+          <label>Mobile</label>
+          <input type="text"
+                 class="form-control"
+                 [class.is-invalid]="isFieldInvalid('mobile')"
+                 [class.is-valid]="isFieldValid('mobile')"
+                 formControlName="mobile"
+                 placeholder="10-digit mobile" />
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('mobile')">
+            {{ getFieldError('mobile') }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>GST</label>
+          <input type="text" class="form-control" formControlName="gst" placeholder="GST number" />
+        </div>
+        <div class="form-group">  
+          <label>Status</label>
+          <select class="form-control" formControlName="status">
+            <option value="A">Active</option>
+            <option value="I">Inactive</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label>Remarks</label>
+          <textarea rows="3" class="form-control" formControlName="remarks" placeholder="Notes..."></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ isEditMode ? 'Update' : 'Save' }}
+        </button>
+        <a routerLink="/transport-master" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+  <app-loader [show]="isLoading"></app-loader>
+</div>
+
+

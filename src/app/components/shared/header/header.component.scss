@@ -1,0 +1,301 @@
+.header {
+  background-color: var(--secondary);
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 5px 1rem;
+
+    .nav-top {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+
+      .logo {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+
+        .logo-image {
+          max-height: 50px;
+          max-width: 300px;
+          object-fit: contain;
+          height: auto;
+          width: auto;
+        }
+      }
+
+      .mobile-menu-toggle {
+        display: none;
+      }
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+
+      .client-name {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+
+        .logo-image {
+          max-height: 40px;
+          max-width: 200px;
+          object-fit: contain;
+          height: auto;
+          width: auto;
+        }
+      }
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      align-items: center;
+
+      li {
+        position: relative;
+
+        &.dropdown {
+          > a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+
+            i {
+              font-size: 1rem;
+              &.fa-chevron-down {
+                font-size: 0.8rem;
+                transition: transform 0.3s;
+              }
+            }
+
+            &:hover, &.active {
+              background-color: var(--primary);
+            }
+          }
+
+          .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 200px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+
+            li a {
+              display: block;
+              padding: 0.75rem 1rem;
+              color: var(--text-primary);
+              text-decoration: none;
+              transition: all 0.3s ease;
+
+              &:hover, &.active {
+                background-color: var(--background);
+                color: var(--primary);
+              }
+            }
+
+            &.show {
+              opacity: 1;
+              visibility: visible;
+              transform: translateY(0);
+            }
+          }
+        }
+
+        > a {
+          color: white;
+          text-decoration: none;
+          padding: 0.75rem 1rem;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+
+          &:hover, &.active {
+            background-color: var(--primary);
+          }
+        }
+      }
+    }
+
+    .nav-actions {
+      .btn-logout {
+        background: transparent;
+        color: white;
+        border: 1px solid white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &:hover {
+          background: white;
+          color: var(--secondary);
+        }
+      }
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .nav-container {
+      padding: 0px auto;
+      .nav-links {
+        gap: 0.25rem;
+
+        li > a {
+          padding: 0.5rem;
+          font-size: 0.9rem;
+        }
+
+        .dropdown-menu {
+          min-width: 180px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .nav-container {
+      .nav-top {
+        display: block;
+        .mobile-menu-toggle {
+          display: block;
+          background: transparent;
+          border: none;
+          color: white;
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0.5rem;
+        }
+      }
+
+      .nav-content {
+        display: none;
+        position: fixed;
+        top: 64px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--secondary);
+        padding: 1rem;
+        overflow-y: auto;
+        transition: transform 0.3s ease;
+        transform: translateX(-100%);
+
+        &.show {
+          display: block;
+          transform: translateX(0);
+        }
+      }
+
+      .nav-links {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+
+        li {
+          width: 100%;
+
+          &.dropdown {
+            > a {
+              justify-content: space-between;
+              background-color: rgba(255, 255, 255, 0.1);
+              margin-bottom: 2px;
+
+              i.fa-chevron-down {
+                transform: rotate(0);
+                transition: transform 0.3s;
+              }
+
+              &.active i.fa-chevron-down {
+                transform: rotate(180deg);
+              }
+            }
+
+            .dropdown-menu {
+              position: static;
+              background: transparent;
+              box-shadow: none;
+              opacity: 1;
+              visibility: visible;
+              transform: none;
+              padding-left: 1rem;
+              display: none;
+
+              &.show {
+                display: block;
+              }
+
+              li a {
+                color: white;
+                padding: 0.75rem 1rem;
+                background-color: rgba(255, 255, 255, 0.05);
+                margin-bottom: 2px;
+
+                &:hover, &.active {
+                  background-color: var(--primary);
+                  color: white;
+                }
+              }
+            }
+          }
+
+          > a {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 2px;
+          }
+        }
+      }
+
+      .nav-actions {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+
+        .btn-logout {
+          width: 100%;
+          justify-content: center;
+          background-color: rgba(255, 255, 255, 0.1);
+
+          &:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+          }
+        }
+      }
+    }
+  }
+}

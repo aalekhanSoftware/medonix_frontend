@@ -1,0 +1,214 @@
+<div class="order-container">
+  <div class="header">
+    <h2>Quotation Orders</h2>
+  </div>
+
+  <div class="search-card">
+    <form [formGroup]="searchForm" (ngSubmit)="onSubmit()" class="search-form">
+      <!-- Removed Search field -->
+      
+      <div class="form-group">
+        <label>Item Status</label>
+        <div class="product-select-group">
+          <app-searchable-select
+            formControlName="quotationItemStatuses"
+            [options]="quotationItemStatusOptions"
+            labelKey="label"
+            valueKey="value"
+            [multiple]="true"
+            [defaultOption]="{ label: 'All Statuses', value: '' }"
+            [searchPlaceholder]="'Search statuses...'"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <!-- Removed Quotation ID field -->
+
+      <div class="form-group">
+        <label>Product</label>
+        <div class="product-select-group">
+          <app-searchable-select 
+            formControlName="productId" 
+            [options]="products" 
+            labelKey="name"
+            valueKey="id" 
+            [defaultOption]="{ label: 'All Products', value: '' }"
+            [searchPlaceholder]="'Search products...'"
+            [virtualScroll]="true"
+            [initialDisplayLimit]="50"
+          ></app-searchable-select>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary refresh" 
+            (click)="refreshProducts()"
+            [disabled]="isLoadingProducts" 
+            title="Refresh Products"
+          >
+            <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Quotation Status</label>
+        <div class="product-select-group">
+          <app-searchable-select
+            formControlName="quotationStatuses"
+            [options]="quotationStatusOptions"
+            labelKey="label"
+            valueKey="value"
+            [multiple]="true"
+            [defaultOption]="{ label: 'All Statuses', value: '' }"
+            [searchPlaceholder]="'Search statuses...'"
+          ></app-searchable-select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Customer</label>
+        <div class="product-select-group">
+          <app-searchable-select
+            formControlName="customerId"
+            [options]="customers"
+            labelKey="name"
+            valueKey="id"
+            [defaultOption]="{ label: 'All Customers', value: '' }"
+            [searchPlaceholder]="'Search customers...'"
+            [virtualScroll]="true"
+            [initialDisplayLimit]="100"
+          ></app-searchable-select>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary refresh"
+            style="margin-top: 3px;"
+            (click)="refreshCustomers()" 
+            [disabled]="isLoadingCustomers"
+            title="Refresh Customers"
+          >
+            <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="startDate">Start Date</label>
+        <input type="date" id="startDate" formControlName="startDate">
+      </div>
+
+      <div class="form-group">
+        <label for="endDate">End Date</label>
+        <input type="date" id="endDate" formControlName="endDate">
+      </div>
+    </form>
+
+    <div class="buttons">
+      <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
+      <button type="submit" class="btn btn-primary" (click)="onSubmit()" [disabled]="loading">
+        {{ loading ? 'Searching...' : 'Search' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="results-card">
+    <div class="table-container" *ngIf="!loading && quotationItems.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Customer</th>
+            <th></th>
+            <th>Contact</th>
+            <th>Remarks</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of quotationItems; let i = index">
+            <td [innerHTML]="sanitizeHtml(item.productName)"></td>
+            <!-- <td>{{ item.productName }}</td> -->
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.customerName }}</td>
+            <td>
+              <div *ngIf="item.contactNumber" style="display: flex; gap: 0.5rem;">
+                <button class="btn-icon whatsapp" title="Open WhatsApp" (click)="openWhatsApp(item.contactNumber)">
+                  <i class="fab fa-whatsapp"></i>
+                </button>
+                <button class="btn-icon call" title="Call" (click)="makeCall(item.contactNumber)">
+                  <i class="fas fa-phone"></i>
+                </button>
+              </div>
+            </td>
+            <td>{{ item.contactNumber }}</td>
+            <td>{{ item.itemRemarks }}</td>
+            <td>
+              <!-- Status badge always shown -->
+              <!-- <span class="status-badge" [ngClass]="'status-' + item.quotationItemStatus.toLowerCase()">
+                {{ getStatusLabel(item.quotationItemStatus) }}
+              </span> -->
+              <!-- Status dropdown for updating individual items (only for production items) -->
+              <select *ngIf="item.isProduction" 
+                class="status-dropdown" 
+                [value]="item.quotationItemStatus"
+                (change)="updateQuotationItemStatus(i, $any($event.target).value)"
+                [disabled]="!item.id">
+                <option value="O">Open</option>
+                <option value="IP">In Process</option>
+                <option value="C">Completed</option>
+                <option value="B">Billed</option>
+              </select>
+            </td>
+            <td class="action-cell">
+              <!-- <a class="edit-link" (click)="editQuotation(item.quotationId)">Edit Quotation</a> -->
+              <button 
+                  class="btn-icon edit" 
+                  (click)="editQuotation(item.quotationId!)"
+                  title="Edit quotation"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="loading" *ngIf="loading">
+      <p>Loading quotation orders...</p>
+    </div>
+
+    <div class="no-results" *ngIf="!loading && quotationItems.length === 0">
+      <p>No quotation orders found.</p>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && quotationItems.length > 0 && totalPages > 1">
+      <div class="page-info">
+        Showing {{ currentPage + 1 }} of {{ totalPages }} pages ({{ totalItems }} total items)
+      </div>
+      <div class="pagination-controls">
+        <button 
+          class="page-button" 
+          [disabled]="currentPage === 0"
+          (click)="onPageChange(currentPage - 1)">
+          Previous
+        </button>
+        
+        <button 
+          class="page-button" 
+          *ngFor="let page of getPageNumbers()" 
+          [class.active]="page === currentPage"
+          (click)="onPageChange(page)">
+          {{ page + 1 }}
+        </button>
+        
+        <button 
+          class="page-button" 
+          [disabled]="currentPage === totalPages - 1"
+          (click)="onPageChange(currentPage + 1)">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

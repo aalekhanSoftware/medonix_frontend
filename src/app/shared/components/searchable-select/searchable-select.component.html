@@ -1,0 +1,86 @@
+<div class="searchable-select" [class.active]="isOpen" #dropdown>
+  <div class="select-input">
+    <div 
+      class="search-input" 
+      contenteditable="true"
+      (input)="onSearch($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      (click)="onInputClick($event)"
+      (touchstart)="onInputClick($event)"
+      (keydown)="handleKeydown($event)"
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+      inputmode="search"
+      [style.width.px]="isOpen && focusWidthPx ? focusWidthPx : null"
+      role="combobox"
+      [attr.aria-expanded]="isOpen"
+      [attr.aria-haspopup]="true"
+      [attr.aria-label]="placeholder"
+      #searchInput
+    ></div>
+    <div class="icons-container">
+      <i 
+        *ngIf="allowClear && (selectedValue || (selectedValues && selectedValues.length > 0))" 
+        class="fas fa-times clear-icon" 
+        (click)="clearSelection($event)"
+        (touchstart)="clearSelection($event)"
+        role="button"
+        [attr.aria-label]="'Clear selection'"
+      ></i>
+      <i 
+        class="fas" 
+        [class.fa-chevron-down]="!isOpen" 
+        [class.fa-chevron-up]="isOpen"
+        (click)="toggleDropdown($event)"
+        (touchstart)="toggleDropdown($event)"
+        role="button"
+        [attr.aria-label]="isOpen ? 'Close dropdown' : 'Open dropdown'"
+      ></i>
+    </div>
+  </div>
+  
+  <div class="select-dropdown" *ngIf="isOpen" [style.max-height]="maxHeight"
+       (mousedown)="onDropdownPointerDown($event)"
+       role="listbox"
+       [attr.aria-label]="'Options list'">
+    <div class="options-container" 
+         [class.virtual-scroll]="virtualScroll && filteredOptions.length > adaptiveDisplayLimit" 
+         #optionsContainer
+         (scroll)="onOptionsContainerScroll($event)"
+         (touchcancel)="cancelPendingSelection()">
+      <!-- Virtual scroll spacer for items before visible range -->
+      <div *ngIf="virtualScroll && filteredOptions.length > adaptiveDisplayLimit && offsetY > 0" 
+           class="virtual-scroll-spacer" 
+           [style.height.px]="offsetY"></div>
+      
+      <!-- Only render visible items -->
+      <div 
+        class="option" 
+        *ngFor="let option of displayedOptions; let i = index; trackBy: trackByOptionId"
+        (click)="selectOption(option, $event)"
+        [class.selected]="isSelected(option)"
+        [class.highlighted]="(virtualScroll && filteredOptions.length > adaptiveDisplayLimit ? startIndex + i : i) === highlightedIndex"
+        role="option"
+        [attr.aria-selected]="isSelected(option)"
+      >
+        <div class="option-content">
+          <div class="checkbox" *ngIf="multiple">
+            <i class="fas fa-check" *ngIf="isSelected(option)"></i>
+          </div>
+          <span [innerHTML]="sanitizeHtml(option[labelKey])"></span>
+        </div>
+      </div>
+      
+      <!-- Virtual scroll spacer for items after visible range -->
+      <div *ngIf="virtualScroll && filteredOptions.length > adaptiveDisplayLimit" 
+           class="virtual-scroll-spacer" 
+           [style.height.px]="totalHeight - offsetY - (displayedOptions.length * virtualScrollItemHeight)"></div>
+      
+      <div class="no-results" *ngIf="searchMode === 'filter' && filteredOptions.length === 0">
+        No results found
+      </div>
+    </div>
+  </div>
+</div>

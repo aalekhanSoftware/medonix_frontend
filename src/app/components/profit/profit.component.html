@@ -1,0 +1,105 @@
+<div class="profit-container">
+    <app-loader [show]="isLoading"></app-loader>
+    
+    <div class="search-section card">
+        <h2>Search Profits</h2>
+        <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+            <div class="search-controls">
+                <div class="form-group">
+                    <input 
+                        type="text" 
+                        formControlName="search" 
+                        class="form-control" 
+                        placeholder="Search by invoice number..."
+                    >
+                </div>
+                <div class="form-group">
+                    <input 
+                        type="date" 
+                        formControlName="startDate" 
+                        class="form-control" 
+                        placeholder="Start Date"
+                    >
+                </div>
+                <div class="form-group">
+                    <input 
+                        type="date" 
+                        formControlName="endDate" 
+                        class="form-control" 
+                        placeholder="End Date"
+                    >
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <button type="button" class="btn btn-secondary" (click)="resetForm()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="profits-list card">
+        <h2>Profits</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product Name</th>
+                        <th>Sale Invoice</th>
+                        <th>Sale Amount</th>
+                        <th>Purchase Amount</th>
+                        <th>Other Expenses</th>
+                        <th>Gross Profit</th>
+                        <th>Net Profit</th>
+                        <th>Date</th>
+                        <!-- <th>Actions</th> -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let profit of profits?.content; let index = index">
+                        <td>{{startIndex + index + 1}}</td>
+                        <td>{{profit.productName}}</td>
+                        <td>{{profit.saleInvoice}}</td>
+                        <td>{{profit.saleAmount}}</td>
+                        <td>{{profit.purchaseAmount}}</td>
+                        <td>{{profit.otherExpenses}}</td>
+                        <td [ngClass]="{'text-success': profit.grossProfit > 0, 'text-danger': profit.grossProfit < 0}">
+                            {{profit.grossProfit}}
+                        </td>
+                        <td [ngClass]="{'text-success': profit.netProfit > 0, 'text-danger': profit.netProfit < 0}">
+                            {{profit.netProfit}}
+                        </td>
+                        <td>{{profit.profitDate | date:'medium'}}</td>
+                        <!-- <td class="actions">
+                            <button class="btn-icon" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-icon" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td> -->
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="table-controls">
+            <app-pagination
+                *ngIf="totalPages > 0"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                [totalElements]="totalElements"
+                [pageSizeOptions]="pageSizeOptions"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
+            ></app-pagination>
+        </div>
+    </div>
+</div>

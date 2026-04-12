@@ -1,0 +1,199 @@
+<div class="chart-container">
+  <app-loader [show]="isLoading"></app-loader>
+  
+  <!-- Filter Section -->
+  <div class="filter-section card" [class.loading]="isLoading">
+    <div class="card-header">
+      <h2>
+        <i class="fas fa-chart-pie"></i>
+        Quotation Status Analytics
+      </h2>
+      <p class="subtitle">Analyze quotation status distribution and trends</p>
+    </div>
+    
+    <form [formGroup]="chartForm" (ngSubmit)="onSearch()">
+      <div class="filter-controls">
+        <div class="form-group">
+          <label for="startDate">
+            <i class="far fa-calendar-alt"></i>
+            Start Date
+          </label>
+          <input 
+            id="startDate"
+            type="date" 
+            formControlName="startDate" 
+            class="form-control"
+            placeholder="Select start date"
+            [disabled]="isLoading"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="endDate">
+            <i class="far fa-calendar-alt"></i>
+            End Date
+          </label>
+          <input 
+            id="endDate"
+            type="date" 
+            formControlName="endDate" 
+            class="form-control"
+            placeholder="Select end date"
+            [disabled]="isLoading"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="quotationStatuses">
+            <i class="fas fa-tasks"></i>
+            Quotation Status
+          </label>
+          <div class="select-wrapper" (click)="$event.stopPropagation()">
+            <app-searchable-select
+              formControlName="quotationStatuses"
+              [options]="quotationStatusOptions"
+              labelKey="label"
+              valueKey="value"
+              [multiple]="true"
+              [defaultOption]="{ label: 'All Statuses', value: '' }"
+              [searchPlaceholder]="'Search statuses...'"
+              [allowClear]="true"
+            ></app-searchable-select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="customerId">
+            <i class="fas fa-user"></i>
+            Customer
+          </label>
+          <div class="customer-select-group">
+            <div class="select-wrapper" (click)="$event.stopPropagation()">
+              <app-searchable-select
+                formControlName="customerId"
+                [options]="customers"
+                labelKey="name"
+                valueKey="id"
+                [defaultOption]="{ label: 'All Customers', value: '' }"
+                [searchPlaceholder]="'Search customers...'"
+                [allowClear]="true"
+              ></app-searchable-select>
+            </div>
+            <button 
+              type="button" 
+              class="btn btn-icon btn-primary refresh-btn"
+              (click)="refreshCustomers(); $event.stopPropagation()" 
+              [disabled]="isLoadingCustomers || isLoading"
+              title="Refresh Customers"
+              aria-label="Refresh Customers"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button 
+            type="submit" 
+            class="btn btn-primary search-btn"
+            [disabled]="isLoading"
+            aria-label="Search"
+          >
+            <i class="fas fa-search"></i> 
+            <span>Search</span>
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary reset-btn" 
+            (click)="onReset()"
+            [disabled]="isLoading"
+            aria-label="Reset Filters"
+          >
+            <i class="fas fa-undo"></i> 
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Chart Section -->
+  <div class="chart-section card" *ngIf="!isLoading && chartData.length > 0">
+    <div class="chart-header">
+      <div class="header-title">
+        <h3>
+          <i class="fas fa-chart-pie"></i>
+          Status Distribution
+        </h3>
+        <p class="chart-description">Visual representation of quotation statuses</p>
+      </div>
+      <div class="chart-stats">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-file-invoice"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Total Quotations</span>
+            <span class="stat-value">{{ getTotalCount() }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amount">
+            <i class="fas fa-rupee-sign"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Total Amount</span>
+            <span class="stat-value">₹{{ getTotalAmount() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chart-wrapper">
+      <canvas #chartCanvas></canvas>
+    </div>
+    
+    <div class="chart-legend">
+      <h4 class="legend-title">
+        <i class="fas fa-list"></i>
+        Status Breakdown
+      </h4>
+      <div class="legend-grid">
+        <div class="legend-item" *ngFor="let item of chartData; let i = index">
+          <div class="legend-color" [style.background-color]="getColor(i)"></div>
+          <div class="legend-content">
+            <div class="legend-header">
+              <span class="legend-label">{{ item.statusLabel }}</span>
+              <span class="legend-percentage">{{ item.percentage.toFixed(1) }}%</span>
+            </div>
+            <div class="legend-details">
+              <span class="detail-item">
+                <i class="fas fa-hashtag"></i>
+                {{ item.count }} {{ item.count === 1 ? 'quotation' : 'quotations' }}
+              </span>
+              <span class="detail-item">
+                <i class="fas fa-rupee-sign"></i>
+                ₹{{ item.totalAmount | number:'1.2-2' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Data Section -->
+  <div class="no-data card" *ngIf="!isLoading && chartData.length === 0">
+    <div class="no-data-content">
+      <div class="no-data-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <h3>No Data Available</h3>
+      <p>There are no quotations matching the selected filters. Try adjusting your search criteria.</p>
+      <button class="btn btn-primary" (click)="onReset()">
+        <i class="fas fa-undo"></i>
+        Reset Filters
+      </button>
+    </div>
+  </div>
+</div>

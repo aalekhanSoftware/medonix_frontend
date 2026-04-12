@@ -1,0 +1,98 @@
+<div class="pagination-container">
+    <div class="page-size-selector">
+        <label>Show entries:</label>
+        <select 
+            class="form-control mb-0 text-center" 
+            [ngModel]="pageSize" 
+            (ngModelChange)="onPageSizeChange($event)"
+        >
+            <option *ngFor="let size of pageSizeOptions" [value]="size">
+                {{ size }}
+            </option>
+        </select>
+    </div>
+
+    <div class="pagination-info">
+        Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ totalElements }} entries
+        <span *ngIf="totalAmountSum !== null">
+            &nbsp;| {{ totalAmountLabel }}: {{ totalAmountSum }}
+        </span>
+    </div>
+
+    <div class="pagination">
+        <!-- First Page -->
+        <button 
+            class="btn-page" 
+            [disabled]="currentPage === 0"
+            (click)="loadPage(0)"
+            title="First Page"
+        >
+            <i class="fas fa-angle-double-left"></i>
+        </button>
+
+        <!-- Previous Page -->
+        <button 
+            class="btn-page" 
+            [disabled]="currentPage === 0"
+            (click)="loadPage(currentPage - 1)"
+            title="Previous Page"
+        >
+            <i class="fas fa-angle-left"></i>
+        </button>
+        
+        <ng-container *ngFor="let page of getVisiblePages()">
+            <ng-container *ngIf="page !== -1; else ellipsis">
+                <button 
+                    class="btn-page" 
+                    [class.active]="page === currentPage + 1"
+                    (click)="loadPage(page - 1)"
+                >
+                    {{ page }}
+                </button>
+            </ng-container>
+            <ng-template #ellipsis>
+                <span class="ellipsis">...</span>
+            </ng-template>
+        </ng-container>
+        
+        <!-- Next Page -->
+        <button 
+            class="btn-page" 
+            [disabled]="currentPage === totalPages - 1"
+            (click)="loadPage(currentPage + 1)"
+            title="Next Page"
+        >
+            <i class="fas fa-angle-right"></i>
+        </button>
+
+        <!-- Last Page -->
+        <button 
+            class="btn-page" 
+            [disabled]="currentPage === totalPages - 1"
+            (click)="loadPage(totalPages - 1)"
+            title="Last Page"
+        >
+            <i class="fas fa-angle-double-right"></i>
+        </button>
+
+        <div class="go-to-page">
+            <input 
+                type="number"
+                class="form-control mb-0 text-center"
+                [(ngModel)]="goToPageInput"
+                placeholder="Page"
+                min="1"
+                [max]="totalPages"
+                (keyup.enter)="goToPage()"
+            >
+            <button 
+                class="btn-page"
+                (click)="goToPage()"
+                [disabled]="!goToPageInput"
+                title="Go to page"
+            >
+                Go
+            </button>
+        </div>
+    </div>
+</div> 

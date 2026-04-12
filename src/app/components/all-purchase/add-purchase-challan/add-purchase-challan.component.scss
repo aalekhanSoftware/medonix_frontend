@@ -1,0 +1,479 @@
+.add-purchase-container {
+  padding: 2rem;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+// Ensure the searchable select component can expand to 600px
+.select-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  overflow: visible; // Allow dropdown to overflow container
+  
+  app-searchable-select {
+    display: block;
+    flex: 1;
+    position: relative;
+    z-index: 100;
+    overflow: visible; // Ensure dropdown can render outside
+    
+    // When the component has a custom width, allow it to break out of the grid
+    &.custom-width {
+      position: absolute;
+      z-index: 1000;
+      left: 0;
+    }
+    
+    &:focus-within {
+      z-index: 1000; // Ensure dropdown appears above other elements
+      position: relative;
+      
+      // Ensure dropdown appears above refresh button
+      ::ng-deep .select-dropdown {
+        z-index: 1001 !important;
+        position: absolute !important;
+      }
+    }
+    
+    // Ensure dropdown always appears above refresh button
+    ::ng-deep .select-dropdown {
+      z-index: 1001 !important;
+      position: absolute !important;
+    }
+  }
+
+  .refresh {
+    flex-shrink: 0;
+    margin-top: 0;
+    height: 40px;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1; // Keep button behind dropdown - lower than dropdown's z-index: 1001
+    border: 1px solid var(--supporting);
+    border-radius: 8px;
+    background: white;
+    transition: all 0.3s ease;
+    color: var(--primary);
+    touch-action: manipulation;
+
+    &:hover:not(:disabled) {
+      background: var(--primary);
+      color: white;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+.form-control {
+  height: 40px;
+}
+
+.back-btn {
+  margin-bottom: 1rem;
+}
+
+.form-card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: var(--primary);
+  padding: 1.5rem;
+  
+  .form-title {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.purchase-form {
+  padding: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+// Header Section Styles
+.header-section {
+  background-color: var(--background-light);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative; // Allow children to position absolutely if needed
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Products Section Styles
+.products-section {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border: 1px solid var(--primary);
+
+  .products-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    h3 {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        color: var(--primary);
+      }
+    }
+  }
+}
+
+// Form Controls Styles
+.form-group {
+  margin-bottom: 1rem;
+  position: relative; // Allow children to position absolutely
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+
+    i {
+      color: var(--primary);
+    }
+
+    .required {
+      color: var(--danger);
+      margin-left: 4px;
+    }
+  }
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+
+  .input-group-text {
+    background-color: var(--background);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+    height: 38px;
+    color: var(--text-secondary);
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-control {
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    flex: 1;
+  }
+}
+
+// Purchase Summary Styles
+.purchase-summary {
+  background-color: var(--background-light);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 2rem;
+  flex-wrap: wrap;
+
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    span {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    strong {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+// Products Table Styles - viewport scroll
+.table-responsive {
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 768px) {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+}
+
+.products-table-scroll-inner {
+  width: 100%;
+  display: block;
+}
+
+.products-table-viewport {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  overflow-y: auto;
+  min-height: 750px;
+
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    padding-bottom: 350px;
+  }
+}
+
+.products-table {
+  width: 100%;
+  min-width: 1400px;
+  margin-bottom: 0;
+  background: white;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  th {
+    background-color: var(--background-light);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 1rem;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--border-color);
+
+    // Product Name header - increased width
+    &:first-child {
+      width: 30%;
+      min-width: 300px;
+    }
+
+    // Rate header - decreased width
+    &:nth-child(4) {
+      width: 10%;
+      max-width: 120px;
+    }
+  }
+
+  td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+
+    .form-control {
+      min-width: 80px;
+    }
+
+    // Product Name column - increased width
+    &:first-child {
+      width: 30%;
+      min-width: 300px;
+      
+      .form-control {
+        min-width: 300px;
+      }
+    }
+
+    // Rate column - decreased width
+    &:nth-child(4) {
+      width: 10%;
+      max-width: 120px;
+      
+      .form-control {
+        min-width: 100px;
+        max-width: 120px;
+      }
+    }
+  }
+
+  .input-group {
+    flex-wrap: nowrap;
+  }
+
+  .btn-icon {
+    margin: 0 auto;
+  }
+
+  @media (max-width: 768px) {
+    td, th {
+      padding: 0.5rem;
+    }
+  }
+}
+
+.form-field-container {
+  position: relative;
+  margin-bottom: 1rem;
+  overflow: visible; // Allow dropdown to overflow
+
+  .form-control, .input-group {
+    &.is-invalid {
+      border-color: var(--danger);
+      background-image: url("data:image/svg+xml,..."); // Error icon SVG
+    }
+  }
+}
+
+// Premium Batch Autocomplete Dropdown Styles
+.batch-autocomplete-container {
+  position: relative;
+  z-index: 100;
+  
+  &:focus-within {
+    z-index: 1000;
+  }
+
+  .batch-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    min-width: 150px;
+    max-height: 220px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1001;
+    animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top;
+
+    .batch-option {
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: var(--primary-light, rgba(37, 99, 235, 0.08));
+        color: var(--primary);
+        padding-left: 18px;
+      }
+    }
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+  }
+}
+
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+.products-table {
+  td {
+    padding-bottom: 1.5rem;
+    vertical-align: top;
+  }
+}
+
+.invalid-feedback {
+  color: var(--danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

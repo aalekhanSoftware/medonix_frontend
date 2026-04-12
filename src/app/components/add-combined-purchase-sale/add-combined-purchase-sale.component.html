@@ -1,0 +1,333 @@
+<div class="combined-form-container">
+    <button class="btn btn-sm btn-secondary back-btn" routerLink="/purchase">
+      <i class="fas fa-arrow-left"></i> Back to Purchases
+    </button>
+     <div class="form-card">
+      <div class="card-header">
+        <h2 class="form-title">
+          <i class="fas fa-cart-plus"></i> Combined Purchase & Sale Entry
+        </h2>
+      </div>
+      
+      <form [formGroup]="combinedForm" (ngSubmit)="onSubmit()" class="combined-form">
+        <!-- Product and Quantity Section -->
+        <div class="section-card">
+          <div class="form-row two-columns">
+            <!-- Product Selection -->
+            <div class="form-group">
+              <label for="productId">
+                <i class="fas fa-box"></i> Select Product <span class="required">*</span>
+              </label>
+              <div class="product-select-group">
+                <app-searchable-select
+                  formControlName="productId"
+                  [options]="products"
+                  labelKey="name"
+                  valueKey="id"
+                  [placeholder]="'Select Product'"
+                  [defaultOption]="{ label: 'Select Product', value: '' }"
+                  [searchPlaceholder]="'Search products...'"
+                  [class.is-invalid]="isFieldInvalid('productId')"
+                ></app-searchable-select>
+                <button 
+                  type="button" 
+                  class="btn btn-primary btn-sm refresh mt-2" 
+                  (click)="refreshProducts()" 
+                  [disabled]="isLoadingProducts"
+                  title="Refresh Products"
+                >
+                  <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label for="quantity">
+                <i class="fas fa-hashtag"></i> Quantity <span class="required">*</span>
+              </label>
+              <input 
+                type="number" 
+                id="quantity" 
+                formControlName="quantity" 
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('quantity')"
+                min="1"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Purchase and Sale Details Section -->
+        <div class="section-card">
+          <div class="purchase-sale-grid">
+            <!-- Left Column - Purchase Details -->
+            <div class="purchase-section">
+              <h3 class="section-title">
+                <i class="fas fa-shopping-cart"></i> Purchase Details
+              </h3>
+              <div class="form-column">
+                <!-- Purchase Unit Price -->
+                <div class="form-group">
+                  <label for="purchaseUnitPrice">
+                    <i class="fas fa-tag"></i> Purchase Unit Price <span class="required">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      id="purchaseUnitPrice" 
+                      formControlName="purchaseUnitPrice" 
+                      class="form-control"
+                      [class.is-invalid]="isFieldInvalid('purchaseUnitPrice')"
+                      min="0.01"
+                      step="0.01"
+                    >
+                  </div>
+                </div>
+
+                <!-- Purchase Date -->
+                <div class="form-group">
+                  <label for="purchaseDate">
+                    <i class="fas fa-calendar"></i> Purchase Date <span class="required">*</span>
+                  </label>
+                  <input 
+                    type="datetime-local" 
+                    id="purchaseDate" 
+                    formControlName="purchaseDate" 
+                    class="form-control"
+                    [class.is-invalid]="isFieldInvalid('purchaseDate')"
+                  >
+                </div>
+
+                <!-- Purchase Invoice Number -->
+                <div class="form-group">
+                  <label for="purchaseInvoiceNumber">
+                    <i class="fas fa-file-invoice"></i> Purchase Invoice Number
+                  </label>
+                  <input 
+                    type="text" 
+                    id="purchaseInvoiceNumber" 
+                    formControlName="purchaseInvoiceNumber" 
+                    class="form-control"
+                  >
+                </div>
+
+                <!-- Purchase Other Expenses -->
+                <div class="form-group">
+                  <label for="purchaseOtherExpenses">
+                    <i class="fas fa-coins"></i> Purchase Other Expenses
+                  </label>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      id="purchaseOtherExpenses" 
+                      formControlName="purchaseOtherExpenses" 
+                      class="form-control"
+                      min="0"
+                      step="0.01"
+                    >
+                  </div>
+                </div>
+
+                <!-- Purchase Discount Section -->
+                <!-- <div class="discount-group"> -->
+                  <div class="form-group">
+                    <label for="purchaseDiscount">
+                      <i class="fas fa-percent"></i> Discount Percentage
+                    </label>
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        id="purchaseDiscount" 
+                        formControlName="purchaseDiscount" 
+                        class="form-control"
+                        [class.is-invalid]="isFieldInvalid('purchaseDiscount')"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                      >
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="purchaseDiscountAmount">
+                      <i class="fas fa-tags"></i> Discount Amount
+                    </label>
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        id="purchaseDiscountAmount" 
+                        formControlName="purchaseDiscountAmount" 
+                        class="form-control"
+                        [class.is-invalid]="isFieldInvalid('purchaseDiscountAmount')"
+                        min="0"
+                        step="0.01"
+                      >
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="purchaseDiscountedPrice">
+                      <i class="fas fa-calculator"></i> Final Price
+                    </label>
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        id="purchaseDiscountedPrice" 
+                        formControlName="purchaseDiscountedPrice" 
+                        class="form-control"
+                        readonly
+                      >
+                    </div>
+                  </div>
+                <!-- </div> -->
+              </div>
+            </div>
+
+            <!-- Right Column - Sale Details -->
+            <div class="sale-section">
+              <h3 class="section-title">
+                <i class="fas fa-cash-register"></i> Sale Details
+              </h3>
+              <div class="form-column">
+                <!-- Sale Unit Price -->
+                <div class="form-group">
+                  <label for="saleUnitPrice">
+                    <i class="fas fa-tag"></i> Sale Unit Price <span class="required">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      id="saleUnitPrice" 
+                      formControlName="saleUnitPrice" 
+                      class="form-control"
+                      [class.is-invalid]="isFieldInvalid('saleUnitPrice')"
+                      min="0.01"
+                      step="0.01"
+                    >
+                  </div>
+                </div>
+
+                <!-- Sale Date -->
+                <div class="form-group">
+                  <label for="saleDate">
+                    <i class="fas fa-calendar"></i> Sale Date <span class="required">*</span>
+                  </label>
+                  <input 
+                    type="datetime-local" 
+                    id="saleDate" 
+                    formControlName="saleDate" 
+                    class="form-control"
+                    [class.is-invalid]="isFieldInvalid('saleDate')"
+                  >
+                </div>
+
+                <!-- Sale Invoice Number -->
+                <div class="form-group">
+                  <label for="saleInvoiceNumber">
+                    <i class="fas fa-file-invoice"></i> Sale Invoice Number
+                  </label>
+                  <input 
+                    type="text" 
+                    id="saleInvoiceNumber" 
+                    formControlName="saleInvoiceNumber" 
+                    class="form-control"
+                  >
+                </div>
+
+                <!-- Sale Other Expenses -->
+                <div class="form-group">
+                  <label for="saleOtherExpenses">
+                    <i class="fas fa-coins"></i> Sale Other Expenses
+                  </label>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      id="saleOtherExpenses" 
+                      formControlName="saleOtherExpenses" 
+                      class="form-control"
+                      min="0"
+                      step="0.01"
+                    >
+                  </div>
+                </div>
+
+                <!-- Sale Discount Section -->
+                <!-- <div class="discount-group"> -->
+                  <div class="form-group">
+                    <label for="saleDiscount">
+                      <i class="fas fa-percent"></i> Discount Percentage
+                    </label>
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        id="saleDiscount" 
+                        formControlName="saleDiscount" 
+                        class="form-control"
+                        [class.is-invalid]="isFieldInvalid('saleDiscount')"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                      >
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="saleDiscountAmount">
+                      <i class="fas fa-tags"></i> Discount Amount
+                    </label>
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        id="saleDiscountAmount" 
+                        formControlName="saleDiscountAmount" 
+                        class="form-control"
+                        [class.is-invalid]="isFieldInvalid('saleDiscountAmount')"
+                        min="0"
+                        step="0.01"
+                      >
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="saleDiscountedPrice">
+                      <i class="fas fa-calculator"></i> Final Price
+                    </label>
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        id="saleDiscountedPrice" 
+                        formControlName="saleDiscountedPrice" 
+                        class="form-control"
+                        readonly
+                      >
+                    </div>
+                  </div>
+                <!-- </div> -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-sm btn-secondary"
+            (click)="resetForm()"
+            [disabled]="loading"
+          >
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-sm btn-primary"
+            [disabled]="combinedForm.invalid || loading"
+          >
+            <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+            {{ loading ? 'Saving...' : 'Save Entry' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+   <app-loader *ngIf="loading"></app-loader>

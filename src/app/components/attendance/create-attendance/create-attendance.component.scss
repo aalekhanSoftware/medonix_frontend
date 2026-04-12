@@ -1,0 +1,130 @@
+@import '../../../../variables';
+
+.attendance-form-container {
+  padding: 1.5rem;
+  margin: 0 auto;
+  max-width: 1200px;
+
+  .form-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    .card-header {
+      background-color: var(--primary);
+      padding: 1.5rem;
+      
+      .form-title {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+    }
+  }
+
+  .attendance-form {
+    padding: 2rem;
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        font-weight: 500;
+
+        i {
+          color: var(--primary);
+        }
+
+        .required {
+          color: #dc3545;
+          margin-left: 4px;
+        }
+      }
+
+      .employee-select-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+
+        app-searchable-select {
+          flex: 1;
+        }
+
+        .button-group {
+          display: flex;
+          gap: 0.5rem;
+
+          .btn-icon {
+            padding: 0.75rem;
+            height: 42px;
+            width: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--supporting);
+            border-radius: 8px;
+            background: white;
+            transition: all 0.3s ease;
+
+            &.select-all {
+              color: var(--accent2);
+              &:hover { background: var(--accent2); }
+            }
+
+            &.clear {
+              color: var(--text-secondary);
+              &:hover { background: var(--text-secondary); }
+            }
+
+            &:hover {
+              color: white;
+            }
+
+            &.refresh {
+              color: var(--primary);
+              border: 1px solid var(--supporting);
+              background: white;
+              transition: all 0.3s ease;
+
+              &:hover:not(:disabled) {
+                background: var(--primary);
+                color: white;
+                transform: rotate(180deg);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              }
+
+              &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+  }
+}

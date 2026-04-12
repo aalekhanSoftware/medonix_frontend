@@ -1,0 +1,222 @@
+<div class="transaction-reports-container">
+  <app-loader [show]="isLoading || isExporting"></app-loader>
+
+  <section class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+      </div>
+      <div class="header-text">
+        <h1>Transaction Reports</h1>
+        <p>Search invoice-level Purchase and Sales reports and download Excel</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="search-section card" aria-labelledby="transaction-reports-filters-heading">
+    <h2 id="transaction-reports-filters-heading">Report Filters</h2>
+
+    <form [formGroup]="reportForm" (ngSubmit)="onSearch($event)" aria-label="Transaction reports filter form">
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="report-type">Report Type <span class="required">*</span></label>
+          <select
+            id="report-type"
+            class="form-control"
+            formControlName="reportType"
+            (change)="onReportTypeChange()"
+            (touchstart)="$event.stopPropagation()"
+          >
+            <option value="PURCHASE">Purchase Report</option>
+            <option value="SALES">Sales Report</option>
+            <option value="COLLECTION_OUTSTANDING">Collection Outstanding Report</option>
+            <option value="PAYMENT_DONE">Payment Done Report</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="reportType === 'COLLECTION_OUTSTANDING'">
+          <label for="search-report">Search</label>
+          <input
+            id="search-report"
+            type="text"
+            formControlName="search"
+            class="form-control"
+            placeholder="Search by name, mobile..."
+            aria-label="Search"
+          >
+        </div>
+
+        <ng-container *ngIf="reportType === 'PURCHASE' || reportType === 'SALES' || reportType === 'PAYMENT_DONE'">
+          <div class="form-group">
+            <label for="start-date">Start date <span class="required">*</span></label>
+            <input
+              id="start-date"
+              type="date"
+              formControlName="startDate"
+              class="form-control"
+              aria-label="Start date"
+              (touchstart)="$event.stopPropagation()"
+            >
+          </div>
+          <div class="form-group">
+            <label for="end-date">End date <span class="required">*</span></label>
+            <input
+              id="end-date"
+              type="date"
+              formControlName="endDate"
+              class="form-control"
+              aria-label="End date"
+              (touchstart)="$event.stopPropagation()"
+            >
+          </div>
+        </ng-container>
+
+        <!-- <div class="form-group">
+          <label for="customerId" class="sr-only">Select customer</label>
+          <div class="select-group inline">
+            <app-searchable-select
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Customers', value: '' }"
+              [searchPlaceholder]="'Search customers...'"
+              [virtualScroll]="true"
+              [initialDisplayLimit]="100"
+              [focusWidthPx]="400"
+              [searchMode]="'jump'"
+            ></app-searchable-select>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary refresh-btn"
+              (click)="refreshCustomers()"
+              [disabled]="isLoadingCustomers"
+              title="Refresh Customers"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div> -->
+
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary" [disabled]="isLoading || isExporting">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()" [disabled]="isLoading || isExporting">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button
+            type="button"
+            class="search-btn btn btn-sm btn-success export-btn"
+            (click)="exportExcel()"
+            [disabled]="isLoading || isExporting"
+            title="Download report as Excel"
+          >
+            <i class="fas fa-file-excel"></i> Download Excel
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="results-section card" aria-labelledby="transaction-reports-results-heading">
+    <h2 id="transaction-reports-results-heading">Results</h2>
+
+    <div class="table-responsive" *ngIf="isPurchaseOrSales && rows.length > 0; else emptyOrOther">
+      <table class="table" role="table" aria-label="Purchase or Sales report results">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Invoice No.</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Date</th>
+            <th scope="col">Items</th>
+            <th scope="col">Tax</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" role="row">
+            <td data-label="No">{{ (currentPage * pageSize) + i + 1 }}</td>
+            <td data-label="Invoice No."><strong>{{ row.invoiceNumber }}</strong></td>
+            <td data-label="Customer">{{ row.customerName }}</td>
+            <td data-label="Date">{{ row.date }}</td>
+            <td data-label="Items">{{ row.numberOfItems }}</td>
+            <td data-label="Tax">{{ row.taxAmount }}</td>
+            <td data-label="Total"><strong>{{ row.totalAmount }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-responsive" *ngIf="reportType === 'COLLECTION_OUTSTANDING' && rows.length > 0; else emptyOrOther">
+      <table class="table" role="table" aria-label="Collection outstanding report results">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Name</th>
+            <th scope="col">Mobile</th>
+            <th scope="col">Remaining Amount</th>
+            <th scope="col">Email</th>
+            <th scope="col">Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" role="row">
+            <td data-label="No">{{ (currentPage * pageSize) + i + 1 }}</td>
+            <td data-label="Name"><strong>{{ row.name }}</strong></td>
+            <td data-label="Mobile">{{ row.mobile }}</td>
+            <td data-label="Remaining Amount">{{ row.remaining_payment_amount }}</td>
+            <td data-label="Email">{{ row.email }}</td>
+            <td data-label="Address">{{ row.address }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-responsive" *ngIf="reportType === 'PAYMENT_DONE' && rows.length > 0; else emptyOrOther">
+      <table class="table" role="table" aria-label="Payment done report results">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Customer Name</th>
+            <th scope="col">Date</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Paid/Received</th>
+            <th scope="col">Type</th>
+            <th scope="col">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" role="row">
+            <td data-label="No">{{ (currentPage * pageSize) + i + 1 }}</td>
+            <td data-label="Customer Name"><strong>{{ row.customer_name }}</strong></td>
+            <td data-label="Date">{{ row.date }}</td>
+            <td data-label="Amount">{{ row.amount }}</td>
+            <td data-label="Paid/Received">{{ row.is_received }}</td>
+            <td data-label="Type">{{ row.type }}</td>
+            <td data-label="Remarks">{{ row.remarks }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyOrOther>
+      <div class="empty-state">
+        <i class="fas fa-info-circle" aria-hidden="true"></i>
+        <span>No results found. Adjust filters and click Search.</span>
+      </div>
+    </ng-template>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </section>
+</div>
+

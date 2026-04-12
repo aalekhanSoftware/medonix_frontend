@@ -1,0 +1,423 @@
+.searchable-select {
+  position: relative;
+  width: 100%;
+  // Allow the component to expand beyond its container when focused
+  transform-origin: top left;
+  
+  // Ensure the component can expand when focused
+  &:focus-within {
+    z-index: 1000;
+    position: relative;
+  }
+  
+  &.active {
+    z-index: 1000;
+  }
+  
+  .select-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+    
+    .search-input {
+      padding: 11px 40px 11px 12px;
+      border: 1.5px solid var(--supporting);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      height: 40px;
+      width: 100%;
+      background-color: #ffffff;
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 40px;
+      box-sizing: border-box;
+      
+      // Placeholder styling
+      &:empty:before {
+        content: attr(data-placeholder);
+        color: var(--text-secondary);
+        pointer-events: none;
+      }
+      
+      &:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 58, 88, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+      }
+      
+      // Smooth transitions for all interactions
+      &:hover:not(:focus) {
+        border-color: var(--neutral-medium);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+    }
+    
+    .icons-container {
+      position: absolute;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1;
+      
+      .clear-icon {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        
+        &:hover {
+          color: var(--error);
+          background-color: rgba(194, 59, 59, 0.1);
+          transform: scale(1.1);
+        }
+        
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+      
+      i:not(.clear-icon) {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        &:hover {
+          color: var(--primary);
+        }
+        
+        &:active {
+          transform: scale(0.9);
+        }
+      }
+    }
+  }
+
+  .select-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--neutral-lighter);
+    z-index: 1001;
+    animation: dropdownFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    
+    @keyframes dropdownFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .options-container {
+      max-height: 300px; // Will be overridden by maxHeight input
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 6px 0;
+      -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+      touch-action: pan-y; // Allow vertical panning (scrolling) on touch devices
+      
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: var(--neutral-lightest);
+        border-radius: 4px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: var(--neutral-light);
+        border-radius: 4px;
+        transition: background 0.2s ease;
+        
+        &:hover {
+          background: var(--neutral-medium);
+        }
+      }
+      
+      &.virtual-scroll {
+        // Styles for virtual scroll implementation
+        overflow-y: auto;
+        position: relative;
+      }
+      
+      .virtual-scroll-spacer {
+        width: 100%;
+        pointer-events: none;
+        flex-shrink: 0;
+      }
+      
+      .option {
+        padding: 10px 14px;
+        cursor: pointer;
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        position: relative;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent; // Remove tap highlight on mobile
+        
+        .option-content {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--neutral-light);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            
+            i {
+              color: #ffffff;
+              font-size: 0.7rem;
+              opacity: 0;
+              transition: opacity 0.2s ease;
+            }
+          }
+        }
+        
+        &:hover {
+          background-color: var(--neutral-lightest);
+        }
+        
+        &:active {
+          background-color: var(--neutral-lighter);
+          transform: scale(0.98);
+        }
+        
+        &.selected {
+          background-color: rgba(0, 58, 88, 0.08);
+          color: var(--primary);
+          font-weight: 500;
+
+          .checkbox {
+            background-color: var(--primary);
+            border-color: var(--primary);
+
+            i {
+              opacity: 1;
+            }
+          }
+        }
+        
+        &.highlighted {
+          background-color: var(--neutral-lightest);
+          
+          &:not(.selected) {
+            background-color: rgba(0, 58, 88, 0.05);
+          }
+        }
+      }
+      
+      .no-results {
+        padding: 20px 16px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-style: italic;
+        font-size: 0.9rem;
+        background-color: var(--neutral-lightest);
+      }
+    }
+  }
+}
+
+// When the component is focused and has a custom width
+// .searchable-select.custom-width {
+//   position: absolute;
+//   z-index: 1000;
+// }
+
+@media (max-width: 768px) {
+  .searchable-select {
+    .select-input {
+      .search-input {
+        padding: 12px 40px 12px 14px;
+        font-size: 16px; // Prevent zoom on iOS
+        height: 44px; // Better touch target
+        min-height: 44px;
+      }
+      
+      .icons-container {
+        right: 14px;
+        
+        .clear-icon,
+        i:not(.clear-icon) {
+          width: 24px;
+          height: 24px;
+          font-size: 0.9rem;
+        }
+      }
+    }
+    
+    .select-dropdown {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      top: auto;
+      max-height: 60vh;
+      margin: 0;
+      border-radius: 12px;
+      box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.24), 0 -2px 16px rgba(0, 0, 0, 0.16);
+      border: none;
+      animation: mobileDropdownSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      @keyframes mobileDropdownSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .options-container {
+        max-height: calc(60vh - 20px);
+        padding: 8px 0;
+        
+        .option {
+          padding: 14px 16px;
+          font-size: 1rem;
+          min-height: 48px; // Better touch target
+          
+          .option-content {
+            .checkbox {
+              width: 20px;
+              height: 20px;
+            }
+          }
+          
+          &:active {
+            background-color: var(--neutral-lighter);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments for different screen sizes
+@media (max-width: 576px) {
+  .searchable-select {
+    .select-input {
+      .search-input {
+        padding: 12px 40px 12px 14px;
+        font-size: 16px; // Prevent zoom on iOS
+        height: 44px;
+        min-height: 44px;
+      }
+      
+      .icons-container {
+        right: 14px;
+        
+        .clear-icon {
+          font-size: 0.9rem;
+          width: 24px;
+          height: 24px;
+        }
+        
+        i:not(.clear-icon) {
+          font-size: 0.85rem;
+          width: 24px;
+          height: 24px;
+        }
+      }
+    }
+    
+    .select-dropdown {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      border-radius: 16px;
+      
+      .options-container {
+        .option {
+          padding: 16px;
+          font-size: 1rem;
+          min-height: 52px; // Larger touch target for small screens
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 992px) {
+  .searchable-select {
+    .select-input {
+      .search-input {
+        padding: 12px 40px 12px 14px;
+        font-size: 0.95rem;
+        height: 42px;
+        min-height: 42px;
+      }
+    }
+    
+    .select-dropdown {
+      .options-container {
+        .option {
+          padding: 11px 16px;
+          font-size: 0.95rem;
+          
+          &:hover {
+            background-color: var(--neutral-lightest);
+            transform: translateX(2px);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Tablet specific adjustments
+@media (min-width: 769px) and (max-width: 991px) {
+  .searchable-select {
+    .select-input {
+      .search-input {
+        padding: 11px 40px 11px 13px;
+        font-size: 0.9rem;
+        height: 41px;
+        min-height: 41px;
+      }
+    }
+    
+    .select-dropdown {
+      .options-container {
+        .option {
+          padding: 10px 15px;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+.transport-master-form-container {
+  .card {
+    padding: 16px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .span-2 {
+    grid-column: span 2;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .transport-master-form-container {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+    .span-2 {
+      grid-column: span 1;
+    }
+  }
+}
+
+

@@ -1,0 +1,1294 @@
+.btn {
+  padding: 8px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  // Prevent zoom on iOS
+  touch-action: manipulation;
+  // Improve touch target size for mobile
+  @media (max-width: 768px) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+.add-quotation-container {
+    position: relative;
+    padding: 2rem;
+    // max-width: 1400px; 
+    margin: 0 auto;
+    // Improve touch scrolling on mobile
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  
+    @media (max-width: 768px) {
+      padding: 1rem;
+      // Prevent horizontal scroll on mobile
+      overflow-x: hidden;
+    }
+  }
+  
+  .back-btn {
+    margin-bottom: 1rem;
+  }
+  
+  .form-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+  
+  .card-header {
+    background-color: var(--primary);
+    padding: 1.5rem;
+    
+    .form-title {
+      color: white;
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+  
+  .quotation-form {
+    padding: 2rem;
+  
+    @media (max-width: 768px) {
+      padding: 1rem;
+    }
+  }
+  
+  // Header Section Styles
+  .header-section {
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+    // padding: 1.5rem;
+    margin-bottom: 2rem;
+  
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 0px 10px;
+  
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+  
+  .quotation-row {
+    display: flex;
+    .form-group {
+      width: 60%;
+      height: 90px;
+      margin-bottom: 0px;
+    }
+    .product-delete-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+  .quotation-product {
+    border: 1px solid var(--primary);
+    padding: 20px;
+  }
+
+  // Move dialog styles outside of product-container
+.dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  min-width: 400px;
+  max-width: 90%;
+  width: 900px;
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin: 1rem;
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    background-color: var(--background);
+    border-radius: 12px 12px 0 0;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        color: var(--primary);
+        font-size: 1.1em;
+      }
+    }
+
+    .close-button {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+      margin: -0.5rem -0.5rem -0.5rem 0;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: var(--text-primary);
+      }
+
+      &:active {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}
+
+/* Wrapper to center the table */
+.table-container {
+  width: 90%;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #f0f8ff; /* Light blue background */
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styles */
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #ddd;
+}
+
+.custom-table th, .custom-table td {
+  padding: 12px 15px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+.custom-table input {
+  width: 85%;
+}
+
+.custom-table input[type="number"]::-webkit-outer-spin-button,
+.custom-table input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide number input arrows in Firefox */
+.custom-table input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield; /* Standard property for compatibility */
+}
+
+.custom-table th {
+  background-color: #0099cc; /* Light blue header */
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.custom-table tr:nth-child(even) {
+  background-color: #e6f7ff; /* Light blue for even rows */
+}
+
+.custom-table tr:nth-child(odd) {
+  background-color: #ffffff; /* White for odd rows */
+}
+
+/* Form input styling */
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+/* Buttons styling */
+// .btn {
+//   padding: 8px 15px;
+//   border: none;
+//   border-radius: 5px;
+//   cursor: pointer;
+// }
+
+// .btn-add {
+//   background-color: #4CAF50;
+//   color: white;
+//   margin-top: 10px;
+// }
+
+// .btn-submit {
+//   background-color: #0099cc;
+//   color: white;
+// }
+
+// .btn-delete {
+//   background-color: #ff6347;
+//   color: white;
+// }
+
+// .btn:hover {
+//   opacity: 0.8;
+// }
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .table-container {
+    width: 95%;
+  }
+
+  .custom-table th, .custom-table td {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+}
+  
+  // Products Section Styles
+  .create-quotation-section, .products-section {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid var(--primary);
+  
+    .create-quotation-header ,.products-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+  
+      h3 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+  
+        i {
+          color: var(--primary);
+        }
+      }
+    }
+  }
+  
+  .product-item {
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+  
+    .product-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr auto;
+      gap: 1rem;
+      align-items: start;
+  
+      @media (max-width: 1200px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+  
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    .remove-product {
+      background-color: var(--danger-light);
+      color: var(--danger);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--border-radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+  
+      &:hover:not(:disabled) {
+        background-color: var(--danger);
+        color: white;
+        transform: translateY(-1px);
+      }
+  
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+  
+      @media (max-width: 768px) {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+      }
+    }
+  }
+  
+  // Form Controls Styles
+  .form-group {
+    // margin-bottom: 1rem;
+  
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-weight: 500;
+  
+      i {
+        color: var(--primary);
+      }
+  
+      .required {
+        color: var(--danger);
+        margin-left: 4px;
+      }
+    }
+  }
+  
+  // .input-group {
+  //   position: relative;
+  //   display: flex;
+  //   flex-wrap: wrap;
+  //   align-items: stretch;
+  //   width: 100%;
+    
+  //   .input-group-text {
+  //     display: flex;
+  //     align-items: center;
+  //     padding: 0.375rem 0.75rem;
+  //     font-size: 1rem;
+  //     font-weight: 400;
+  //     line-height: 1.5;
+  //     color: #495057;
+  //     text-align: center;
+  //     white-space: nowrap;
+  //     background-color: #e9ecef;
+  //     border: 1px solid #ced4da;
+  //     border-radius: 0 0.25rem 0.25rem 0;
+  //     border-left: none;
+  //   }
+    
+  //   input {
+  //     position: relative;
+  //     flex: 1 1 auto;
+  //     width: 1%;
+  //     min-width: 0;
+  //     margin-bottom: 0;
+      
+  //     &:not(:last-child) {
+  //       border-top-right-radius: 0;
+  //       border-bottom-right-radius: 0;
+  //     }
+  //   }
+  // }
+  
+  // Purchase Summary Styles
+  .quotation-summary {
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+  
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+  
+      span {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
+  
+      strong {
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+    }
+  }
+  
+  // Form Actions
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+  
+    @media (max-width: 576px) {
+      flex-direction: column;
+      
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+  
+  // Products Table Styles - viewport handles scroll (smooth for 10k+ rows)
+  .table-responsive {
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    // Improve mobile scrolling
+    touch-action: pan-x;
+    
+    // Custom scrollbar for webkit browsers
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+      
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+  
+    @media (max-width: 768px) {
+      margin: 0 -1rem;
+      padding: 0 1rem;
+      // Make table more mobile-friendly
+      .products-table {
+        font-size: 0.875rem;
+        
+        th, td {
+          padding: 0.5rem 0.25rem;
+          min-width: 80px;
+          
+          input {
+            font-size: 0.875rem;
+            padding: 0.25rem;
+          }
+        }
+      }
+    }
+  }
+
+  .products-table-scroll-inner {
+    width: 100%;
+    display: block;
+  }
+
+  .products-table-viewport {
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+    overflow-y: auto;
+    min-height: 750px;
+
+    ::ng-deep .cdk-virtual-scroll-content-wrapper {
+      min-width: 1280px;
+      padding-bottom: 350px;
+    }
+  }
+
+  .products-table {
+    width: 100%;
+    min-width: 1280px;
+    table-layout: fixed;
+    margin-bottom: 0;
+    background: white;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    th {
+      background-color: var(--background-light);
+      color: var(--text-primary);
+      font-weight: 200;
+      padding: 1rem;
+      white-space: nowrap;
+      border-bottom: 2px solid var(--border-color);
+      // Sticky header for mobile
+      @media (max-width: 768px) {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: var(--background-light);
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+      }
+    }
+
+    th:nth-child(1),
+    td:nth-child(1) {
+      width: 360px;
+      min-width: 360px;
+      max-width: 360px;
+      box-sizing: border-box;
+
+      .form-field-container,
+      .select-group {
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      app-searchable-select {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      // Keep product name in one line and truncate with ellipsis so column doesn't grow
+      ::ng-deep .select-input .search-input {
+        max-width: 100% !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    th:nth-child(2),
+    td:nth-child(2) {
+      min-width: 90px;
+      width: 90px;
+    }
+
+    th:nth-child(3),
+    td:nth-child(3) {
+      min-width: 105px;
+      width: 105px;
+    }
+
+    th:nth-child(4),
+    td:nth-child(4) {
+      min-width: 120px;
+      width: 120px;
+    }
+
+    th:nth-child(5),
+    td:nth-child(5) {
+      width: 130px;
+      min-width: 130px;
+    }
+
+    th:nth-child(6),
+    td:nth-child(6) {
+      width: 85px;
+      min-width: 85px;
+      max-width: 85px;
+      padding-left: 0.35rem;
+      padding-right: 0.35rem;
+
+      .form-field-container,
+      .input-group {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+      .form-control {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .input-group-text {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+      }
+    }
+
+    th:nth-child(7),
+    td:nth-child(7) {
+      width: 85px;
+      min-width: 85px;
+      max-width: 85px;
+      padding-left: 0.35rem;
+      padding-right: 0.35rem;
+
+      .form-field-container,
+      .input-group {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+      .form-control {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .input-group-text {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+      }
+    }
+
+    th:nth-child(8),
+    td:nth-child(8) {
+      width: 98px;
+      min-width: 98px;
+      max-width: 98px;
+      padding-left: 0.35rem;
+      padding-right: 0.35rem;
+
+      .input-group {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+      .form-control {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    th:nth-child(9),
+    td:nth-child(9) {
+      min-width: 160px;
+      width: 160px;
+    }
+
+    th:nth-child(10),
+    td:nth-child(10) {
+      min-width: 115px;
+      width: 115px;
+    }
+
+    th:nth-child(11),
+    td:nth-child(11) {
+      min-width: 105px;
+      width: 105px;
+    }
+
+    th:nth-child(12),
+    td:nth-child(12) {
+      min-width: 80px;
+      width: 80px;
+    }
+
+    th:nth-child(13),
+    td:nth-child(13) {
+      min-width: 80px;
+      width: 80px;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border-color);
+      
+      .form-control {
+        // Improve touch targets
+        @media (max-width: 768px) {
+          min-height: 40px;
+          font-size: 16px; // Prevent zoom on iOS
+        }
+      }
+      select {
+        width: 38px;
+      }
+    }
+  
+    .input-group {
+      flex-wrap: nowrap;
+    }
+  
+    .btn-icon {
+      margin: 0 auto;
+    }
+  
+    @media (max-width: 768px) {
+      td, th {
+        padding: 0.5rem 0.25rem;
+      }
+
+      .discount-type-selector .form-check-label {
+        font-size: 0.75rem;
+      }
+    }
+  }
+  
+  .form-field-container {
+    position: relative;
+    margin-bottom: 1rem;
+    min-width: 250px;
+    .form-control, .input-group {
+      &.is-invalid {
+        border-color: var(--danger);
+        background-image: url("data:image/svg+xml,..."); // Error icon SVG
+      }
+    }
+  }
+  .form-field-container-brand {
+    position: relative;
+    margin-bottom: 1rem;
+    min-width: 200px;
+    .form-control, .input-group {
+      &.is-invalid {
+        border-color: var(--danger);
+        background-image: url("data:image/svg+xml,..."); // Error icon SVG
+      }
+    }
+  }
+  
+  .form-field-container {
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: visible; // Allow dropdown to overflow
+
+    .form-control, .input-group {
+      &.is-invalid {
+        border-color: var(--danger);
+        background-image: url("data:image/svg+xml,..."); // Error icon SVG
+      }
+    }
+  }
+  
+  .calc-type-col, .dropdown {
+    min-width: 130px;
+  }
+  
+  .products-table {
+    td {
+      padding-bottom: 1.5rem;
+      vertical-align: top;
+    }
+  }
+  
+  .invalid-feedback {
+    color: var(--danger);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  // Line-level discount styles (match add-sale)
+  .discount-type-selector {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    .form-check {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      .form-check-input {
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .form-check-label {
+        margin: 0;
+        cursor: pointer;
+        font-size: 0.875rem;
+        user-select: none;
+      }
+    }
+  }
+
+  .discount-amount-display {
+    color: #28a745;
+    font-weight: 500;
+  }
+
+  .discount-price-display {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  
+// Fix z-index stacking for table rows with dropdowns
+.products-table {
+  tbody {
+    tr {
+      position: relative;
+      
+      // When a row contains an active dropdown, elevate its z-index
+      &:has(.searchable-select.active) {
+        z-index: 100;
+        position: relative;
+      }
+      
+      td {
+        // Ensure td doesn't create new stacking context unless needed
+        position: static;
+        
+        // When td contains active dropdown, allow overflow
+        &:has(.searchable-select.active) {
+          position: relative;
+          z-index: 100;
+          overflow: visible;
+        }
+      }
+    }
+  }
+}
+
+.form-field-container {
+  // Allow dropdown to overflow
+  overflow: visible;
+  
+  &:has(.searchable-select.active) {
+    z-index: 1000;
+    position: relative;
+  }
+}
+
+.select-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  // Allow dropdown overflow
+  overflow: visible;
+  position: relative;
+  
+  // Elevate z-index when dropdown is active
+  &:has(.searchable-select.active) {
+    z-index: 1000;
+  }
+
+  app-searchable-select {
+    flex: 1;
+    position: relative;
+    
+    // When active, ensure highest z-index
+    &.active,
+    &:focus-within {
+      z-index: 1001;
+    }
+    
+    // Dropdown should appear above everything
+    ::ng-deep .select-dropdown {
+      z-index: 9999 !important;
+      position: absolute;
+    }
+    
+    // Mobile dropdown positioning
+    @media (max-width: 768px) {
+      position: relative;
+      
+      // Override any fixed positioning that might cause issues
+      ::ng-deep .select-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: none !important;
+        z-index: 9999 !important;
+        box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.2) !important;
+        border-radius: 16px 16px 0 0 !important;
+        max-height: 60vh !important;
+        overflow-y: auto !important;
+      }
+    }
+  }
+
+  .btn-icon.refresh {
+    padding: 0.75rem;
+    height: 35px;
+    width: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--supporting);
+    border-radius: 8px;
+    background: white;
+    transition: all 0.3s ease;
+    color: var(--primary);
+    // Prevent zoom on iOS
+    touch-action: manipulation;
+
+    &:hover:not(:disabled) {
+      background: var(--primary);
+      color: white;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      height: 44px;
+      width: 44px;
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+.totals-row {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  
+  td {
+    border-top: 2px solid #dee2e6;
+  }
+  
+  .form-field-container .input-group {
+    position: relative;
+
+    input {
+      background-color: #fff;
+    }
+
+    &.loading {
+      input {
+        opacity: 0.6;
+      }
+    }
+
+    .price-loader {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      i {
+        font-size: 14px;
+      }
+    }
+
+    .form-control.loading {
+      opacity: 0.6;
+    }
+  }
+}
+
+.search-input {
+  height: 43px !important;
+}
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      color: var(--primary);
+    }
+  }
+  
+  .quotation-discount-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    
+    .quotation-discount-group {
+      margin-bottom: 0;
+      // min-width: 200px;
+      
+      label {
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+      
+      .input-group {
+        display: flex;
+        align-items: center;
+        
+        input {
+          height: 38px;
+          min-width: 80px;
+        }
+        
+        .input-group-text {
+          height: 38px;
+          display: flex;
+          align-items: center;
+          background-color: var(--background-light);
+          border-color: var(--border-color);
+        }
+      }
+      
+      .invalid-feedback {
+        position: absolute;
+        font-size: 0.75rem;
+      }
+    }
+    
+    button {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+  }
+}
+
+// Add responsive styles for mobile/tablet view
+@media (max-width: 768px) {
+  .products-header {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .quotation-discount-wrapper {
+      width: 100%;
+      margin-top: 0.75rem;
+      flex-direction: column;
+      align-items: stretch;
+      
+      .quotation-discount-group {
+        width: 100%;
+        margin-bottom: 1rem;
+      }
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+  
+  .table-responsive {
+    .products-table {
+      th, td {
+        white-space: nowrap;
+        min-width: 100px;
+        
+        &:nth-child(1) {
+          /* Product column - make it wider on mobile if needed */
+        }
+      }
+    }
+  }
+}
+
+.quotation-discount-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+  flex-wrap: wrap;
+  
+  .quotation-discount-field {
+    min-width: 150px;
+    margin-bottom: 0;
+    
+    label {
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    .input-group {
+      flex-wrap: nowrap;
+      
+      input {
+        text-align: right;
+        width: 100px;
+      }
+    }
+  }
+}
+
+// If your table layout needs adjustments after adding the new column
+.products-table {
+  th, td {
+    white-space: nowrap;
+    padding: 0.5rem;
+    
+    &:first-child {
+      /* First column styling can be added here if needed */
+    }
+  }
+}
+
+// Responsive adjustments for mobile devices
+@media (max-width: 768px) {
+  .quotation-discount-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .quotation-discount-field {
+      margin-bottom: 10px;
+      
+      .input-group input {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Enhanced mobile responsive styles
+@media (max-width: 768px) {
+  .products-header {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .quotation-discount-wrapper {
+      width: 100%;
+      margin-top: 0.75rem;
+      flex-direction: column;
+      align-items: stretch;
+      
+      .quotation-discount-field {
+        width: 100%;
+        margin-bottom: 1rem;
+        
+        .input-group input {
+          font-size: 16px; // Prevent zoom on iOS
+          height: 44px; // Better touch target
+        }
+      }
+      
+      button {
+        width: 100%;
+        height: 44px;
+        font-size: 16px;
+      }
+    }
+  }
+  
+  .table-responsive {
+    .products-table {
+      th, td {
+        white-space: nowrap;
+        min-width: 80px;
+        font-size: 0.875rem;
+        
+        &:nth-child(1) {
+          // Product column - make it wider on mobile
+          min-width: 150px;
+        }
+      }
+      
+      // Better mobile input styling
+      input {
+        font-size: 16px !important; // Prevent zoom on iOS
+        padding: 0.5rem !important;
+        min-height: 40px !important;
+      }
+    }
+  }
+  
+  // Form improvements for mobile
+  .form-group {
+    margin-bottom: 1rem;
+    
+    input, textarea, select {
+      font-size: 16px !important; // Prevent zoom on iOS
+      min-height: 44px !important;
+      padding: 0.75rem !important;
+    }
+  }
+  
+  // Better button spacing on mobile
+  .form-actions {
+    gap: 0.75rem;
+    
+    .btn {
+      height: 44px;
+      font-size: 16px;
+    }
+  }
+}
+
+// Enhanced responsive adjustments for mobile devices
+@media (max-width: 768px) {
+  .quotation-discount-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .quotation-discount-field {
+      margin-bottom: 10px;
+      
+      .input-group input {
+        width: 100%;
+        font-size: 16px; // Prevent zoom on iOS
+        height: 44px; // Better touch target
+      }
+    }
+  }
+  
+  // Allow horizontal scroll when table is wider than viewport; improve touch experience
+  .add-quotation-container {
+    overflow-x: auto;
+    touch-action: pan-x pan-y;
+  }
+  
+  // Improve form field spacing on mobile
+  .header-section .form-row {
+    gap: 1rem;
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+  }
+}

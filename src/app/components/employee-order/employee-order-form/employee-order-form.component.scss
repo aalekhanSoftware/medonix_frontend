@@ -1,0 +1,122 @@
+@import '../../../../variables';
+
+.employee-order-form-container {
+  padding: 1.5rem;
+  margin: 0 auto;
+  max-width: 1200px;
+
+  .form-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+
+    .card-header {
+      background-color: var(--primary);
+      padding: 1.5rem;
+      
+      .form-title {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+    }
+  }
+
+  .employee-order-form {
+    padding: 2rem;
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        font-weight: 500;
+
+        i {
+          color: var(--primary);
+        }
+
+        .required {
+          color: #dc3545;
+          margin-left: 4px;
+        }
+      }
+
+      .product-select-group,
+      .employee-select-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+
+        app-searchable-select {
+          flex: 1;
+        }
+
+        .btn-icon.refresh {
+          padding: 0.75rem;
+          height: 42px;
+          width: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid var(--supporting);
+          border-radius: 8px;
+          background: white;
+          color: var(--primary);
+          transition: all 0.3s ease;
+
+          &:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
+      }
+
+      // Reuse form control styles from employee-form.component.scss
+    //   @include formControlStyles();
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .employee-order-form-container {
+    padding: 1rem;
+
+    .employee-order-form {
+      padding: 1rem;
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+} 

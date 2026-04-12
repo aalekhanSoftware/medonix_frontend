@@ -1,0 +1,221 @@
+{
+  "info": {
+    "_postman_id": "month-wise-reports-collection",
+    "name": "Month-wise Reports APIs",
+    "description": "Month-wise (bar chart) data for Sales, Purchases, and Payment Done reports.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "{{access_token}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Month-wise Bar Charts",
+      "item": [
+        {
+          "name": "Sales Report - Month wise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sales/report/month-wise",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sales",
+                "report",
+                "month-wise"
+              ]
+            },
+            "description": "Returns month-wise sales totals (for bar chart). startDate/endDate format: yyyy-MM-dd.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"customerId\": 1\n}"
+            },
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST"
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    { \"month\": \"2024-01\", \"value\": 12000.00 },\n    { \"month\": \"2024-02\", \"value\": 0 },\n    { \"month\": \"2024-03\", \"value\": 9800.00 }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Purchase Report - Month wise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/purchases/report/month-wise",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "purchases",
+                "report",
+                "month-wise"
+              ]
+            },
+            "description": "Returns month-wise purchase totals (for bar chart). startDate/endDate format: yyyy-MM-dd.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"customerId\": 1\n}"
+            },
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST"
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    { \"month\": \"2024-01\", \"value\": 5200.00 },\n    { \"month\": \"2024-02\", \"value\": 7400.00 }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Payment Done Report - Month wise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/payment-done/month-wise",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "payment-done",
+                "month-wise"
+              ]
+            },
+            "description": "Returns month-wise payment totals (sum of payment_history.amount) for bar chart. startDate/endDate format: yyyy-MM-dd.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"customerId\": 1\n}"
+            },
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST"
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    { \"month\": \"2024-01\", \"value\": 2500.00 },\n    { \"month\": \"2024-02\", \"value\": 0 },\n    { \"month\": \"2024-03\", \"value\": 13200.00 }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

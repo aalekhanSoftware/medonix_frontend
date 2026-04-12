@@ -1,0 +1,38 @@
+{
+  "name": "angular-starter",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build"
+  },
+  "dependencies": {
+    "@angular/animations": "^17.3.9",
+    "@angular/common": "^17.3.9",
+    "@angular/compiler": "^17.3.9",
+    "@angular/core": "^17.3.9",
+    "@angular/forms": "^17.3.9",
+    "@angular/material": "^17.3.9",
+    "@angular/platform-browser": "^17.3.9",
+    "@angular/platform-browser-dynamic": "^17.3.9",
+    "@angular/router": "^17.3.9",
+    "@fortawesome/fontawesome-free": "^6.5.1",
+    "baseline-browser-mapping": "^2.9.18",
+    "bootstrap": "^5.3.3",
+    "chart.js": "^4.4.3",
+    "crypto-js": "^4.2.0",
+    "ngx-toastr": "^18.0.0",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.5.0",
+    "zone.js": "~0.14.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^17.3.9",
+    "@angular/cli": "^17.3.9",
+    "@angular/compiler-cli": "^17.3.9",
+    "@types/crypto-js": "^4.2.2",
+    "angular-cli-ghpages": "^2.0.3",
+    "sass": "^1.69.0",
+    "typescript": "~5.4.2"
+  }
+}

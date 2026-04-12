@@ -1,0 +1,214 @@
+{
+	"info": {
+		"name": "Purchase Order API",
+		"description": "API collection for Purchase Order management endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Purchase Order",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"customerId\": 1,\n  \"orderDate\": \"15-01-2024\",\n  \"invoiceNumber\": \"PO-2024-001\",\n  \"products\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 10.000,\n      \"unitPrice\": 100.00,\n      \"batchNumber\": \"BATCH001\",\n      \"remarks\": \"First order\"\n    },\n    {\n      \"productId\": 2,\n      \"quantity\": 5.000,\n      \"unitPrice\": 200.00,\n      \"batchNumber\": \"BATCH002\",\n      \"remarks\": \"Second item\"\n    }\n  ],\n  \"packagingAndForwadingCharges\": 50.00\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/create",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"purchase-orders",
+						"create"
+					]
+				},
+				"description": "Create a new purchase order. To update an existing order, include the 'id' field in the request body."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Purchase Order",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1,\n  \"customerId\": 1,\n  \"orderDate\": \"15-01-2024\",\n  \"invoiceNumber\": \"PO-2024-001-UPDATED\",\n  \"products\": [\n    {\n      \"id\": 1,\n      \"productId\": 1,\n      \"quantity\": 15.000,\n      \"unitPrice\": 100.00,\n      \"batchNumber\": \"BATCH001\",\n      \"remarks\": \"Updated quantity\"\n    },\n    {\n      \"productId\": 3,\n      \"quantity\": 8.000,\n      \"unitPrice\": 150.00,\n      \"batchNumber\": \"BATCH003\",\n      \"remarks\": \"New item added\"\n    }\n  ],\n  \"packagingAndForwadingCharges\": 75.00\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/create",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"purchase-orders",
+						"create"
+					]
+				},
+				"description": "Update an existing purchase order by including the 'id' field. Items with 'id' will be updated, items without 'id' will be created, and items not in the request will be deleted."
+			},
+			"response": []
+		},
+		{
+			"name": "Search Purchase Orders",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"currentPage\": 0,\n  \"perPageRecord\": 10,\n  \"search\": \"PO-2024\",\n  \"customerId\": 1,\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"batchNumber\": \"BATCH001\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/search",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"purchase-orders",
+						"search"
+					]
+				},
+				"description": "Search purchase orders with pagination and filters. All fields are optional."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Purchase Order Detail",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/detail",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"purchase-orders",
+						"detail"
+					]
+				},
+				"description": "Get detailed information about a specific purchase order including all items."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Purchase Order",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/:id",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"purchase-orders",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "1",
+							"description": "Purchase Order ID"
+						}
+					]
+				},
+				"description": "Delete a purchase order by ID. This will also delete all associated purchase order items."
+			},
+			"response": []
+		},
+		{
+			"name": "Generate Purchase Order PDF",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/generate-pdf",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"purchase-orders",
+						"generate-pdf"
+					]
+				},
+				"description": "Generate a PDF document for a purchase order. The response will be a PDF file that can be downloaded or viewed."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
+

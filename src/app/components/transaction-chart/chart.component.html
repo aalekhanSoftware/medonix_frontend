@@ -1,0 +1,161 @@
+<div class="transaction-chart-container">
+  <app-loader [show]="isLoading"></app-loader>
+
+  <section class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+      </div>
+      <div class="header-text">
+        <h1>Transaction Charts</h1>
+        <p>Month-wise Sales, Purchase and Payment Done analytics</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="search-section card" aria-labelledby="transaction-chart-filters-heading">
+    <h2 id="transaction-chart-filters-heading">Chart Filters</h2>
+
+    <form
+      [formGroup]="chartForm"
+      (ngSubmit)="onSearch($event)"
+      aria-label="Transaction chart filter form"
+    >
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="chart-report-type">
+            Report Type <span class="required">*</span>
+          </label>
+          <select
+            id="chart-report-type"
+            class="form-control"
+            formControlName="reportType"
+            (change)="onReportTypeChange()"
+            (touchstart)="$event.stopPropagation()"
+          >
+            <option value="SALES">Sales Report</option>
+            <option value="PURCHASE">Purchase Report</option>
+            <option value="PAYMENT_DONE">Payment Done Report</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="chart-start-date">
+            Start Date <span class="required">*</span>
+          </label>
+          <input
+            id="chart-start-date"
+            type="date"
+            formControlName="startDate"
+            class="form-control"
+            aria-label="Start date"
+            (touchstart)="$event.stopPropagation()"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="chart-end-date">
+            End Date <span class="required">*</span>
+          </label>
+          <input
+            id="chart-end-date"
+            type="date"
+            formControlName="endDate"
+            class="form-control"
+            aria-label="End date"
+            (touchstart)="$event.stopPropagation()"
+          />
+        </div>
+
+        <div class="form-group" (touchstart)="$event.stopPropagation()">
+          <label for="chart-customer-select">Customer</label>
+          <div class="select-wrapper">
+            <app-searchable-select
+              id="chart-customer-select"
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Customers', value: '' }"
+              [searchPlaceholder]="'Search customers...'"
+              [allowClear]="true"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button
+            type="submit"
+            class="search-btn btn btn-sm btn-primary"
+            [disabled]="isLoading"
+            aria-label="Search"
+          >
+            <i class="fas fa-search"></i> Search
+          </button>
+
+          <button
+            type="button"
+            class="search-btn btn btn-sm btn-secondary"
+            (click)="resetForm()"
+            [disabled]="isLoading"
+            aria-label="Reset Filters"
+          >
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="results-section card" aria-labelledby="transaction-chart-results-heading">
+    <h2 id="transaction-chart-results-heading">Month-wise Bar Chart</h2>
+
+    <div class="chart-stats" *ngIf="!isLoading && chartPoints.length > 0">
+      <div class="stat-card" *ngIf="chartForm.get('reportType')?.value !== 'PAYMENT_DONE'">
+        <div class="stat-icon">
+          <i class="fas fa-coins" aria-hidden="true"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Amount</span>
+          <span class="stat-value">₹{{ chartTotal | number: '1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="stat-card" *ngIf="chartForm.get('reportType')?.value === 'PAYMENT_DONE'">
+        <div class="stat-icon">
+          <i class="fas fa-arrow-down" aria-hidden="true"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Received</span>
+          <span class="stat-value">{{ totalReceivedCount | number: '1.0-0' }}</span>
+        </div>
+      </div>
+      <div class="stat-card" *ngIf="chartForm.get('reportType')?.value === 'PAYMENT_DONE'">
+        <div class="stat-icon">
+          <i class="fas fa-arrow-up" aria-hidden="true"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Paid</span>
+          <span class="stat-value">{{ totalPaidCount | number: '1.0-0' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="chart-wrapper"
+      [class.chart-wrapper--hidden]="isLoading || chartPoints.length === 0"
+    >
+      <canvas #chartCanvas></canvas>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && chartPoints.length === 0">
+      <i class="fas fa-info-circle" aria-hidden="true"></i>
+      <span *ngIf="hasSearched; else notSearched">
+        No data found for the selected filters. Try adjusting the date range or customer.
+      </span>
+      <ng-template #notSearched>
+        Select filters and click Search to load the month-wise chart.
+      </ng-template>
+    </div>
+  </section>
+</div>
+

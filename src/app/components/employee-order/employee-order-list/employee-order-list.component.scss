@@ -1,0 +1,94 @@
+@import '../../../../variables';
+
+.employee-order-container {
+  padding: 20px;
+  background-color: var(--background);
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+
+    h2 {
+      margin-bottom: 20px;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+    }
+  }
+
+  .search-section {
+    .search-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      align-items: start;
+
+      .button-group {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        // align-self: flex-end;
+      }
+    }
+  }
+
+  .action-buttons {
+    margin: 20px 0;
+  }
+
+  .status-o {
+    color: var(--warning);
+    background-color: rgba(255, 165, 0, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+
+  .status-i {
+    color: var(--info);
+    background-color: rgba(255, 165, 0, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+
+  .status-c {
+    color: var(--success);
+    background-color: rgba(255, 165, 0, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+
+  // Reference to employee-list.component.scss for table styles
+//   @include tableStyles();
+  
+  // Reference to employee-list.component.scss for pagination styles
+//   @include paginationStyles();
+
+}
+
+@media (max-width: 768px) {
+  .employee-order-container {
+    padding: 10px;
+
+    .search-section {
+      .search-controls {
+        grid-template-columns: 1fr;
+        gap: 10px;
+
+        .button-group {
+          width: 100%;
+          justify-content: flex-end;
+        }
+      }
+    }
+
+    .table-responsive {
+      margin: 0 -15px;
+      padding: 0 15px;
+    }
+  }
+} 

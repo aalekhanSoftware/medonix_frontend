@@ -1,0 +1,495 @@
+@import '../../../../variables';
+
+.pending-item-container {
+  padding: 20px;
+  background-color: var(--background);
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  h2 {
+    color: var(--primary);
+    margin: 0;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.search-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+
+    label {
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    input,
+    select {
+      padding: 10px;
+      border: 1px solid var(--supporting);
+      border-radius: 4px;
+      font-size: 14px;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+
+        input[type="checkbox"] {
+          width: auto;
+        }
+      }
+    }
+    
+    .product-select-group {
+      display: flex;
+      gap: 8px;
+      
+      app-searchable-select {
+        flex: 1;
+      }
+      
+      .refresh {
+        width: 33px;
+        height: 33px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        min-width: auto;
+      }
+    }
+  }
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+
+    &.btn-primary {
+      background-color: var(--primary);
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: darken($primary, 10%);
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    &.btn-secondary {
+      background-color: var(--secondary);
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: darken($secondary, 10%);
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+    }
+  }
+}
+
+.results-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  th,
+  td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--supporting);
+
+    .btn-icon {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      
+      &.whatsapp {
+        color: #25D366;
+        background-color: rgba(37, 211, 102, 0.1);
+        
+        &:hover:not(:disabled) {
+          background-color: #25D366;
+          color: white;
+          transform: translateY(-1px);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        
+        i {
+          font-size: 18px;
+        }
+      }
+      
+      &.call {
+        color: #007bff;
+        background-color: rgba(0, 123, 255, 0.1);
+        
+        &:hover:not(:disabled) {
+          background-color: #007bff;
+          color: white;
+          transform: translateY(-1px);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        
+        i {
+          font-size: 18px;
+        }
+      }
+
+      &.edit {
+        color: var(--primary);
+        background-color: rgba(20, 88, 129, 0.1);
+        
+        &:hover:not(:disabled) {
+          background-color: var(--primary);
+          color: white;
+          transform: translateY(-1px);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        
+        i {
+          font-size: 16px;
+        }
+      }
+
+      &.dispatch {
+        color: #ff9800;
+        background-color: rgba(255, 152, 0, 0.1);
+        
+        &:hover:not(:disabled) {
+          background-color: #ff9800;
+          color: white;
+          transform: translateY(-1px);
+        }
+        
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        
+        i {
+          font-size: 16px;
+        }
+      }
+      
+      i {
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      padding: 8px;
+      font-size: 14px;
+    }
+  }
+
+  th {
+    background-color: var(--secondary);
+    color: white;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  tr:hover {
+    background-color: rgba(174, 198, 207, 0.1);
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+
+    &.status-o {
+      background-color: #ffecb3;
+      color: #ff9800;
+    }
+
+    &.status-ip {
+      background-color: #bbdefb;
+      color: #2196f3;
+    }
+
+    &.status-c {
+      background-color: #c8e6c9;
+      color: #4caf50;
+    }
+
+    &.status-b {
+      background-color: #e1bee7;
+      color: #9c27b0;
+    }
+  }
+
+  .action-cell {
+    white-space: nowrap;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    
+    .edit-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+
+  .page-info {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .pagination-controls {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+
+    .page-button {
+      padding: 8px 12px;
+      border: 1px solid var(--supporting);
+      background-color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+
+      &:hover:not(.disabled):not(.active) {
+        background-color: var(--primary);
+        color: white;
+      }
+
+      &.active {
+        background-color: var(--primary);
+        color: white;
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &:active:not(.disabled) {
+        transform: scale(0.95);
+      }
+    }
+  }
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+
+  p {
+    margin: 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .pending-item-container {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-card {
+    padding: 15px;
+  }
+
+  .buttons {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+
+  .results-card {
+    padding: 15px;
+  }
+
+  .table-container {
+    font-size: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 800px; // Ensure table doesn't get too compressed
+    
+    th,
+    td {
+      padding: 8px 5px;
+      white-space: nowrap;
+    }
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group {
+    margin-bottom: 10px;
+  }
+  
+  .product-select-group {
+    flex-direction: column;
+    
+    .refresh {
+      align-self: flex-start;
+    }
+  }
+
+  table {
+    th,
+    td {
+      font-size: 12px;
+      padding: 6px 4px;
+    }
+  }
+}
+
+// Touch device optimizations
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .btn-icon,
+  .page-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .search-form {
+    .form-group {
+      input,
+      select {
+        font-size: 16px; // Prevents zoom on iOS
+      }
+    }
+  }
+}
+

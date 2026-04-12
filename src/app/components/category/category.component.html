@@ -1,0 +1,109 @@
+<div class="category-container">
+  <app-loader [show]="isLoading"></app-loader>
+  <div class="search-section card">
+    <h3>Search Categories</h3>
+    <div class="search-container">
+      <form [formGroup]="searchForm" class="search-form">
+        <div class="search-inputs">
+          <input type="text" class="form-control" placeholder="Search categories..." formControlName="search">
+          <select class="form-control" formControlName="status">
+            <option value="A">Active</option>
+            <option value="I">Inactive</option>
+          </select>
+          <button class="search-btn btn btn-primary" (click)="onSearch()">
+            <i class="fas fa-search me-2"></i> Search
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <button class="btn btn-sm btn-primary mb-2" (click)="openCreateDialog()">
+    <i class="fas fa-plus"></i> Create Category
+  </button>
+
+  <div class="categories-list card">
+    <h2>Categories</h2>
+    
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of categories">
+            <td>{{ category.name }}</td>
+            <td>
+              <span [class]="'status-badge ' + (category.status === 'A' ? 'active' : 'inactive')">
+                {{ category.status === 'A' ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-icon" (click)="editCategory(category)" title="Edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-icon" (click)="deleteCategory(category.id!)" title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="categories.length === 0">
+            <td colspan="3" class="text-center">No categories found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </div>
+</div>
+
+<div class="dialog-backdrop" *ngIf="isDialogOpen" (click)="closeDialog()"></div>
+<div class="dialog" *ngIf="isDialogOpen" [@dialogAnimation]>
+  <div class="dialog-header">
+    <h2>{{ isEditing ? 'Edit' : 'Create' }} Category</h2>
+    <button class="close-button" (click)="closeDialog()">×</button>
+  </div>
+  <div class="dialog-content">
+    <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Category Name</label>
+        <input 
+          type="text" 
+          id="name" 
+          class="form-control" 
+          formControlName="name" 
+          [class.is-invalid]="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched"
+        >
+        <div class="invalid-feedback" *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">
+          Category name is required
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" class="form-control" formControlName="status">
+          <option value="A">Active</option>
+          <option value="I">Inactive</option>
+        </select>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeDialog()">Cancel</button>
+        <button type="submit" class="btn btn-sm btn-primary" [disabled]="categoryForm.invalid || isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+          {{ isEditing ? 'Update' : 'Create' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,141 @@
+@import '../add-quotation/add-quotation.component.scss';
+
+// Dispatch-specific tweaks
+.card-header {
+  background-image: linear-gradient(135deg, var(--primary) 0%, #1d976c 100%);
+}
+
+.products-table th {
+  white-space: nowrap;
+}
+
+// Column sizing: keep table predictable and prevent Product names from pushing other columns
+.products-table {
+  table-layout: fixed;
+}
+
+.products-table th:nth-child(1),
+.products-table td:nth-child(1) {
+  width: 130px;
+  min-width: 130px;
+  max-width: 130px;
+  box-sizing: border-box;
+}
+
+.products-table th:nth-child(2),
+.products-table td:nth-child(2) {
+  width: 420px;
+  min-width: 420px;
+  max-width: 420px;
+  box-sizing: border-box;
+}
+
+.products-table th:nth-child(3),
+.products-table td:nth-child(3) {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  box-sizing: border-box;
+}
+
+.products-table th:nth-child(4),
+.products-table td:nth-child(4) {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  box-sizing: border-box;
+}
+
+.products-table th:nth-child(5),
+.products-table td:nth-child(5) {
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
+  box-sizing: border-box;
+}
+
+.products-table th:nth-child(6),
+.products-table td:nth-child(6) {
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+  box-sizing: border-box;
+}
+
+.products-table th:nth-child(7),
+.products-table td:nth-child(7) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  box-sizing: border-box;
+}
+
+.form-field-container {
+  position: relative;
+  margin-bottom: 1rem;
+  min-width: 100px !important;
+}
+
+// Truncate Product name + show full value on hover (via title attribute in template)
+.products-table td:nth-child(2) .product-name {
+  min-width: 0 !important;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+// Reduce searchable-select width only on Dispatch page
+.select-group app-searchable-select {
+  width: 120px !important;
+}
+
+// Highlight dispatched rows
+.products-table tr.dispatched-row {
+  background-color: #C5C6C7; // light orange
+}
+
+// Ensure Status select remains visible and usable on small desktop widths
+.products-table td.status-col select,
+.products-table th.status-col select {
+  min-width: 85px;
+}
+
+// Make the last two columns sticky so they don't scroll out of view
+.products-table {
+  th.status-col,
+  td.status-col {
+    // position: sticky;
+    // right: 40px; // placed just before created roll
+    // background: #fff;
+    // z-index: 2;
+    min-width: 85px;
+  }
+}
+
+// Ensure the table can scroll - viewport handles scroll
+.table-responsive {
+  overflow-x: hidden;
+}
+
+.products-table-scroll-inner {
+  width: 100%;
+  display: block;
+}
+
+.products-table-viewport {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  overflow-y: auto;
+  min-height: 750px;
+
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    padding-bottom: 350px;
+  }
+}
+
+.products-table {
+  min-width: 1200px;
+}
+

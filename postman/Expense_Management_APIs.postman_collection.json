@@ -1,0 +1,606 @@
+{
+  "info": {
+    "_postman_id": "medonix-expense-management-api",
+    "name": "Medonix Backend - Expense Management (Employee + Expense Master)",
+    "description": "CRUD APIs for employee_master (`/api/employee-master`, separate from existing `/api/employees` HR APIs) and expense_master (`/api/expenses`). Authenticate first (use Medonix Complete collection Login) and set access_token in environment.\n\n**Response shape (all endpoints):** JSON body uses `ApiResponse`: `success` (boolean), `message` (string), optional `data` (any — omitted when null). Successful mutations return HTTP **200** with `success: true` and usually no `data`. Validation/business errors return HTTP **422** with `success: false` and `message` explaining the issue.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "{{access_token}}",
+      "type": "string"
+    },
+    {
+      "key": "employeeId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Employee Master",
+      "item": [
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"status\": \"A\",\n  \"remarks\": \"Optional note\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/employee-master",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "employee-master"]
+            },
+            "description": "Status must be A (active) or I (inactive)."
+          },
+          "response": [
+            {
+              "name": "200 OK — Created",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employee created successfully\"\n}"
+            },
+            {
+              "name": "422 — Validation (example)",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Employee name is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{employeeId}},\n  \"name\": \"John Doe Updated\",\n  \"status\": \"A\",\n  \"remarks\": \"Updated remarks\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/employee-master",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "employee-master"]
+            },
+            "description": "id is required in the JSON body (not in the URL)."
+          },
+          "response": [
+            {
+              "name": "200 OK — Updated",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employee updated successfully\"\n}"
+            },
+            {
+              "name": "422 — Not found / validation",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Employee not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{employeeId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/employee-master",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "employee-master"]
+            },
+            "description": "Send id in the body. Fails if employee is referenced by any expense (employee_ids array)."
+          },
+          "response": [
+            {
+              "name": "200 OK — Deleted",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employee deleted successfully\"\n}"
+            },
+            {
+              "name": "422 — Referenced by expense",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cannot delete employee: referenced by one or more expense records\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Employees (getEmployees)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"status\": \"\",\n  \"search\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/employee-master/getEmployees",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "employee-master", "getEmployees"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK — List",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employees retrieved successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"John Doe\",\n      \"status\": \"A\",\n      \"remarks\": \"Optional note\",\n      \"createdAt\": \"2026-03-28T10:15:30+00:00\",\n      \"updatedAt\": null,\n      \"createdBy\": \"Admin User\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Employees (paginated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"status\": \"A\",\n  \"page\": 0,\n  \"size\": 10,\n  \"sortBy\": \"id\",\n  \"sortDir\": \"desc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/employee-master/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "employee-master", "search"]
+            },
+            "description": "sortBy allowlist: id, name, status, created_at"
+          },
+          "response": [
+            {
+              "name": "200 OK — Paginated",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Employees retrieved successfully\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 2,\n        \"name\": \"Jane Smith\",\n        \"status\": \"A\",\n        \"remarks\": null\n      },\n      {\n        \"id\": 1,\n        \"name\": \"John Doe\",\n        \"status\": \"A\",\n        \"remarks\": \"Note\"\n      }\n    ],\n    \"totalElements\": 2,\n    \"totalPages\": 1\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Expense Master",
+      "item": [
+        {
+          "name": "Create Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeIds\": [1],\n  \"amount\": 1500.50,\n  \"reason\": \"Travel\",\n  \"expenseDate\": \"2026-04-02\",\n  \"other\": \"Optional extra info\",\n  \"remarks\": \"Optional\",\n  \"isExpense\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            },
+            "description": "employeeIds must reference employees for the same client; at least one id required. expenseDate is mandatory (YYYY-MM-DD)."
+          },
+          "response": [
+            {
+              "name": "200 OK — Created",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expense created successfully\"\n}"
+            },
+            {
+              "name": "422 — Invalid employee ids",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"One or more employee ids are invalid for this client\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Expense",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{expenseId}},\n  \"employeeIds\": [1, 2],\n  \"amount\": 2000.00,\n  \"reason\": \"Updated reason\",\n  \"expenseDate\": \"2026-04-02\",\n  \"other\": \"\",\n  \"remarks\": \"\",\n  \"isExpense\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            },
+            "description": "id is required in the JSON body (not in the URL). expenseDate is mandatory (YYYY-MM-DD)."
+          },
+          "response": [
+            {
+              "name": "200 OK — Updated",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expense updated successfully\"\n}"
+            },
+            {
+              "name": "422 — Not found",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Expense not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Expense",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": {{expenseId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            },
+            "description": "Send id in the body."
+          },
+          "response": [
+            {
+              "name": "200 OK — Deleted",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expense deleted successfully\"\n}"
+            },
+            {
+              "name": "422 — Missing id",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Expense id is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Import Expenses (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "description": "Excel workbook (.xlsx)",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/import-excel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "import-excel"]
+            },
+            "description": "multipart/form-data with field `file`. Uses collection Bearer auth. On success, `data` includes `processedRows` and `insertedRows`."
+          },
+          "response": [
+            {
+              "name": "200 OK — Imported",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expense Excel import completed successfully\",\n  \"data\": {\n    \"processedRows\": 18,\n    \"insertedRows\": 18\n  }\n}"
+            },
+            {
+              "name": "422 — Business error",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Employee not found for name: Example\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Expenses (getExpenses)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"reason\": \"\",\n  \"isExpense\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/getExpenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "getExpenses"]
+            },
+            "description": "Optional `isExpense` filter (true = expense, false = income). Response rows include `employeeNames` and `employees` (id + name) resolved from employee_master, in the same order as `employeeIds`."
+          },
+          "response": [
+            {
+              "name": "200 OK — List",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expenses retrieved successfully\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"employeeIds\": [1, 2],\n      \"employeeNames\": [\"John Doe\", \"Jane Smith\"],\n      \"employees\": [\n        { \"id\": 1, \"name\": \"John Doe\" },\n        { \"id\": 2, \"name\": \"Jane Smith\" }\n      ],\n      \"amount\": 1500.50,\n      \"reason\": \"Travel\",\n      \"expenseDate\": \"2026-04-02\",\n      \"other\": \"Optional extra info\",\n      \"remarks\": \"Optional\",\n      \"isExpense\": true,\n      \"createdAt\": \"2026-03-28T11:00:00+00:00\",\n      \"updatedAt\": null,\n      \"createdBy\": \"Admin User\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Expenses (paginated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"\",\n  \"reason\": \"\",\n  \"isExpense\": true,\n  \"page\": 0,\n  \"size\": 10,\n  \"sortBy\": \"id\",\n  \"sortDir\": \"desc\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "search"]
+            },
+            "description": "Optional `isExpense` filter (true = expense, false = income). Each row includes `employeeIds` plus `employeeNames` (same order) and `employees` as `[{ \"id\", \"name\" }, ...]` from `employee_master`. sortBy allowlist: id, amount, reason, created_at"
+          },
+          "response": [
+            {
+              "name": "200 OK — Paginated",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Expenses retrieved successfully\",\n  \"data\": {\n    \"content\": [\n      {\n        \"id\": 1,\n        \"employeeIds\": [1, 2],\n        \"employeeNames\": [\"John Doe\", \"Jane Smith\"],\n        \"employees\": [\n          { \"id\": 1, \"name\": \"John Doe\" },\n          { \"id\": 2, \"name\": \"Jane Smith\" }\n        ],\n        \"amount\": 1500.50,\n        \"reason\": \"Travel\",\n        \"expenseDate\": \"2026-04-02\",\n        \"other\": null,\n        \"remarks\": null,\n        \"isExpense\": true\n      }\n    ],\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

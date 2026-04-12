@@ -1,0 +1,161 @@
+<div class="modal-overlay" *ngIf="display$ | async" (click)="close()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-shopping-cart"></i> Create Sale</h2>
+      <button class="btn-icon close" (click)="close()" title="Close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="saleForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="quantity">
+            <i class="fas fa-hashtag"></i> Quantity <span class="required">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="quantity" 
+            formControlName="quantity" 
+            class="form-control"
+            [class.is-invalid]="saleForm.get('quantity')?.invalid && saleForm.get('quantity')?.touched"
+          >
+          <div class="invalid-feedback" *ngIf="saleForm.get('quantity')?.errors?.['required']">
+            Quantity is required
+          </div>
+          <div class="invalid-feedback" *ngIf="saleForm.get('quantity')?.errors?.['max']">
+            Quantity cannot exceed remaining quantity ({{ purchase.remainingQuantity }})
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="unitPrice">
+            <i class="fas fa-tag"></i> Unit Price <span class="required">*</span>
+          </label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              id="unitPrice" 
+              formControlName="unitPrice" 
+              class="form-control"
+              [class.is-invalid]="saleForm.get('unitPrice')?.invalid && saleForm.get('unitPrice')?.touched"
+              min="0.01"
+              step="0.01"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="saleDate">
+            <i class="fas fa-calendar"></i> Sale Date
+          </label>
+          <input 
+            type="datetime-local" 
+            id="saleDate" 
+            formControlName="saleDate" 
+            class="form-control"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="invoiceNumber">
+            <i class="fas fa-file-invoice"></i> Invoice Number <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="invoiceNumber" 
+            formControlName="invoiceNumber" 
+            class="form-control"
+            [class.is-invalid]="saleForm.get('invoiceNumber')?.invalid && saleForm.get('invoiceNumber')?.touched"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="otherExpenses">
+            <i class="fas fa-coins"></i> Other Expenses
+          </label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              id="otherExpenses" 
+              formControlName="otherExpenses" 
+              class="form-control"
+              min="0"
+              step="0.01"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="discount-group">
+        <div class="form-group">
+          <label for="discount">
+            <i class="fas fa-percent"></i> Discount Percentage
+          </label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              id="discount" 
+              formControlName="discount" 
+              class="form-control"
+              [class.is-invalid]="saleForm.get('discount')?.invalid && saleForm.get('discount')?.touched"
+              min="0"
+              max="100"
+              step="0.01"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="discountAmount">
+            <i class="fas fa-tags"></i> Discount Amount
+          </label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              id="discountAmount" 
+              formControlName="discountAmount" 
+              class="form-control"
+              [class.is-invalid]="saleForm.get('discountAmount')?.invalid && saleForm.get('discountAmount')?.touched"
+              min="0"
+              step="0.01"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="discountedPrice">
+            <i class="fas fa-calculator"></i> Final Price
+          </label>
+          <div class="input-group">
+            <input 
+              type="number" 
+              id="discountedPrice" 
+              formControlName="discountedPrice" 
+              class="form-control"
+              readonly
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="close()"
+        >
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="saleForm.invalid || loading"
+        >
+          <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+          {{ loading ? 'Creating...' : 'Create Sale' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div> 

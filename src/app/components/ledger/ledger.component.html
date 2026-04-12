@@ -1,0 +1,277 @@
+<div class="ledger-container">
+  <app-loader [show]="isLoading || isGeneratingPdf || isLoadingPdfData"></app-loader>
+
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-file-invoice-dollar"></i>
+      </div>
+      <div class="header-text">
+        <h1>Ledger Report</h1>
+        <p>Generate customer ledger reports with custom date ranges</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="filter-card card">
+    <div class="card-header">
+      <h2><i class="fas fa-filter"></i> Report Filters</h2>
+    </div>
+
+    <form [formGroup]="ledgerForm" (ngSubmit)="generatePdf($event)" class="filter-form">
+      <div class="filter-grid">
+        <!-- Customer Selection -->
+        <div class="form-group customer-group" *ngIf="!isDealer">
+          <label for="customerId">
+            <i class="fas fa-user"></i> Select Customer <span class="required">*</span>
+          </label>
+          <div class="select-group inline">
+            <app-searchable-select
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [placeholder]="'Select Customer'"
+              [searchPlaceholder]="'Search customers...'"
+              [class.is-invalid]="isFieldInvalid('customerId')"
+            ></app-searchable-select>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary refresh-btn"
+              (click)="refreshCustomers()"
+              [disabled]="isLoadingCustomers"
+              title="Refresh Customers"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('customerId')">
+            Please select a customer
+          </div>
+        </div>
+
+        <!-- Start Date -->
+        <div class="form-group">
+          <label for="startDate">
+            <i class="fas fa-calendar-alt"></i> Start Date <span class="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="startDate"
+            formControlName="startDate"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('startDate')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('startDate')">
+            Start date is required
+          </div>
+        </div>
+
+        <!-- End Date -->
+        <div class="form-group">
+          <label for="endDate">
+            <i class="fas fa-calendar-check"></i> End Date <span class="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="endDate"
+            formControlName="endDate"
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('endDate')"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('endDate')">
+            End date is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="resetForm()"
+          [disabled]="isGeneratingPdf || isLoadingPdfData"
+        >
+          <i class="fas fa-undo"></i> Reset
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary search-ledger-btn"
+          (click)="searchLedgerData()"
+          [disabled]="ledgerForm.invalid || isGeneratingPdf || isLoadingPdfData"
+        >
+          <i class="fas" [ngClass]="isLoadingPdfData ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+          {{ isLoadingPdfData ? 'Loading...' : 'Search' }}
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary generate-btn"
+          [disabled]="ledgerForm.invalid || isGeneratingPdf || isLoadingPdfData"
+        >
+          <i class="fas" [ngClass]="isGeneratingPdf ? 'fa-spinner fa-spin' : 'fa-file-pdf'"></i>
+          {{ isGeneratingPdf ? 'Generating...' : 'Generate PDF' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- On-screen ledger (generate-pdf-data) -->
+  <div class="ledger-results-card card" *ngIf="ledgerPdfData as data">
+    <div class="ledger-results-header">
+      <div class="ledger-results-title-block">
+        <h2>{{ data.statementTitle }}</h2>
+        <p class="ledger-generated" *ngIf="data.generatedAtFormatted">
+          Generated: {{ data.generatedAtFormatted }}
+        </p>
+      </div>
+    </div>
+
+    <div class="ledger-summary-section">
+      <div class="ledger-summary-grid">
+        <div class="ledger-summary-block">
+          <h3>Customer</h3>
+          <p class="ledger-line strong">{{ data.ledgerSummary.customerName }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.customerAddress">{{ data.ledgerSummary.customerAddress }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.customerMobile">Mob: {{ data.ledgerSummary.customerMobile }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.customerGst">GST: {{ data.ledgerSummary.customerGst }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.customerEmail">{{ data.ledgerSummary.customerEmail }}</p>
+        </div>
+        <div class="ledger-summary-block">
+          <h3>Company</h3>
+          <p class="ledger-line strong">{{ data.ledgerSummary.companyName }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.companyAddress">{{ data.ledgerSummary.companyAddress }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.companyMobile">Mob: {{ data.ledgerSummary.companyMobile }}</p>
+          <p class="ledger-line" *ngIf="data.ledgerSummary.companyGst">GST: {{ data.ledgerSummary.companyGst }}</p>
+        </div>
+        <div class="ledger-summary-block ledger-period-balances">
+          <h3>Period &amp; balances</h3>
+          <p class="ledger-line">
+            <span class="muted">Period</span>
+            {{ data.ledgerSummary.startDate }} — {{ data.ledgerSummary.endDate }}
+          </p>
+          <p class="ledger-line ledger-amounts">
+            <span>Opening</span>
+            <strong>{{ (data.ledgerSummary.openingBalance ?? 0) | currency:'INR' }}</strong>
+          </p>
+          <p class="ledger-line ledger-amounts">
+            <span>Total debit</span>
+            <strong>{{ (data.ledgerSummary.totalDebit ?? 0) | currency:'INR' }}</strong>
+          </p>
+          <p class="ledger-line ledger-amounts">
+            <span>Total credit</span>
+            <strong>{{ (data.ledgerSummary.totalCredit ?? 0) | currency:'INR' }}</strong>
+          </p>
+          <p class="ledger-line ledger-amounts closing">
+            <span>Closing</span>
+            <strong>{{ (data.ledgerSummary.closingBalance ?? 0) | currency:'INR' }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="ledger-stats-chips" *ngIf="data.ledgerSummary">
+        <span class="stat-chip">Purchases: {{ data.ledgerSummary.totalPurchases ?? 0 }} ({{ (data.ledgerSummary.totalPurchaseAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">Pur. returns: {{ data.ledgerSummary.totalPurchaseReturns ?? 0 }} ({{ (data.ledgerSummary.totalPurchaseReturnAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">Sales: {{ data.ledgerSummary.totalSales ?? 0 }} ({{ (data.ledgerSummary.totalSaleAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">Sale returns: {{ data.ledgerSummary.totalSaleReturns ?? 0 }} ({{ (data.ledgerSummary.totalSaleReturnAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">Pymt received: {{ data.ledgerSummary.totalPaymentsReceived ?? 0 }} ({{ (data.ledgerSummary.totalPaymentReceivedAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">Pymt made: {{ data.ledgerSummary.totalPaymentsMade ?? 0 }} ({{ (data.ledgerSummary.totalPaymentMadeAmount ?? 0) | currency:'INR' }})</span>
+      </div>
+
+      <!-- <div class="ledger-company-other" *ngIf="companyOtherEntries().length">
+        <h4>Other company details</h4>
+        <ul>
+          <li *ngFor="let pair of companyOtherEntries()">
+            <span class="muted">{{ pair.key }}</span> {{ pair.value }}
+          </li>
+        </ul>
+      </div> -->
+    </div>
+
+    <div class="ledger-table-wrap">
+      <p class="ledger-empty" *ngIf="getSortedLedgerEntries().length === 0">
+        No transactions in this period.
+      </p>
+      <div class="table-responsive ledger-table-scroll" *ngIf="getSortedLedgerEntries().length > 0">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Invoice</th>
+              <th>Description</th>
+              <th class="num">Debit</th>
+              <th class="num">Credit</th>
+              <th class="num">Running bal.</th>
+              <th class="num">Items</th>
+              <th class="num">Tax</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of getSortedLedgerEntries()">
+              <td>{{ row.transactionDate }}</td>
+              <td>{{ transactionTypeLabel(row.transactionType) }}</td>
+              <td>{{ row.invoiceNumber }}</td>
+              <td class="desc-cell">{{ row.description }}</td>
+              <td class="num">{{ row.debitAmount != null && row.debitAmount !== 0 ? (row.debitAmount | currency:'INR') : '—' }}</td>
+              <td class="num">{{ row.creditAmount != null && row.creditAmount !== 0 ? (row.creditAmount | currency:'INR') : '—' }}</td>
+              <td class="num">{{ row.runningBalance != null ? (row.runningBalance | currency:'INR') : '—' }}</td>
+              <td class="num">{{ row.numberOfItems != null ? row.numberOfItems : '—' }}</td>
+              <td class="num">{{ row.taxAmount != null ? (row.taxAmount | currency:'INR') : '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Card -->
+  <div class="info-card card">
+    <div class="info-header">
+      <i class="fas fa-info-circle"></i>
+      <h3>How to Generate Report</h3>
+    </div>
+    <div class="info-content">
+      <div class="info-step" *ngIf="!isDealer">
+        <div class="step-number">1</div>
+        <div class="step-text">Select a customer from the dropdown</div>
+      </div>
+      <div class="info-step" *ngIf="isDealer">
+        <div class="step-number">1</div>
+        <div class="step-text">Your ledger will be generated automatically</div>
+      </div>
+      <div class="info-step">
+        <div class="step-number">2</div>
+        <div class="step-text">Choose the start and end date for the report period</div>
+      </div>
+      <div class="info-step">
+        <div class="step-number">3</div>
+        <div class="step-text">Click "Search" to view the full ledger on screen, or "Generate PDF" to download</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Section (when customer is selected) -->
+  <div class="preview-card card" *ngIf="ledgerForm.get('customerId')?.value">
+    <div class="preview-header">
+      <i class="fas fa-eye"></i>
+      <h3>Report Preview</h3>
+    </div>
+    <div class="preview-content">
+      <div class="preview-item">
+        <span class="preview-label">Customer</span>
+        <span class="preview-value">{{ getSelectedCustomerName() }}</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Date Range</span>
+        <span class="preview-value">
+          {{ ledgerForm.get('startDate')?.value | date:'dd MMM yyyy' }}
+          <i class="fas fa-arrow-right"></i>
+          {{ ledgerForm.get('endDate')?.value | date:'dd MMM yyyy' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

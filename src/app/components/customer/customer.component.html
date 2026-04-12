@@ -1,0 +1,139 @@
+<div class="customer-container">
+  <div class="search-section card">
+    <h2>Search Customers</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" (keydown.enter)="$event.preventDefault()">
+      <div class="search-controls">
+        <div class="form-group">
+          <input 
+            type="text" 
+            formControlName="search" 
+            class="form-control" 
+            placeholder="Search customers..."
+          >
+        </div>
+        <div class="form-group status-filter">
+          <select formControlName="status" class="form-control" title="Filter by status">
+            <option value="A">Active</option>
+            <option value="I">Inactive</option>
+            <option value="P">Pending</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input 
+            type="date" 
+            formControlName="startDate" 
+            class="form-control" 
+            placeholder="Start Date"
+          >
+        </div>
+        <div class="form-group">
+          <input 
+            type="date" 
+            formControlName="endDate" 
+            class="form-control" 
+            placeholder="End Date"
+          >
+        </div>
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <button class="btn btn-sm btn-primary add-customer-btn mb-2" (click)="openDealerRegister()">
+    <i class="fas fa-plus"></i> Add Customer / Dealer
+  </button>
+
+  <div class="customers-list card">
+    <h2>Customers</h2>
+
+    <div class="table-responsive">
+      <div class="loading-overlay" *ngIf="isLoading">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Mobile</th>
+              <th>Email</th>
+              <th>GST</th>
+              <th>DL Number</th>
+              <th>Address</th>
+              <th>Pincode</th>
+              <th>Remaining Payment</th>
+              <th>Next Action Date</th>
+              <th>Credit Days</th>
+              <th>Remarks</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let customer of customers">
+              <td>{{customer.name}}</td>
+              <td>{{customer.mobile}}</td>
+              <td>{{customer.email}}</td>
+              <td>{{customer.gst}}</td>
+              <td>{{customer.dlNumber || '-'}}</td>
+              <td>{{customer.address || '-'}}</td>
+              <td>{{customer.pincode || '-'}}</td>
+              <td>₹{{customer.remainingPaymentAmount | number:'1.2-2'}}</td>
+              <td>{{ (customer.nextActionDate || null) | date:'medium' }}</td>
+              <td>{{customer.validityDays ?? '-'}}</td>
+              <td>{{customer.remarks || '-'}}</td>
+              <td>
+                <span 
+                  class="status-badge" 
+                  [ngClass]="{
+                    'active': customer.status === 'A',
+                    'inactive': customer.status === 'I',
+                    'pending': customer.status === 'P'
+                  }"
+                >
+                  {{ customer.status === 'A' ? 'Active' : (customer.status === 'I' ? 'Inactive' : 'Pending') }}
+                </span>
+              </td>
+              <td class="actions">
+                <button 
+                  type="button"
+                  class="btn-icon edit" 
+                  (click)="openCustomerModal(customer)"
+                  [attr.aria-label]="'Edit ' + customer.name"
+                  title="Edit customer"
+                >
+                  <i class="fas fa-pen"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!customers?.length">
+              <td colspan="13" class="text-center">No customers found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Replace lines 49-139 with: -->
+    <div class="table-controls">
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalElements]="totalElements"
+        [pageSizeOptions]="pageSizeOptions"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
+    </div>
+    </div>
+  </div>
+
+  <app-customer-modal
+    (customerSaved)="loadCustomers()"
+  ></app-customer-modal>
+

@@ -1,0 +1,484 @@
+@import '../../../../variables';
+
+.add-payment-container {
+  padding: 24px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+}
+
+// ============================================
+// Back Button
+// ============================================
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: white;
+  border: 1.5px solid $neutral-lighter;
+  border-radius: 10px;
+  color: $primary;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+  text-decoration: none;
+
+  i {
+    font-size: 0.85rem;
+  }
+
+  &:hover {
+    background: $primary;
+    border-color: $primary;
+    color: white;
+    transform: translateX(-4px);
+  }
+}
+
+// ============================================
+// Form Card
+// ============================================
+.form-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba($neutral-dark, 0.08);
+  border: 1px solid $neutral-lighter;
+  overflow: hidden;
+}
+
+// ============================================
+// Card Header
+// ============================================
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, $primary 0%, $primary-light 100%);
+  border-bottom: none;
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    background: rgba(white, 0.15);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+
+    i {
+      font-size: 1.5rem;
+      color: white;
+    }
+  }
+
+  .header-text {
+    .form-title {
+      margin: 0 0 4px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.3px;
+    }
+
+    .form-subtitle {
+      margin: 0;
+      font-size: 0.9rem;
+      color: rgba(white, 0.8);
+    }
+  }
+}
+
+// ============================================
+// Form Content
+// ============================================
+.payment-form {
+  padding: 32px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+// ============================================
+// Form Group
+// ============================================
+.form-group {
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: $neutral-dark;
+
+    i {
+      color: $secondary;
+      font-size: 0.85rem;
+    }
+
+    .required {
+      color: $error;
+      font-weight: 700;
+    }
+
+    .optional {
+      color: $neutral-medium;
+      font-weight: 400;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// ============================================
+// Input Wrapper & Styles
+// ============================================
+.input-wrapper {
+  position: relative;
+
+  &.currency-input {
+    display: flex;
+    align-items: center;
+
+    .currency-symbol {
+      position: absolute;
+      left: 14px;
+      font-weight: 600;
+      color: $secondary;
+      font-size: 1rem;
+      z-index: 1;
+    }
+  }
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid $neutral-lighter;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  color: $neutral-dark;
+  background: $neutral-lightest;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: $neutral-medium;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $secondary;
+    background: white;
+    box-shadow: 0 0 0 4px rgba($secondary, 0.1);
+  }
+
+  &.is-invalid {
+    border-color: $error;
+    background: rgba($error, 0.03);
+
+    &:focus {
+      box-shadow: 0 0 0 4px rgba($error, 0.1);
+    }
+  }
+
+  &.with-prefix {
+    padding-left: 36px;
+  }
+
+  &.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a949c'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 24px;
+    padding-right: 44px;
+  }
+
+  &.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+  }
+}
+
+// ============================================
+// Input with Action Button
+// ============================================
+.input-with-action {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+
+  app-searchable-select {
+    flex: 1;
+  }
+
+  .btn-refresh {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $neutral-lightest;
+    border: 1.5px solid $neutral-lighter;
+    border-radius: 12px;
+    color: $secondary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+      background: $secondary;
+      border-color: $secondary;
+      color: white;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// ============================================
+// Toggle Switch
+// ============================================
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: $neutral-lightest;
+  border-radius: 12px;
+  border: 1.5px solid $neutral-lighter;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: $neutral-medium;
+  transition: all 0.3s ease;
+
+  i {
+    font-size: 0.8rem;
+  }
+
+  &.active {
+    color: $secondary;
+    font-weight: 600;
+
+    i {
+      color: $secondary;
+    }
+  }
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 56px;
+  height: 30px;
+  flex-shrink: 0;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: $error;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    &::before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  input:checked + .toggle-slider {
+    background: $success;
+  }
+
+  input:checked + .toggle-slider::before {
+    transform: translateX(26px);
+  }
+
+  input:focus + .toggle-slider {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba($secondary, 0.2);
+  }
+
+  &:hover .toggle-slider {
+    filter: brightness(1.05);
+  }
+}
+
+// ============================================
+// Error Message
+// ============================================
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: $error;
+  font-weight: 500;
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+// ============================================
+// Form Actions
+// ============================================
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid $neutral-lighter;
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+
+    i {
+      font-size: 0.9rem;
+    }
+
+    &.btn-secondary {
+      background: $neutral-lightest;
+      color: $neutral-dark;
+      border: 1.5px solid $neutral-lighter;
+
+      &:hover:not(:disabled) {
+        background: $neutral-lighter;
+        border-color: $neutral-light;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    &.btn-primary {
+      background: linear-gradient(135deg, $secondary 0%, $secondary-dark 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba($secondary, 0.3);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba($secondary, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+// ============================================
+// Responsive Adjustments
+// ============================================
+@media (max-width: 576px) {
+  .add-payment-container {
+    padding: 16px;
+  }
+
+  .back-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+
+  .card-header {
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+
+      i {
+        font-size: 1.25rem;
+      }
+    }
+
+    .header-text {
+      .form-title {
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  .payment-form {
+    padding: 20px;
+  }
+
+  .form-grid {
+    gap: 16px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

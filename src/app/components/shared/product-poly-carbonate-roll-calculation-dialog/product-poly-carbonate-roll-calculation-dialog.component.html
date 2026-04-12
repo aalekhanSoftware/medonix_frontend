@@ -1,0 +1,140 @@
+<div class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-ruler-combined"></i>
+        Poly Carbonate Roll Calculation - <span [innerHTML]="product.name"></span>
+      </h3>
+      <button class="close-button" (click)="closeDialog()" type="button" aria-label="Close dialog">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-content">
+      <form [formGroup]="calculationForm">
+        <!-- Calculation Base Selection and Manual Quantity in one line -->
+        <div class="d-flex gap-3 mb-3 align-items-end" style="flex-wrap: wrap;">
+          <div class="calculation-base-section" style="flex: 1; min-width: 200px; display: flex; flex-direction: column;">
+            <label class="form-label" style="margin-bottom: 0.5rem; height: 1.5rem; display: flex; align-items: center;">Calculation Base:</label>
+            <select class="form-select" [(ngModel)]="calculationBase" [ngModelOptions]="{standalone: true}" (ngModelChange)="onCalculationBaseChange()">
+              <option value="SF">Sq. Feet</option>
+              <option value="M">Manual</option>
+            </select>
+          </div>
+
+          <!-- Manual Quantity Input (shown when 'M' is selected) -->
+          <div class="manual-quantity-section" *ngIf="isManualMode" style="flex: 1; min-width: 200px; display: flex; flex-direction: column;">
+            <label class="form-label" style="margin-bottom: 0.5rem; height: 1.5rem; display: flex; align-items: center;">Manual Quantity:</label>
+            <input 
+              type="number" 
+              formControlName="manualQuantity" 
+              class="form-control" 
+              min="0.01"
+              step="0.01"
+              [class.is-invalid]="calculationForm.get('manualQuantity')?.invalid && calculationForm.get('manualQuantity')?.touched"
+              placeholder="Enter manual quantity"
+            >
+            <div *ngIf="calculationForm.get('manualQuantity')?.invalid && calculationForm.get('manualQuantity')?.touched" class="error">
+              <span class="ps-3">Manual quantity must be greater than 0.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculation Table (always shown - can be filled in both SF and Manual modes) -->
+        <div class="calculation-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Length</th>
+                <th>Width</th>
+                <th>Total (Length x Width)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="calculations">
+              <tr *ngFor="let row of calculationsArray.controls; let i = index" [formGroupName]="i">
+                <td class="table-col">
+                  <input 
+                    type="number" 
+                    formControlName="length" 
+                    class="form-control" 
+                    min="0.01"
+                    step="0.01"
+                    [class.is-invalid]="row.get('length')?.invalid && row.get('length')?.touched"
+                  >
+                  <div *ngIf="row.get('length')?.invalid && row.get('length')?.touched" class="error">
+                    <span *ngIf="row.get('length')?.errors?.['required']" class="ps-3">Length is required.</span>
+                    <span *ngIf="row.get('length')?.errors?.['min']" class="ps-3">Length must be greater than 0.</span>
+                  </div>
+                </td>
+                <td class="table-col">
+                  <input 
+                    type="number" 
+                    formControlName="width" 
+                    class="form-control" 
+                    min="0.01"
+                    step="0.01"
+                    [class.is-invalid]="row.get('width')?.invalid && row.get('width')?.touched"
+                  >
+                  <div *ngIf="row.get('width')?.invalid && row.get('width')?.touched" class="error">
+                    <span *ngIf="row.get('width')?.errors?.['required']" class="ps-3">Width is required.</span>
+                    <span *ngIf="row.get('width')?.errors?.['min']" class="ps-3">Width must be greater than 0.</span>
+                  </div>
+                </td>
+                <td class="table-col">
+                  <input 
+                    type="number" 
+                    formControlName="total" 
+                    class="form-control" 
+                    readonly
+                    [value]="row.get('total')?.value"
+                    step="0.0001"
+                  >
+                </td>
+                <td class="pt-0">
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-danger delete-btn" 
+                    (click)="removeRow(i)"
+                    [disabled]="calculationsArray.length === 1"
+                    title="Remove Row"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="bottom-border">
+              <tr>
+                <td><strong>{{ totals.totalLength | number:'1.2-2' }}</strong></td>
+                <td><strong>{{ totals.totalWidth | number:'1.2-2' }}</strong></td>
+                <td><strong>{{ totals.totalTotal | number:'1.0-4' }}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="dialog-actions">
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="closeDialog()">
+              Cancel
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm btn-secondary me-2" (click)="addRow()">
+              <i class="fas fa-plus"></i> Add <U>R</U>ow
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-primary" 
+              [disabled]="isManualMode ? (calculationForm.get('manualQuantity')?.invalid || !calculationForm.get('manualQuantity')?.value) : isFormArrayInvalid()" 
+              (click)="onSave()">
+              <i class="fas fa-save"></i> Save Calculation
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
