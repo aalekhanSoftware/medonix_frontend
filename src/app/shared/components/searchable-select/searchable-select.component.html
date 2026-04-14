@@ -48,6 +48,7 @@
     <div class="options-container" 
          [class.virtual-scroll]="virtualScroll && filteredOptions.length > adaptiveDisplayLimit" 
          #optionsContainer
+         (wheel)="onOptionsContainerWheel($event)"
          (scroll)="onOptionsContainerScroll($event)"
          (touchcancel)="cancelPendingSelection()">
       <!-- Virtual scroll spacer for items before visible range -->

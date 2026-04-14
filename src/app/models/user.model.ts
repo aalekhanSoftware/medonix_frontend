@@ -45,7 +45,7 @@ export interface UserDetailResponse {
 export interface UserUpdatePasswordRequest {
   id: number;
   password: string;
-  status: 'A' | 'I';
+  status?: 'A' | 'I';
 }
 
 export interface UserUpdatePasswordResponse {

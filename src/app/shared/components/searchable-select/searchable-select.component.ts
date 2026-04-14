@@ -101,6 +101,8 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   private containerTouchStartListener?: () => void;
   private containerTouchEndListener?: () => void;
   private containerTouchMoveListener?: () => void;
+  private readonly mouseWheelScrollFactor = 0.45;
+  private readonly maxWheelItemsPerEvent = 4;
 
   constructor(
     private elementRef: ElementRef,
@@ -1212,6 +1214,38 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         }, 50);
       });
     }
+  }
+
+  onOptionsContainerWheel(event: WheelEvent): void {
+    const container = this.optionsContainer?.nativeElement;
+    if (!container || event.deltaY === 0) {
+      return;
+    }
+
+    // Normalize wheel units (pixel/line/page) into pixels, then dampen and clamp.
+    const lineHeightPx = this.virtualScrollItemHeight;
+    const pageHeightPx = Math.max(container.clientHeight, this.virtualScrollItemHeight * 10);
+    let normalizedDelta = event.deltaY;
+
+    if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+      normalizedDelta = event.deltaY * lineHeightPx;
+    } else if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+      normalizedDelta = event.deltaY * pageHeightPx;
+    }
+
+    const reducedDelta = normalizedDelta * this.mouseWheelScrollFactor;
+    const maxDeltaPerEvent = this.virtualScrollItemHeight * this.maxWheelItemsPerEvent;
+    const clampedDelta = Math.max(-maxDeltaPerEvent, Math.min(maxDeltaPerEvent, reducedDelta));
+
+    const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    const nextScrollTop = Math.max(0, Math.min(maxScrollTop, container.scrollTop + clampedDelta));
+
+    if (nextScrollTop === container.scrollTop) {
+      return;
+    }
+
+    event.preventDefault();
+    container.scrollTop = nextScrollTop;
   }
 
   selectOption(option: SelectOption, event?: Event): void {

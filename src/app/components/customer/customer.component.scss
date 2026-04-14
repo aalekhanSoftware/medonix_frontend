@@ -281,6 +281,41 @@ td.actions {
       outline-offset: 2px;
     }
   }
+
+  &.reset-password {
+    background: linear-gradient(135deg, rgba(28, 105, 212, 0.1) 0%, rgba(28, 105, 212, 0.16) 100%);
+    color: #1c69d4;
+    border: 1px solid rgba(28, 105, 212, 0.25);
+    box-shadow: 0 2px 4px rgba(28, 105, 212, 0.1);
+
+    i {
+      font-size: 15px;
+      transition: transform 0.2s ease;
+    }
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #1c69d4 0%, #275bb1 100%);
+      color: #ffffff;
+      border-color: #1c69d4;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(28, 105, 212, 0.25);
+
+      i {
+        transform: scale(1.1);
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0) scale(0.95);
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+  }
 }
 
 @media (max-width: 768px) {
@@ -291,6 +326,135 @@ td.actions {
 
     &.edit i {
       font-size: 16px;
+    }
+
+    &.reset-password i {
+      font-size: 16px;
+    }
+  }
+}
+
+.password-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1050;
+}
+
+.password-modal {
+  width: min(100%, 520px);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin: 0;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+
+  .password-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+
+    h3 {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+  }
+
+  .password-modal-subtitle {
+    margin: 0 0 1rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+  }
+
+  .close-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #fff;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #dc2626;
+      border-color: rgba(220, 38, 38, 0.35);
+    }
+  }
+
+  .password-field {
+    margin-bottom: 0.95rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+  }
+
+  .password-input-group {
+    position: relative;
+  }
+
+  .toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.45rem;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-primary);
+    }
+  }
+
+  .field-error {
+    display: block;
+    margin-top: 0.35rem;
+    color: #dc2626;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .password-modal-actions {
+    margin-top: 1.15rem;
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .password-modal {
+    width: min(100%, 100%);
+    padding: 1rem;
+
+    .password-modal-actions {
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
     }
   }
 }

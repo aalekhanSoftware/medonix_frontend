@@ -105,13 +105,13 @@
                 {{ product.status === 'A' ? 'Active' : 'Inactive' }}
               </span>
             </td>
-            <td [ngClass]="{'negative-quantity': (product?.remainingQuantity ?? 0) < 0}">
+            <td [ngClass]="{'negative-quantity': (product?.remainingQuantity ?? 0) < (product?.minimumStock ?? 0)}">
               {{ product?.remainingQuantity ?? 0 }}
             </td>
             <td [ngClass]="{'negative-quantity': (product?.blockedQuantity ?? 0) < 0}">
               {{ product?.blockedQuantity ?? 0 }}
             </td>
-            <td [ngClass]="{'negative-quantity': (product?.totalRemainingQuantity ?? 0) < 0}">
+            <td [ngClass]="{'negative-quantity': (product?.totalRemainingQuantity ?? 0) < (product?.minimumStock ?? 0)}">
               {{ product?.totalRemainingQuantity ?? 0 }}
             </td>
             <td>{{ product.purchaseAmount }}</td>

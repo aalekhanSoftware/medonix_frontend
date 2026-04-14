@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../services/customer.service';
 import { Customer, CustomerSearchRequest } from '../../models/customer.model';
@@ -11,6 +11,8 @@ import { ModalService } from '../../services/modal.service';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { AuthService } from '../../services/auth.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-customer',
@@ -24,8 +26,15 @@ import { takeUntil } from 'rxjs/operators';
 export class CustomerComponent implements OnInit, OnDestroy {
   customers: Customer[] = [];
   searchForm!: FormGroup;
+  passwordResetForm!: FormGroup;
   isLoading = false;
   displayModal = false;
+  isAdmin = false;
+  isPasswordModalOpen = false;
+  isResettingPassword = false;
+  selectedCustomerForPassword: Customer | null = null;
+  showNewPassword = false;
+  showConfirmPassword = false;
   
   // Pagination properties
   currentPage = 0;
@@ -40,6 +49,8 @@ export class CustomerComponent implements OnInit, OnDestroy {
 
   constructor(
     private customerService: CustomerService,
+    private userService: UserService,
+    private authService: AuthService,
     private fb: FormBuilder,
     private toastr: ToastrService,
     public modalService: ModalService,
@@ -47,9 +58,11 @@ export class CustomerComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {
     this.initializeForm();
+    this.initializePasswordResetForm();
   }
 
   ngOnInit(): void {
+    this.isAdmin = this.authService.isAdmin();
     this.loadCustomers();
     
     // Store subscription reference for proper cleanup
@@ -86,6 +99,13 @@ export class CustomerComponent implements OnInit, OnDestroy {
       status: [''],
       startDate: [''],
       endDate: ['']
+    });
+  }
+
+  private initializePasswordResetForm(): void {
+    this.passwordResetForm = this.fb.group({
+      password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(50)]],
+      confirmPassword: ['', [Validators.required]]
     });
   }
 
@@ -162,6 +182,90 @@ export class CustomerComponent implements OnInit, OnDestroy {
 
   openDealerRegister() {
     this.router.navigate(['/dealers/register']);
+  }
+
+  openSetPasswordModal(customer: Customer): void {
+    if (!this.isAdmin) {
+      return;
+    }
+
+    if (!customer?.userId) {
+      this.toastr.warning('User account is not linked for this customer');
+      return;
+    }
+
+    this.selectedCustomerForPassword = customer;
+    this.isPasswordModalOpen = true;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
+    this.passwordResetForm.reset();
+    this.cdr.markForCheck();
+  }
+
+  closeSetPasswordModal(): void {
+    this.isPasswordModalOpen = false;
+    this.isResettingPassword = false;
+    this.selectedCustomerForPassword = null;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
+    this.passwordResetForm.reset();
+    this.cdr.markForCheck();
+  }
+
+  togglePasswordField(field: 'new' | 'confirm'): void {
+    if (field === 'new') {
+      this.showNewPassword = !this.showNewPassword;
+      return;
+    }
+
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  get passwordsMismatch(): boolean {
+    const password = this.passwordResetForm.get('password')?.value;
+    const confirmPassword = this.passwordResetForm.get('confirmPassword')?.value;
+    return !!password && !!confirmPassword && password !== confirmPassword;
+  }
+
+  submitPasswordReset(): void {
+    if (!this.selectedCustomerForPassword?.userId) {
+      this.toastr.error('User id is not available for this customer');
+      return;
+    }
+
+    if (this.passwordResetForm.invalid || this.passwordsMismatch) {
+      Object.keys(this.passwordResetForm.controls).forEach((key) => {
+        this.passwordResetForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isResettingPassword = true;
+    const password = this.passwordResetForm.get('password')?.value;
+
+    this.userService.updatePassword({
+      id: this.selectedCustomerForPassword.userId,
+      password
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.toastr.success(response.message || 'Password updated successfully');
+            this.closeSetPasswordModal();
+            return;
+          }
+
+          this.toastr.error(response.message || 'Failed to update password');
+          this.isResettingPassword = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.toastr.error(error?.error?.message || 'Failed to update password');
+          this.isResettingPassword = false;
+          this.cdr.markForCheck();
+        }
+      });
   }
   // Update the openCustomerModal method
   openCustomerModal(customer?: Customer) {
