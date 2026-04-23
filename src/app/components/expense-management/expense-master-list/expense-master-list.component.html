@@ -32,10 +32,30 @@
         <div class="filter-field">
           <label for="ex-type" class="filter-label">Transaction type</label>
           <select id="ex-type" class="form-control" formControlName="isExpense" aria-label="Filter by transaction type">
-            <option value="">All</option>
-            <option value="true">Expense</option>
-            <option value="false">Income</option>
+            <option [ngValue]="null">All</option>
+            <option [ngValue]="true">Expense</option>
+            <option [ngValue]="false">Income</option>
           </select>
+        </div>
+        <div class="filter-field">
+          <label for="ex-start-date" class="filter-label">Start date</label>
+          <input
+            id="ex-start-date"
+            type="date"
+            class="form-control"
+            formControlName="startDate"
+            aria-label="Filter by start date"
+          />
+        </div>
+        <div class="filter-field">
+          <label for="ex-end-date" class="filter-label">End date</label>
+          <input
+            id="ex-end-date"
+            type="date"
+            class="form-control"
+            formControlName="endDate"
+            aria-label="Filter by end date"
+          />
         </div>
         <div class="button-group">
           <button type="submit" class="btn btn-primary" aria-label="Apply search">

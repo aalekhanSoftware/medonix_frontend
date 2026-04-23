@@ -55,7 +55,9 @@ export class ExpenseMasterListComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       search: [''],
       reason: [''],
-      isExpense: ['']
+      startDate: [null],
+      endDate: [null],
+      isExpense: [null]
     });
   }
 
@@ -70,6 +72,8 @@ export class ExpenseMasterListComponent implements OnInit, OnDestroy {
     const payload = {
       search: v.search || '',
       reason: v.reason || '',
+      startDate: v.startDate || null,
+      endDate: v.endDate || null,
       isExpense: this.parseIsExpenseFilter(v.isExpense),
       page: this.currentPage,
       size: this.pageSize,
@@ -168,7 +172,7 @@ export class ExpenseMasterListComponent implements OnInit, OnDestroy {
   reset(event?: Event): void {
     event?.preventDefault();
     event?.stopPropagation();
-    this.searchForm.reset({ search: '', reason: '', isExpense: '' });
+    this.searchForm.reset({ search: '', reason: '', startDate: null, endDate: null, isExpense: null });
     this.currentPage = 0;
     this.pageSize = 10;
     this.loadData();

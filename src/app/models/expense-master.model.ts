@@ -29,6 +29,8 @@ export interface ExpenseMasterGetExpensesRequest {
 export interface ExpenseMasterSearchRequest {
   search?: string;
   reason?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   isExpense?: boolean | null;
   page?: number;
   size?: number;

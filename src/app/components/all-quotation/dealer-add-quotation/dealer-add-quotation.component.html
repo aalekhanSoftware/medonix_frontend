@@ -38,11 +38,11 @@
                   <tr>
                     <th class="product-col">Product</th>
                     <th class="qty-col">Quantity</th>
-                    <th class="price-col">Unit Price</th>
+                    <!-- <th class="price-col">Unit Price</th> -->
                     <th class="remarks-col">Remarks</th>
-                    <th class="calc-col">Item Price</th>
-                    <th class="calc-col">Tax Amount</th>
-                    <th class="calc-col">Final Price</th>
+                    <!-- <th class="calc-col">Item Price</th> -->
+                    <!-- <th class="calc-col">Tax Amount</th> -->
+                    <!-- <th class="calc-col">Final Price</th> -->
                     <th class="action-col">Actions</th>
                   </tr>
                 </thead>
@@ -76,6 +76,7 @@
                 </td>
 
                 <!-- Unit Price (Readonly - from customer price API) -->
+                <!--
                 <td class="price-col">
                   <div class="input-group readonly-field">
                     <span class="currency-symbol">₹</span>
@@ -87,6 +88,7 @@
                     </span>
                   </div>
                 </td>
+                -->
 
                 <!-- Remarks -->
                 <td class="remarks-col">
@@ -95,14 +97,17 @@
                 </td>
 
                 <!-- Item Price -->
+                <!--
                 <td class="calc-col">
                   <div class="calculated-value">
                     <span class="currency">₹</span>
                     <span class="value">{{ getFormattedPrice(i) }}</span>
                   </div>
                 </td>
+                -->
 
                 <!-- Tax Amount -->
+                <!--
                 <td class="calc-col">
                   <div class="calculated-value tax-value">
                     <span class="currency">₹</span>
@@ -110,14 +115,17 @@
                     <span class="percentage">({{ item.get('taxPercentage')?.value }}%)</span>
                   </div>
                 </td>
+                -->
 
                 <!-- Final Price -->
+                <!--
                 <td class="calc-col">
                   <div class="calculated-value final-value">
                     <span class="currency">₹</span>
                     <span class="value">{{ getFormattedFinalPrice(i) }}</span>
                   </div>
                 </td>
+                -->
 
                 <!-- Actions -->
                 <td class="action-col">
@@ -130,6 +138,7 @@
                   </tr>
                 </tbody>
                 <tfoot>
+              <!--
               <tr class="totals-row">
                 <td colspan="4" class="totals-label">
                   <strong><i class="fas fa-calculator"></i> Order Totals</strong>
@@ -154,6 +163,7 @@
                 </td>
                 <td></td>
                 </tr>
+              -->
               </tfoot>
             </table>
           </cdk-virtual-scroll-viewport>
@@ -187,12 +197,14 @@
               <span class="summary-label">Products:</span>
               <strong class="summary-value">{{ itemsFormArray.length }}</strong>
             </div>
+            <!--
             <div class="summary-divider"></div>
             <div class="summary-item highlight">
               <i class="fas fa-indian-rupee-sign"></i>
               <span class="summary-label">Total:</span>
               <strong class="summary-value">₹{{ totals.finalPrice | number:'1.2-2' }}</strong>
             </div>
+            -->
           </div>
 
           <div class="form-actions">
