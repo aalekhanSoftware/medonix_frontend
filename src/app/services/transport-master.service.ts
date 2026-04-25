@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap } from 'rxjs';
+import { map, Observable, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { EncryptionService } from '../shared/services/encryption.service';
+import { LocalStorageDataService } from '../shared/services/local-storage-data.service';
 
 export interface TransportMasterSearchRequest {
   search?: string;
@@ -26,7 +26,10 @@ export class TransportMasterService {
   private apiUrl = `${environment.apiUrl}/api/transports`;
   private readonly CACHE_KEY = 'active_transports';
 
-  constructor(private http: HttpClient, private encryptionService: EncryptionService) {}
+  constructor(
+    private http: HttpClient,
+    private localStorageDataService: LocalStorageDataService
+  ) {}
 
   create(transport: TransportMaster): Observable<any> {
     return this.http.post(this.apiUrl, transport);
@@ -42,29 +45,39 @@ export class TransportMasterService {
 
   getTransports(params: any): Observable<any> {
     if (params?.status === 'A') {
-      const encryptedData = localStorage.getItem(this.CACHE_KEY);
-      if (encryptedData) {
-        const decryptedData = this.encryptionService.decrypt(encryptedData);
-        if (decryptedData) {
-          return of(decryptedData);
-        }
+      const cachedResponse = this.localStorageDataService.getItem<any>(this.CACHE_KEY, {
+        encrypted: true,
+        sortDirection: 'asc'
+      });
+      if (cachedResponse) {
+        return of(cachedResponse);
       }
     }
 
     return this.http.post<any>(`${this.apiUrl}/getTransports`, {
       search: params?.search
     }).pipe(
+      map(response => {
+        if (params?.status === 'A' && response?.success) {
+          return this.localStorageDataService.sortData(this.CACHE_KEY, response, {
+            sortDirection: 'asc'
+          });
+        }
+        return response;
+      }),
       tap(response => {
         if (params?.status === 'A' && response?.success) {
-          const encryptedData = this.encryptionService.encrypt(response);
-          localStorage.setItem(this.CACHE_KEY, encryptedData);
+          this.localStorageDataService.setItem(this.CACHE_KEY, response, {
+            encrypted: true,
+            sortDirection: 'asc'
+          });
         }
       })
     );
   }
 
   refreshTransports(): Observable<any> {
-    localStorage.removeItem(this.CACHE_KEY);
+    this.localStorageDataService.removeItem(this.CACHE_KEY);
     return this.getTransports({ status: 'A' });
   }
 

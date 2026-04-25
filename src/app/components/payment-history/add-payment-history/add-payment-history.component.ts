@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { PaymentHistoryService } from '../../../services/payment-history.service';
 import { CustomerService } from '../../../services/customer.service';
@@ -134,7 +134,10 @@ export class AddPaymentHistoryComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
-    this.paymentHistoryService.getPaymentHistoryDetails(id).pipe(takeUntil(this.destroy$)).subscribe({
+    this.paymentHistoryService.getPaymentHistoryDetails(id).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => { this.loading = false; })
+    ).subscribe({
       next: (res: PaymentHistoryDetailsResponse) => {
         const d = res.data;
         // Convert DD-MM-YYYY from API to YYYY-MM-DD for the date picker
@@ -154,8 +157,7 @@ export class AddPaymentHistoryComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.snackbar.error('Failed to load payment history details');
-      },
-      complete: () => { this.loading = false; }
+      }
     });
   }
 
@@ -228,15 +230,17 @@ export class AddPaymentHistoryComponent implements OnInit, OnDestroy {
       ? this.paymentHistoryService.updatePaymentHistory(payload)
       : this.paymentHistoryService.createPaymentHistory(payload);
 
-    serviceCall.pipe(takeUntil(this.destroy$)).subscribe({
+    serviceCall.pipe(
+      takeUntil(this.destroy$),
+      finalize(() => { this.loading = false; })
+    ).subscribe({
       next: (response: any) => {
         this.snackbar.success(this.isEdit ? 'Payment history updated successfully' : 'Payment history created successfully');
         this.router.navigate(['/payment-history']);
       },
       error: (error: any) => {
         this.snackbar.error('Failed to save payment history');
-      },
-      complete: () => { this.loading = false; }
+      }
     });
   }
 

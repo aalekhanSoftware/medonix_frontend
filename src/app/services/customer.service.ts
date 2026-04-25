@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, tap } from 'rxjs';
+import { map, Observable, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { CustomerResponse, CustomerSearchRequest } from '../models/customer.model';
-import { CacheService } from '../shared/services/cache.service';
-import { EncryptionService } from '../shared/services/encryption.service';
 import { ApiResponse } from '../models/api.model';
+import { LocalStorageDataService } from '../shared/services/local-storage-data.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,9 +14,8 @@ export class CustomerService {
   private apiUrl = `${environment.apiUrl}/api/customers`;
 
   constructor(
-    private http: HttpClient, 
-    private cacheService: CacheService,
-    private encryptionService: EncryptionService
+    private http: HttpClient,
+    private localStorageDataService: LocalStorageDataService
   ) {}
 
   searchCustomers(params: any): Observable<CustomerResponse> {
@@ -37,29 +35,39 @@ export class CustomerService {
 
   getCustomers(params: any): Observable<any> {
     if (params.status === 'A') {
-      const encryptedData = localStorage.getItem(this.CACHE_KEY);
-      if (encryptedData) {
-        const decryptedData = this.encryptionService.decrypt(encryptedData);
-        if (decryptedData) {
-          return of(decryptedData);
-        }
+      const cachedResponse = this.localStorageDataService.getItem<any>(this.CACHE_KEY, {
+        encrypted: true,
+        sortDirection: 'asc'
+      });
+      if (cachedResponse) {
+        return of(cachedResponse);
       }
     }
 
     return this.http.post<any>(`${this.apiUrl}/getCustomers`, {
       search: params.search
     }).pipe(
+      map(response => {
+        if (params.status === 'A' && response?.success) {
+          return this.localStorageDataService.sortData(this.CACHE_KEY, response, {
+            sortDirection: 'asc'
+          });
+        }
+        return response;
+      }),
       tap(response => {
         if (params.status === 'A' && response.success) {
-          const encryptedData = this.encryptionService.encrypt(response);
-          localStorage.setItem(this.CACHE_KEY, encryptedData);
+          this.localStorageDataService.setItem(this.CACHE_KEY, response, {
+            encrypted: true,
+            sortDirection: 'asc'
+          });
         }
       })
     );
   }
 
   refreshCustomers(): Observable<any> {
-    localStorage.removeItem(this.CACHE_KEY);
+    this.localStorageDataService.removeItem(this.CACHE_KEY);
     return this.getCustomers({ status: 'A' });
   }
 

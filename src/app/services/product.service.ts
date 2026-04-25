@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Product, ProductResponse, ProductSearchRequest } from '../models/product.model';
-import { CacheService } from '../shared/services/cache.service';
-import { EncryptionService } from '../shared/services/encryption.service';
+import { LocalStorageDataService } from '../shared/services/local-storage-data.service';
 
 @Injectable({
   providedIn: 'root'
@@ -22,8 +21,7 @@ export class ProductService {
 
   constructor(
     private http: HttpClient, 
-    private cacheService: CacheService,
-    private encryptionService: EncryptionService
+    private localStorageDataService: LocalStorageDataService
   ) {}
 
   searchProducts(params: ProductSearchRequest): Observable<ProductResponse> {
@@ -38,14 +36,14 @@ export class ProductService {
       }
       
       // Try localStorage cache (decrypt once and store in memory)
-      const encryptedData = localStorage.getItem(this.CACHE_KEY);
-      if (encryptedData) {
-        const decryptedData = this.encryptionService.decrypt(encryptedData) as any;
-        if (decryptedData && decryptedData.data) {
-          this.cachedProducts = decryptedData.data;
-          this.productsSubject.next(this.cachedProducts!);
-          return of(decryptedData);
-        }
+      const cachedResponse = this.localStorageDataService.getItem<any>(this.CACHE_KEY, {
+        encrypted: true,
+        sortDirection: 'asc'
+      });
+      if (cachedResponse && cachedResponse.data) {
+        this.cachedProducts = cachedResponse.data;
+        this.productsSubject.next(this.cachedProducts!);
+        return of(cachedResponse);
       }
     }
 
@@ -57,6 +55,14 @@ export class ProductService {
       categoryId: params.categoryId,
       status: params.status
     }).pipe(
+      map(response => {
+        if (params.status === 'A' && response?.success) {
+          return this.localStorageDataService.sortData(this.CACHE_KEY, response, {
+            sortDirection: 'asc'
+          });
+        }
+        return response;
+      }),
       tap(response => {
         if (params.status === 'A' && response.success) {
           // Update in-memory cache
@@ -64,8 +70,10 @@ export class ProductService {
           this.productsSubject.next(this.cachedProducts!);
           
           // Persist to localStorage (encrypted)
-          const encryptedData = this.encryptionService.encrypt(response);
-          localStorage.setItem(this.CACHE_KEY, encryptedData);
+          this.localStorageDataService.setItem(this.CACHE_KEY, response, {
+            encrypted: true,
+            sortDirection: 'asc'
+          });
         }
       })
     );
@@ -74,7 +82,7 @@ export class ProductService {
   refreshProducts(): Observable<any> {
     // Invalidate in-memory cache
     this.cachedProducts = null;
-    localStorage.removeItem(this.CACHE_KEY);
+    this.localStorageDataService.removeItem(this.CACHE_KEY);
     return this.getProducts({ status: 'A' });
   }
 
