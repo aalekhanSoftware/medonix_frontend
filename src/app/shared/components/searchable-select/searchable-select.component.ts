@@ -36,7 +36,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   @Input() multiple = false;
   @Input() allowClear = true;
   @Input() focusWidthPx?: number;
-  @Input() maxHeight: string = '300px';
+  @Input() maxHeight: string = '420px';
   @Input() virtualScroll = true; // Default to true for performance
   @Input() searchDebounceMs = 300;
   @Input() initialDisplayLimit: number = 100; // Limit initial display for large lists (adaptive based on dataset size)
@@ -873,8 +873,13 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     // Cache check - if search text hasn't changed, return cached results
     if (this.searchText === this.lastSearchText && this.lastFilteredOptions.length > 0) {
       this.filteredOptions = this.lastFilteredOptions;
+      this.scrollTop = 0;
+      this.lastScrollTop = 0;
       this.updateDisplayedOptions();
       this.highlightedIndex = this.filteredOptions.length > 0 ? 0 : -1;
+      if (this.highlightedIndex >= 0) {
+        this.scrollToIndex(this.highlightedIndex);
+      }
       return;
     }
     
@@ -923,7 +928,12 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
             this.lastSearchText = this.searchText;
             this.lastFilteredOptions = [...this.filteredOptions];
             this.highlightedIndex = this.filteredOptions.length > 0 ? 0 : -1;
+            this.scrollTop = 0;
+            this.lastScrollTop = 0;
             this.updateDisplayedOptions();
+            if (this.highlightedIndex >= 0) {
+              this.scrollToIndex(this.highlightedIndex);
+            }
             this.cdr.markForCheck();
           }
         };
@@ -954,10 +964,15 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     this.lastSearchText = this.searchText;
     this.lastFilteredOptions = this.filteredOptions === this.options ? this.filteredOptions : [...this.filteredOptions];
     this.highlightedIndex = this.filteredOptions.length > 0 ? 0 : -1;
+    this.scrollTop = 0;
+    this.lastScrollTop = 0;
     
     // Update displayed options based on virtual scrolling
     // This will limit what's rendered in the DOM
     this.updateDisplayedOptions();
+    if (this.highlightedIndex >= 0) {
+      this.scrollToIndex(this.highlightedIndex);
+    }
     
     this.cdr.markForCheck();
   }
@@ -1039,15 +1054,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
   private scrollToIndex(index: number): void {
     const container = this.optionsContainer?.nativeElement;
-    if (!container || index <= 0) {
-      if (container) {
-        container.scrollTop = 0;
-        this.scrollTop = 0;
-        this.lastScrollTop = 0;
-        if (this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit()) {
-          this.updateDisplayedOptions();
-        }
-      }
+    if (!container || index < 0) {
       return;
     }
 
@@ -1056,16 +1063,22 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       if (!c) return;
 
       if (this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit()) {
-        const targetScrollTop = index * this.virtualScrollItemHeight;
-        const maxScroll = Math.max(0, this.totalHeight - this.containerHeight);
-        c.scrollTop = Math.min(targetScrollTop, maxScroll);
+        const viewportHeight = Math.max(c.clientHeight || this.containerHeight || parseInt(this.maxHeight, 10) || 300, 1);
+        const targetScrollTop = (index * this.virtualScrollItemHeight) - ((viewportHeight - this.virtualScrollItemHeight) / 2);
+        const maxScroll = Math.max(0, this.totalHeight - viewportHeight);
+        c.scrollTop = Math.max(0, Math.min(targetScrollTop, maxScroll));
         this.scrollTop = c.scrollTop;
         this.lastScrollTop = c.scrollTop;
         this.updateDisplayedOptions();
         return;
       }
 
-      this.scrollToHighlighted();
+      const optionElements = c.querySelectorAll('.option');
+      const targetOption = optionElements[index] as HTMLElement | undefined;
+      if (!targetOption) return;
+      const targetOffset = targetOption.offsetTop - ((c.clientHeight - targetOption.offsetHeight) / 2);
+      const maxScroll = Math.max(0, c.scrollHeight - c.clientHeight);
+      c.scrollTop = Math.max(0, Math.min(targetOffset, maxScroll));
     });
   }
   
@@ -1389,17 +1402,22 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
     switch (event.key) {
       case 'ArrowDown':
-        this.highlightedIndex = Math.min(
-          this.highlightedIndex + 1, 
-          this.filteredOptions.length - 1
-        );
+        if (this.filteredOptions.length === 0) {
+          break;
+        }
+        this.highlightedIndex = this.highlightedIndex < 0
+          ? 0
+          : Math.min(this.highlightedIndex + 1, this.filteredOptions.length - 1);
         event.preventDefault();
         event.stopPropagation();
         this.scrollToHighlighted();
         break;
 
       case 'ArrowUp':
-        this.highlightedIndex = Math.max(this.highlightedIndex - 1, 0);
+        if (this.filteredOptions.length === 0) {
+          break;
+        }
+        this.highlightedIndex = this.highlightedIndex <= 0 ? 0 : this.highlightedIndex - 1;
         event.preventDefault();
         event.stopPropagation();
         this.scrollToHighlighted();
@@ -1429,31 +1447,8 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     requestAnimationFrame(() => {
       const container = this.optionsContainer?.nativeElement;
       if (!container) return;
-      
-      // If using virtual scrolling, calculate scroll position based on highlighted index
-      if (this.virtualScroll && this.filteredOptions.length > this.initialDisplayLimit) {
-        const targetScrollTop = this.highlightedIndex * this.virtualScrollItemHeight;
-        const maxScroll = this.totalHeight - this.containerHeight;
-        container.scrollTop = Math.min(targetScrollTop, maxScroll);
-        this.scrollTop = container.scrollTop;
-        this.updateDisplayedOptions();
-        this.cdr.markForCheck();
-        return;
-      }
-      
-      // Fallback to DOM-based scrolling for small lists
-      const highlighted = container.querySelector('.option.highlighted') as HTMLElement;
-      
-      if (highlighted) {
-        const containerRect = container.getBoundingClientRect();
-        const highlightedRect = highlighted.getBoundingClientRect();
-
-        if (highlightedRect.bottom > containerRect.bottom) {
-          container.scrollTop += highlightedRect.bottom - containerRect.bottom;
-        } else if (highlightedRect.top < containerRect.top) {
-          container.scrollTop -= containerRect.top - highlightedRect.top;
-        }
-      }
+      if (this.highlightedIndex < 0) return;
+      this.scrollToIndex(this.highlightedIndex);
       this.cdr.markForCheck();
     });
   }

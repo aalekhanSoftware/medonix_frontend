@@ -70,7 +70,7 @@
           <div class="checkbox" *ngIf="multiple">
             <i class="fas fa-check" *ngIf="isSelected(option)"></i>
           </div>
-          <span [innerHTML]="sanitizeHtml(option[labelKey])"></span>
+          <span class="option-label" [attr.title]="getOptionLabel(option)" [innerHTML]="sanitizeHtml(option[labelKey])"></span>
         </div>
       </div>
       
