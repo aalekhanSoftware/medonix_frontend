@@ -63,6 +63,7 @@
         (click)="selectOption(option, $event)"
         [class.selected]="isSelected(option)"
         [class.highlighted]="(virtualScroll && filteredOptions.length > adaptiveDisplayLimit ? startIndex + i : i) === highlightedIndex"
+        [attr.data-option-index]="virtualScroll && filteredOptions.length > adaptiveDisplayLimit ? startIndex + i : i"
         role="option"
         [attr.aria-selected]="isSelected(option)"
       >

@@ -27,7 +27,7 @@
                 [placeholder]="'Select Customer'"
                 [searchPlaceholder]="'Search customers...'"
                 [class.is-invalid]="isFieldInvalid('customerId')"
-                [searchMode]="'jump'"
+                [searchMode]="'filter'"
               ></app-searchable-select>
               <button 
                 type="button" 
@@ -146,7 +146,7 @@
                         [initialDisplayLimit]="50"
                         [maxHeight]="'320px'"
                         [class.is-invalid]="isProductFieldInvalid(i, 'productId')"
-                        [searchMode]="'jump'"
+                        [searchMode]="'filter'"
                       ></app-searchable-select>
                       <button 
                         type="button" 

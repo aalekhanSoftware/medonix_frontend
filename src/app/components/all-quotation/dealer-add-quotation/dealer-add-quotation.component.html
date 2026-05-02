@@ -56,7 +56,7 @@
                         [valueKey]="'id'" [placeholder]="'Select Product'" [searchPlaceholder]="'Search products...'"
                         [class.is-invalid]="isItemFieldInvalid(i, 'productId')"
                         (selectionChange)="onProductSelect(i, $event)" [focusWidthPx]="700"
-                        [virtualScroll]="true" [initialDisplayLimit]="50" [maxHeight]="'320px'" [searchMode]="'jump'"></app-searchable-select>
+                        [virtualScroll]="true" [initialDisplayLimit]="50" [maxHeight]="'320px'" [searchMode]="'filter'"></app-searchable-select>
                       <button type="button" class="btn btn-sm btn-icon refresh" (click)="refreshProducts()"
                         [disabled]="isLoadingProducts" title="Refresh Products"
                         (touchstart)="$event.stopPropagation()">

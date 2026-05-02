@@ -6,6 +6,8 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { Subject, takeUntil } from 'rxjs';
 import { PurchaseService } from '../../../services/purchase.service';
 import { PurchaseRecent } from '../../../models/purchase.model';
+import { SaleRecent } from '../../../models/sale.model';
+import { SaleService } from '../../../services/sale.service';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
@@ -46,6 +48,34 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
               </div>
               <small class="text-muted">
                 Purchases shown are from the last 6 months. Leave blank to create a new Purchase automatically; select one to append items into an existing Purchase.
+              </small>
+            </div>
+
+            <div class="form-group" *ngIf="openedFromDispatchQuotation">
+              <label>
+                <i class="fas fa-link"></i> Sale Bill (optional)
+              </label>
+              <div class="select-group">
+                <app-searchable-select
+                  formControlName="saleId"
+                  [options]="saleOptions"
+                  labelKey="displayLabel"
+                  valueKey="id"
+                  [defaultOption]="{ label: 'Create new Sale (auto)', value: null }"
+                  [searchPlaceholder]="'Search sales by invoice/customer...'"
+                ></app-searchable-select>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary refresh"
+                  (click)="refreshSales()"
+                  [disabled]="isLoadingSales"
+                  title="Refresh Sales"
+                >
+                  <i class="fas" [ngClass]="isLoadingSales ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+                </button>
+              </div>
+              <small class="text-muted">
+                Sales shown are from the last 6 months. Leave blank to create a new Sale automatically; select one to append quotation items into an existing Sale.
               </small>
             </div>
 
@@ -124,27 +154,37 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
    * (Dispatch quotation and other usages leave this false by default.)
    */
   @Input() openedFromPurchaseOrder: boolean = false;
+  @Input() openedFromDispatchQuotation: boolean = false;
   @Input() customerId?: number | string | null;
 
   @Output() confirm = new EventEmitter<
     | number
     | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number; purchaseId?: number | null }
+    | { packagingAndForwadingCharges: number; saleId?: number | null }
   >();
   @Output() cancel = new EventEmitter<void>();
 
   chargesForm: FormGroup;
   isLoading = false;
   isLoadingPurchases = false;
+  isLoadingSales = false;
   purchaseOptions: Array<PurchaseRecent & { displayLabel: string }> = [];
   private purchaseOptionsRaw: PurchaseRecent[] = [];
+  saleOptions: Array<SaleRecent & { displayLabel: string }> = [];
+  private saleOptionsRaw: SaleRecent[] = [];
 
   private destroy$ = new Subject<void>();
   private open$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder, private purchaseService: PurchaseService) {
+  constructor(
+    private fb: FormBuilder,
+    private purchaseService: PurchaseService,
+    private saleService: SaleService
+  ) {
     this.chargesForm = this.fb.group({
       invoiceNumber: [''],
       purchaseId: [null],
+      saleId: [null],
       packagingAndForwadingCharges: [
         0,
         [Validators.required, Validators.min(0)]
@@ -163,7 +203,8 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
       this.chargesForm.patchValue({
         packagingAndForwadingCharges: this.defaultCharges !== undefined ? this.defaultCharges : 0,
         invoiceNumber: '',
-        purchaseId: null
+        purchaseId: null,
+        saleId: null
       });
 
       // Dynamically toggle invoice requirement when purchase changes (Purchase Order flow)
@@ -175,6 +216,10 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
 
       if (this.openedFromPurchaseOrder) {
         this.loadPurchases();
+      }
+
+      if (this.openedFromDispatchQuotation) {
+        this.loadSales();
       }
     }
   }
@@ -284,6 +329,65 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
     return `${p.invoiceNumber} • ${p.customerName} • ${dateLabel} • ₹${amountLabel} • Items: ${p.numberOfItems} • ${qcLabel} • #${p.id}`;
   }
 
+  refreshSales(): void {
+    this.loadSales(true);
+  }
+
+  private loadSales(force: boolean = false): void {
+    if (!force && this.saleOptionsRaw.length > 0) {
+      this.updateSaleOptions();
+      return;
+    }
+
+    this.isLoadingSales = true;
+    this.saleService.getSalesLast6Months(this.customerId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response?.success) {
+            this.saleOptionsRaw = Array.isArray(response.data) ? response.data : [];
+            this.updateSaleOptions();
+          } else {
+            this.saleOptionsRaw = [];
+            this.saleOptions = [];
+          }
+          this.isLoadingSales = false;
+        },
+        error: () => {
+          this.saleOptionsRaw = [];
+          this.saleOptions = [];
+          this.isLoadingSales = false;
+        }
+      });
+  }
+
+  private updateSaleOptions(): void {
+    const rawCustomerId = this.customerId;
+    const customerId =
+      rawCustomerId === null || rawCustomerId === undefined || rawCustomerId === ''
+        ? null
+        : Number(rawCustomerId);
+
+    const list = [...this.saleOptionsRaw].sort((a, b) => {
+      if (!customerId) return 0;
+      const aMatch = Number(a.customerId) === customerId ? 0 : 1;
+      const bMatch = Number(b.customerId) === customerId ? 0 : 1;
+      return aMatch - bMatch;
+    });
+
+    this.saleOptions = list.map(s => ({
+      ...s,
+      displayLabel: this.formatSaleLabel(s)
+    }));
+  }
+
+  private formatSaleLabel(s: SaleRecent): string {
+    const dateLabel = s.saleDate ? formatDate(new Date(s.saleDate), 'dd-MM-yyyy', 'en') : '-';
+    const amount = typeof s.totalSaleAmount === 'number' ? s.totalSaleAmount : Number(s.totalSaleAmount || 0);
+    const amountLabel = Number.isFinite(amount) ? amount.toFixed(2) : '0.00';
+    return `${s.invoiceNumber} • ${s.customerName} • ${dateLabel} • ₹${amountLabel} • Items: ${s.numberOfItems} • #${s.id}`;
+  }
+
   onCancel(): void {
     this.cancel.emit();
   }
@@ -297,6 +401,21 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
           ? null
           : Number(purchaseIdControlValue);
       
+      // Dispatch quotation flow emits object with optional selected sale id.
+      if (this.openedFromDispatchQuotation) {
+        const saleIdControlValue = this.chargesForm.get('saleId')?.value;
+        const saleId =
+          saleIdControlValue === null || saleIdControlValue === undefined || saleIdControlValue === ''
+            ? null
+            : Number(saleIdControlValue);
+
+        this.confirm.emit({
+          packagingAndForwadingCharges: Number.isFinite(charges) ? charges : 0,
+          ...(saleId !== null ? { saleId } : {})
+        });
+        return;
+      }
+
       // If orderId is provided and invoice number is required, emit object with all fields
       if (this.requireInvoiceNumber && this.orderId !== undefined && this.orderId !== null) {
         const invoiceNumber = this.chargesForm.get('invoiceNumber')?.value || '';

@@ -43,6 +43,26 @@ export interface SaleResponse {
   };
 }
 
+export interface SaleRecent {
+  id: number;
+  saleDate: string;
+  invoiceNumber: string;
+  totalSaleAmount: number;
+  customerId: number;
+  customerName: string;
+  numberOfItems: number;
+  taxAmount: number;
+  sgst: number;
+  cgst: number;
+  igst: number;
+}
+
+export interface SaleRecentResponse {
+  success: boolean;
+  message: string;
+  data: SaleRecent[];
+}
+
 export interface SaleProduct {
   productId: number;
   quantity: number;

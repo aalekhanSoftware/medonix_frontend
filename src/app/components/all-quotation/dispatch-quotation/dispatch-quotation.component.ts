@@ -1095,17 +1095,24 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
     this.showPackagingChargesModal = true;
   }
 
-  onPackagingChargesConfirm(data: number | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number }): void {
+  onPackagingChargesConfirm(
+    data:
+      | number
+      | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number }
+      | { packagingAndForwadingCharges: number; saleId?: number | null }
+  ): void {
     this.showPackagingChargesModal = false;
     const ids = Array.from(this.selectedQuotationItemIds);
     
     // Extract charges - handle both number (backward compatibility) and object (new format)
-    const charges = typeof data === 'number' ? data : data.packagingAndForwadingCharges;
+    const rawCharges = typeof data === 'number' ? data : data.packagingAndForwadingCharges;
+    const charges = Number.isFinite(Number(rawCharges)) ? Number(rawCharges) : 0;
+    const saleId = typeof data === 'number' ? undefined : ('saleId' in data ? data.saleId : undefined);
     
     // Create sale with the packaging charges entered in modal
     // This is separate from the quotation's packagingAndForwadingCharges
     this.isLoading = true;
-    this.saleService.createFromQuotationItems(ids, charges)
+    this.saleService.createFromQuotationItems(ids, charges, saleId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res: any) => {

@@ -878,7 +878,12 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     this.showPackagingChargesModal = true;
   }
 
-  onPackagingChargesConfirm(data: number | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number; purchaseId?: number | null }): void {
+  onPackagingChargesConfirm(
+    data:
+      | number
+      | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number; purchaseId?: number | null }
+      | { packagingAndForwadingCharges: number; saleId?: number | null }
+  ): void {
     this.showPackagingChargesModal = false;
     
     // Get selected item IDs
@@ -892,18 +897,24 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     // Handle both number (backward compatibility) and object (new format with invoice number)
     let requestBody: { id: number; invoiceNumber?: string; packagingAndForwadingCharges: number; purchaseOrderItemIds: number[]; purchaseId?: number | null };
     
-    if (typeof data === 'object' && data.id !== undefined) {
+    if (typeof data === 'object' && data !== null && 'id' in data) {
       // New format: object with id, invoiceNumber (from user input), and packagingAndForwadingCharges
       // If purchaseId is provided, store it in the form (for future create/update flows).
-      if (data.purchaseId !== undefined) {
-        this.purchaseOrderForm.get('purchaseId')?.setValue(data.purchaseId ?? null, { emitEvent: false });
+      const purchaseData = data as {
+        id: number;
+        invoiceNumber: string;
+        packagingAndForwadingCharges: number;
+        purchaseId?: number | null;
+      };
+      if (purchaseData.purchaseId !== undefined) {
+        this.purchaseOrderForm.get('purchaseId')?.setValue(purchaseData.purchaseId ?? null, { emitEvent: false });
       }
       requestBody = {
-        id: data.id,
-        invoiceNumber: data.invoiceNumber,
-        packagingAndForwadingCharges: data.packagingAndForwadingCharges,
+        id: purchaseData.id,
+        invoiceNumber: purchaseData.invoiceNumber,
+        packagingAndForwadingCharges: purchaseData.packagingAndForwadingCharges,
         purchaseOrderItemIds: purchaseOrderItemIds,
-        ...(data.purchaseId !== undefined ? { purchaseId: data.purchaseId ?? null } : {})
+        ...(purchaseData.purchaseId !== undefined ? { purchaseId: purchaseData.purchaseId ?? null } : {})
       };
     } else {
       // Fallback: use form values if number is passed (shouldn't happen but for safety)

@@ -29,7 +29,7 @@
                 <div class="select-group">
                   <app-searchable-select formControlName="customerId" [options]="customers" labelKey="name" valueKey="id"
                     [placeholder]="'Select Customer'" [searchPlaceholder]="'Search customers...'"
-                    [searchMode]="'jump'"></app-searchable-select>
+                    [searchMode]="'filter'"></app-searchable-select>
                   <button type="button" class="btn btn-sm btn-primary refresh" style="margin-top: 3px;" (click)="refreshCustomers()"
                     [disabled]="isLoadingCustomers" title="Refresh Customers">
                     <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
@@ -197,7 +197,7 @@
                               [virtualScroll]="true"
                               [initialDisplayLimit]="50"
                               [maxHeight]="'320px'"
-                              [searchMode]="'jump'"
+                              [searchMode]="'filter'"
                             ></app-searchable-select>
                             <button
                               type="button"

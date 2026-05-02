@@ -24,7 +24,7 @@
               <div class="select-group">
                 <app-searchable-select formControlName="customerId" [options]="customers" labelKey="name" valueKey="id"
                   [placeholder]="'Select Customer'" [searchPlaceholder]="'Search customers...'"
-                  [virtualScroll]="true" [initialDisplayLimit]="100" [searchMode]="'jump'"></app-searchable-select>
+                  [virtualScroll]="true" [initialDisplayLimit]="100" [searchMode]="'filter'"></app-searchable-select>
                 <button type="button" class="btn btn-sm btn-primary refresh" style="margin-top: 3px;"
                   (click)="refreshCustomers()" [disabled]="isLoadingCustomers" title="Refresh Customers">
                   <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
@@ -228,6 +228,8 @@
 <app-packaging-charges-modal
   [show]="showPackagingChargesModal"
   [defaultCharges]="0"
+  [openedFromDispatchQuotation]="true"
+  [customerId]="quotationForm.get('customerId')?.value"
   (confirm)="onPackagingChargesConfirm($event)"
   (cancel)="onPackagingChargesCancel()"
 ></app-packaging-charges-modal>

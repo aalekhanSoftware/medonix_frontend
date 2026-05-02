@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Sale, SaleResponse, SaleSearchRequest } from '../models/sale.model';
+import { Sale, SaleRecentResponse, SaleResponse, SaleSearchRequest } from '../models/sale.model';
 
 @Injectable({
   providedIn: 'root'
@@ -48,11 +48,33 @@ export class SaleService {
     return this.http.post<any>(`${environment.apiUrl}/api/sale-returns/detail`, { id });
   }
 
-  createFromQuotationItems(quotationItemIds: number[], packagingAndForwadingCharges?: number): Observable<any> {
-    const payload: any = { quotationItemIds };
-    if (packagingAndForwadingCharges !== undefined && packagingAndForwadingCharges !== null) {
-      payload.packagingAndForwadingCharges = packagingAndForwadingCharges;
+  getSalesLast6Months(customerId?: number | string | null): Observable<SaleRecentResponse> {
+    const normalizedCustomerId =
+      customerId === null || customerId === undefined || customerId === ''
+        ? null
+        : Number(customerId);
+    const payload =
+      normalizedCustomerId !== null && Number.isFinite(normalizedCustomerId)
+        ? { customerId: normalizedCustomerId }
+        : {};
+    return this.http.post<SaleRecentResponse>(`${this.apiUrl}/last-6-months`, payload);
+  }
+
+  createFromQuotationItems(
+    quotationItemIds: number[],
+    packagingAndForwadingCharges?: number,
+    saleId?: number | null
+  ): Observable<any> {
+    const normalizedCharges = Number(packagingAndForwadingCharges ?? 0);
+    const payload: any = {
+      quotationItemIds,
+      packagingAndForwadingCharges: Number.isFinite(normalizedCharges) ? normalizedCharges : 0
+    };
+
+    if (saleId !== undefined && saleId !== null) {
+      payload.saleId = saleId;
     }
+
     return this.http.post(`${this.apiUrl}/createFromQuotationItems`, payload);
   }
 
