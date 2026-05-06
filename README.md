@@ -1,5 +1,4 @@
 # medonix_frontend
-
 ng deploy --base-href "https://aalekhanSoftware.github.io/medonix_frontend/"
 
 ng deploy --base-href "https://admin.medonixsurgitech.com/"
