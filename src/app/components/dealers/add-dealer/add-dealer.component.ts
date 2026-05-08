@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DealersService, RegisterDealerRequest } from '../../../services/dealers.service';
-import { ToastrService } from 'ngx-toastr';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { Meta } from '@angular/platform-browser';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
+import { SnackbarService } from '../../../shared/services/snackbar.service';
 
 @Component({
   selector: 'app-add-dealer',
@@ -22,7 +23,7 @@ export class AddDealerComponent implements OnInit, OnDestroy {
   constructor(
     private formBuilder: FormBuilder,
     @Inject(DealersService) private dealersService: DealersService,
-    private toastr: ToastrService,
+    private snackbar: SnackbarService,
     private title: Title,
     private meta: Meta
   ) {}
@@ -68,20 +69,43 @@ export class AddDealerComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response?.success) {
-            this.toastr.success('Dealer registered successfully. Pending for approval.', 'Success');
+            this.snackbar.success('Dealer registered successfully. Pending for approval.');
             this.form.reset();
           } else {
-            this.toastr.info(response?.message || 'Request submitted.');
+            this.snackbar.info(response?.message || 'Request submitted.');
           }
         },
-        error: (err) => {
-          const message = err?.error?.message || 'Failed to register dealer. Please try again.';
-          this.toastr.error(message, 'Error');
-          // Safety fallback - ensure button is re-enabled on error
-          this.isSubmitting = false;
+        error: (err: HttpErrorResponse) => {
+          const message = this.extractErrorMessage(err) || 'Failed to register dealer. Please try again.';
+          this.snackbar.error(message);
         }
       });
     this.subscriptions.push(sub);
+  }
+
+  private extractErrorMessage(err: HttpErrorResponse | any): string | null {
+    // Expected backend shape: { success:false, message:"..." } for 400/409/422
+    const raw = err?.error;
+
+    if (raw && typeof raw === 'object') {
+      const msg = (raw as any).message;
+      return typeof msg === 'string' && msg.trim() ? msg.trim() : null;
+    }
+
+    if (typeof raw === 'string' && raw.trim()) {
+      // Some APIs return text/plain or a JSON string in `error`
+      try {
+        const parsed = JSON.parse(raw);
+        const msg = parsed?.message;
+        if (typeof msg === 'string' && msg.trim()) return msg.trim();
+      } catch {
+        // Not JSON; fall through
+      }
+      return raw.trim();
+    }
+
+    const fallback = err?.message;
+    return typeof fallback === 'string' && fallback.trim() ? fallback.trim() : null;
   }
 
   ngOnDestroy(): void {

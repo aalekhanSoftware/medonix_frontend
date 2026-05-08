@@ -39,11 +39,20 @@
 
       .form-control {
         border-color: var(--neutral-light);
+        width: 100%;
         
         &:focus {
           border-color: var(--primary);
           box-shadow: 0 0 0 0.2rem rgba(0, 58, 88, 0.1);
         }
+      }
+
+      .client-select {
+        text-transform: none;
+        letter-spacing: normal;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .error-message {

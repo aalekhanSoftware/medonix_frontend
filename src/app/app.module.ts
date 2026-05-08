@@ -5,6 +5,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastrModule } from 'ngx-toastr';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { HeaderComponent } from './components/shared/header/header.component';
@@ -40,6 +41,7 @@ import { LedgerComponent } from './components/ledger/ledger.component';
     RouterModule,
     AppRoutingModule,
     ToastrModule.forRoot(),
+    MatSnackBarModule,
     PaginationComponent,
     LoaderComponent,
     SearchableSelectComponent

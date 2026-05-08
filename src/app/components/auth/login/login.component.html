@@ -3,6 +3,25 @@
     <h2>Login</h2>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit($event)">
       <div class="form-group">
+        <label for="clientId">Client</label>
+        <select
+          id="clientId"
+          formControlName="clientId"
+          class="form-control client-select"
+          [disabled]="isClientsLoading"
+          [attr.title]="selectedClientName"
+        >
+          <option [ngValue]="null">Select a client</option>
+          <option *ngFor="let client of clients" [ngValue]="client.id">
+            {{ client.name }}
+          </option>
+        </select>
+        <div class="error-message" *ngIf="loginForm.get('clientId')?.touched && loginForm.get('clientId')?.invalid">
+          <span *ngIf="loginForm.get('clientId')?.errors?.['required']">Client is required</span>
+        </div>
+      </div>
+
+      <div class="form-group">
         <label for="email">Email</label>
         <input
           type="email"
@@ -34,9 +53,9 @@
       <button 
         type="submit" 
         class="btn btn-primary btn-block" 
-        [disabled]="loginForm.invalid || isLoading"
+        [disabled]="loginForm.invalid || isLoading || isClientsLoading"
       >
-        {{ isLoading ? 'Logging in...' : 'Login' }}
+        {{ isLoading ? 'Logging in...' : (isClientsLoading ? 'Loading clients...' : 'Login') }}
       </button>
     </form>
   </div>

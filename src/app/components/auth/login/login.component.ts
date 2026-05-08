@@ -1,4 +1,4 @@
-import { Component, Inject, PLATFORM_ID, OnDestroy } from '@angular/core';
+import { Component, Inject, PLATFORM_ID, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -12,9 +12,11 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent implements OnDestroy {
+export class LoginComponent implements OnInit, OnDestroy {
   loginForm: FormGroup;
   isLoading = false;
+  isClientsLoading = false;
+  clients: Array<{ id: number; name: string }> = [];
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -25,9 +27,36 @@ export class LoginComponent implements OnDestroy {
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.loginForm = this.fb.group({
+      clientId: [null, Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+  }
+
+  ngOnInit(): void {
+    this.loadClients();
+  }
+
+  private loadClients(): void {
+    this.isClientsLoading = true;
+    this.authService.getPublicClients()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.clients = response?.data ?? [];
+          this.isClientsLoading = false;
+        },
+        error: () => {
+          this.snackbar.error('Failed to load clients');
+          this.isClientsLoading = false;
+        }
+      });
+  }
+
+  get selectedClientName(): string {
+    const selectedId = Number(this.loginForm.get('clientId')?.value);
+    if (!selectedId) return '';
+    return this.clients.find(c => c.id === selectedId)?.name ?? '';
   }
 
   onSubmit(event?: Event): void {
@@ -36,7 +65,15 @@ export class LoginComponent implements OnDestroy {
 
     if (this.loginForm.valid) {
       this.isLoading = true;
-      this.authService.login(this.loginForm.value)
+
+      const formValue = this.loginForm.value;
+      const payload = {
+        clientId: Number(formValue.clientId),
+        email: formValue.email,
+        password: formValue.password
+      };
+
+      this.authService.login(payload)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
@@ -47,6 +84,7 @@ export class LoginComponent implements OnDestroy {
             }
             this.snackbar.success('Login successful');
             this.router.navigate(['/quotation']);
+            this.isLoading = false;
           },
           error: (error) => {
             this.snackbar.error(error?.error?.message || 'Login failed');

@@ -14,6 +14,23 @@ interface TokenResponse {
     refreshToken: string;
   };
 }
+
+interface PublicClient {
+  id: number;
+  name: string;
+}
+
+interface PublicClientsResponse {
+  success: boolean;
+  message: string;
+  data: PublicClient[];
+}
+
+interface LoginCredentials {
+  clientId: number;
+  email: string;
+  password: string;
+}
 export enum UserRole {
   ADMIN = 'ADMIN',
   STAFF_ADMIN = 'STAFF_ADMIN',
@@ -38,7 +55,11 @@ export class AuthService {
     private router: Router
   ) { }
 
-  login(credentials: { email: string; password: string }): Observable<any> {
+  getPublicClients(): Observable<PublicClientsResponse> {
+    return this.http.get<PublicClientsResponse>(`${environment.apiUrl}/api/clients/public-list`);
+  }
+
+  login(credentials: LoginCredentials): Observable<any> {
     return this.http.post(`${environment.apiUrl}/api/auth/login`, credentials).pipe(
       tap((response: any) => {
         localStorage.setItem('token', response.accessToken);
