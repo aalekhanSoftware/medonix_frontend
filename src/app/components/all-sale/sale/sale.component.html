@@ -107,6 +107,7 @@
             <th scope="col">Customer Name</th>
             <th scope="col">Sale Date</th>
             <th scope="col">Total Sales Amount</th>
+            <th scope="col" *ngIf="canViewPaymentDoneAmount">Payment Done Amount</th>
             <th scope="col" *ngIf="canManageSales">Actions</th>
           </tr>
         </thead>
@@ -117,6 +118,15 @@
             <td data-label="Customer Name">{{ sale?.customerName ? sale?.customerName : '-'}}</td>
             <td data-label="Sale Date">{{ sale?.saleDate | date:'dd-MM-yyyy' }}</td>
             <td data-label="Total Sales Amount"><strong>{{ sale?.totalSaleAmount ?? 0 | round }}</strong></td>
+            <td data-label="Payment Done Amount" *ngIf="canViewPaymentDoneAmount">
+              <strong>{{ sale?.paymentDoneAmount ?? 0 | round }}</strong>
+              <i
+                *ngIf="sale?.isFullPaymentDone === true"
+                class="fas fa-check text-success ms-1"
+                aria-label="Full payment done"
+                title="Full payment done"
+              ></i>
+            </td>
             <td class="actions" data-label="Actions" *ngIf="canManageSales">
               <button 
                 class="btn-icon pdf" 

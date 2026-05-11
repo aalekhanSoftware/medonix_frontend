@@ -57,6 +57,8 @@ export interface LedgerEntry {
   runningBalance?: number;
   numberOfItems?: number | null;
   taxAmount?: number | null;
+  paymentDoneAmount?: number | null;
+  isFullPaymentDone?: boolean | null;
   sortOrder?: number;
 }
 

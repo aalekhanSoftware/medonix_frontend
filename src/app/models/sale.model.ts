@@ -22,6 +22,8 @@ export interface Sale {
   customerId?: number;
   discountAmount?: number;
   hasCreditNote?: boolean;
+  paymentDoneAmount?: number;
+  isFullPaymentDone?: boolean;
   products?: SaleProduct[];
 }
 

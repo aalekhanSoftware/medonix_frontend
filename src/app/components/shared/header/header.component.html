@@ -120,6 +120,11 @@
                 <i class="fas fa-chart-line"></i> Chart
               </a>
             </li>
+            <li *ngIf="permissions.canViewSale">
+              <a routerLink="/transaction/unpaid-sales" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-file-invoice-dollar"></i> Unpaid Sales
+              </a>
+            </li>
             <li *ngIf="permissions.canViewPurchase">
               <a routerLink="/purchase" routerLinkActive="active" (click)="closeAllMenus()">
                 <i class="fas fa-shopping-cart"></i> Purchase

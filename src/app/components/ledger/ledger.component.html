@@ -207,6 +207,8 @@
               <th class="num">Running bal.</th>
               <th class="num">Items</th>
               <th class="num">Tax</th>
+              <th class="num">Payment Done</th>
+              <th class="num">Paid</th>
             </tr>
           </thead>
           <tbody>
@@ -220,6 +222,8 @@
               <td class="num">{{ row.runningBalance != null ? (row.runningBalance | currency:'INR') : '—' }}</td>
               <td class="num">{{ row.numberOfItems != null ? row.numberOfItems : '—' }}</td>
               <td class="num">{{ row.taxAmount != null ? (row.taxAmount | currency:'INR') : '—' }}</td>
+              <td class="num">{{ row.paymentDoneAmount != null && row.paymentDoneAmount !== 0 ? (row.paymentDoneAmount | currency:'INR') : '—' }}</td>
+              <td class="num">{{ row.isFullPaymentDone ? '✓' : '—' }}</td>
             </tr>
           </tbody>
         </table>

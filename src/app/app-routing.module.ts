@@ -294,6 +294,12 @@ const routes: Routes = [
     data: { preload: true, roles: ['ADMIN', 'STAFF_ADMIN', 'DEALER', 'SALES_AND_MARKETING', 'REPORTER'] }
   },
   {
+    path: 'transaction/unpaid-sales',
+    loadComponent: () => import('./components/transaction-unpaid-sales/transaction-unpaid-sales.component').then(m => m.TransactionUnpaidSalesComponent),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { preload: true, roles: ['ADMIN', 'STAFF_ADMIN', 'DEALER', 'SALES_AND_MARKETING', 'REPORTER'] }
+  },
+  {
     path: '**',
     redirectTo: '/purchase',
     pathMatch: 'full'

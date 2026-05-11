@@ -1,0 +1,143 @@
+<div class="unpaid-sales-container">
+  <app-loader [show]="isLoading"></app-loader>
+
+  <section class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+      </div>
+      <div class="header-text">
+        <h1>Unpaid Sales</h1>
+        <p>Find customer-wise unpaid invoices by days and review pending collections.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="search-section card" aria-labelledby="unpaid-sales-filters-heading">
+    <h2 id="unpaid-sales-filters-heading">Search Filters</h2>
+
+    <form [formGroup]="unpaidSalesForm" (ngSubmit)="onSearch($event)" aria-label="Unpaid sales search form">
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="customerId">Customer</label>
+          <div class="select-group inline">
+            <app-searchable-select
+              id="customerId"
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'Select Customer', value: '' }"
+              [searchPlaceholder]="'Search customers...'"
+              [virtualScroll]="true"
+              [initialDisplayLimit]="100"
+              [allowClear]="true"
+              [focusWidthPx]="600"
+              [searchMode]="'filter'"
+            ></app-searchable-select>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-primary refresh-btn"
+              (click)="refreshCustomers()"
+              [disabled]="isLoadingCustomers"
+              title="Refresh Customers"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="days">Days</label>
+          <input
+            id="days"
+            type="number"
+            class="form-control"
+            formControlName="days"
+            min="0"
+            max="365"
+            step="1"
+            placeholder="Enter days"
+            (touchstart)="$event.stopPropagation()"
+          >
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary" [disabled]="isLoading">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()" [disabled]="isLoading">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="results-section card" aria-labelledby="unpaid-sales-results-heading">
+    <h2 id="unpaid-sales-results-heading">Results</h2>
+
+    <div class="table-responsive" *ngIf="rows.length > 0; else emptyState">
+      <table class="table" role="table" aria-label="Unpaid sales result table">
+        <thead>
+          <tr>
+            <th scope="col">No</th>
+            <th scope="col">Invoice No.</th>
+            <th scope="col">Sale Date</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Total Sale Amount</th>
+            <th scope="col">Payment Done</th>
+            <th scope="col">Pending Amount</th>
+            <th scope="col" class="col-actions">Payment receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of rows; let i = index; trackBy: trackBySaleId">
+            <td data-label="No">{{ (currentPage * pageSize) + i + 1 }}</td>
+            <td data-label="Invoice No."><strong>{{ row.invoiceNumber }}</strong></td>
+            <td data-label="Sale Date">{{ row.saleDate }}</td>
+            <td data-label="Customer">{{ row.customerName }}</td>
+            <td data-label="Total Sale Amount">{{ row.totalSaleAmount }}</td>
+            <td data-label="Payment Done">{{ row.paymentDoneAmount }}</td>
+            <td data-label="Pending Amount"><strong>{{ row.pendingAmount }}</strong></td>
+            <td data-label="Payment receipt" class="col-actions">
+              <button
+                type="button"
+                class="btn btn-sm btn-secondary receipt-btn"
+                (click)="printPaymentReceipt(row, $event)"
+                [disabled]="printingReceiptSaleId !== null"
+                [attr.aria-busy]="printingReceiptSaleId === row.id"
+                [title]="'Print payment receipt for ' + row.invoiceNumber"
+              >
+                <i
+                  class="fas"
+                  [ngClass]="printingReceiptSaleId === row.id ? 'fa-spinner fa-spin' : 'fa-print'"
+                  aria-hidden="true"
+                ></i>
+                <span class="receipt-btn-label"> Print receipt</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <i class="fas fa-info-circle" aria-hidden="true"></i>
+        <span>No unpaid sales found. Select filters and click Search.</span>
+      </div>
+    </ng-template>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </section>
+</div>

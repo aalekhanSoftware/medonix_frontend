@@ -7,7 +7,7 @@ import { DateUtils } from '../../../shared/utils/date-utils';
 import { Router } from '@angular/router';
 import { CustomerService } from '../../../services/customer.service';
 import { EncryptionService } from '../../../shared/services/encryption.service';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService, UserRole } from '../../../services/auth.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -35,6 +35,7 @@ export class SaleComponent implements OnInit, OnDestroy {
   customers: any[] = [];
   isLoadingCustomers = false;
   canManageSales = false;
+  canViewPaymentDoneAmount = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -53,6 +54,7 @@ export class SaleComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.canManageSales = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    this.canViewPaymentDoneAmount = this.authService.hasAnyRole([UserRole.ADMIN, UserRole.SALES_AND_MARKETING]);
     this.loadSales();
     if (this.canManageSales) {
       this.loadCustomers();
