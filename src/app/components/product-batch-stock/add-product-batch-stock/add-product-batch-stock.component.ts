@@ -8,6 +8,7 @@ import { takeUntil } from 'rxjs/operators';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 import { ProductService } from '../../../services/product.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { toProductOptionsList } from '../../../shared/utils/product-display.util';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
@@ -115,7 +116,7 @@ export class AddProductBatchStockComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response?.success && response.data) {
-            this.products = Array.isArray(response.data) ? response.data : (response.data.content || []);
+            this.products = toProductOptionsList(response.data);
             this.buildProductMap();
           }
           this.isLoading = false;
@@ -143,7 +144,7 @@ export class AddProductBatchStockComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response?.success && response.data) {
-            this.products = Array.isArray(response.data) ? response.data : (response.data.content || []);
+            this.products = toProductOptionsList(response.data);
             this.buildProductMap();
             this.snackbar.success('Products refreshed successfully');
           }

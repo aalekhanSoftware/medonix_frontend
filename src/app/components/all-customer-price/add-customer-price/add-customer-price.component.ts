@@ -6,6 +6,7 @@ import { Subject, takeUntil, Subscription, debounceTime, filter, distinctUntilCh
 import { formatDate } from '@angular/common';
 import { ProductService } from '../../../services/product.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { QuotationService } from '../../../services/quotation.service';
 import { PriceService } from '../../../services/price.service';
 import { AuthService } from '../../../services/auth.service';
@@ -409,7 +410,7 @@ export class AddCustomerPriceComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
           }
           this.isLoadingProducts = false;
         },
@@ -427,7 +428,7 @@ export class AddCustomerPriceComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.snackbar.success('Products refreshed successfully');
           }
           this.isLoadingProducts = false;

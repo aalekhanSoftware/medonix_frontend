@@ -37,7 +37,7 @@ export class TransactionUnpaidSalesComponent implements OnInit, OnDestroy {
 
   currentPage = 0;
   pageSize = 10;
-  pageSizeOptions = [5, 10, 50, 100];
+  pageSizeOptions = [5, 10, 50, 100,500, 1000];
   totalElements = 0;
   totalPages = 0;
 
@@ -189,6 +189,10 @@ export class TransactionUnpaidSalesComponent implements OnInit, OnDestroy {
 
   trackBySaleId(_index: number, row: UnpaidSaleRow): number {
     return row.id;
+  }
+
+  get totalPendingAmount(): number {
+    return this.rows.reduce((sum, row) => sum + (Number(row.pendingAmount) || 0), 0);
   }
 
   printPaymentReceipt(row: UnpaidSaleRow, event?: Event): void {

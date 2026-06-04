@@ -14,6 +14,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
 import { StandalonePurchaseReturnRequest, StandalonePurchaseReturnUpdateRequest, StandalonePurchaseReturnProductDto } from '../../../models/purchase-return.model';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
+import { toProductOptionsList } from '../../../shared/utils/product-display.util';
 
 @Component({
   selector: 'app-add-standalone-purchase-return',
@@ -113,7 +114,7 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content || response.data;
+          this.products = toProductOptionsList(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;
@@ -490,7 +491,7 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
     this.productService.refreshProducts().pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content ?? response.data;
+          this.products = toProductOptionsList(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;

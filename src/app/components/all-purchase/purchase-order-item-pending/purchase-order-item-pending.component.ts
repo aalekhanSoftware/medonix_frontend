@@ -10,6 +10,7 @@ import { CustomerService } from '../../../services/customer.service';
 import { ProductService } from '../../../services/product.service';
 import { PurchaseOrderService } from '../../../services/purchase-order.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 
 interface PendingPurchaseItem {
@@ -206,7 +207,7 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
           }
           this.isLoadingProducts = false;
         },
@@ -243,7 +244,7 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.snackbar.success('Products refreshed successfully');
           }
           this.isLoadingProducts = false;

@@ -9,6 +9,7 @@ import { ProductService } from '../../../services/product.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 @Component({
   selector: 'app-employee-order-form',
@@ -116,7 +117,7 @@ export class EmployeeOrderFormComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
           }
           this.isLoadingProducts = false;
         },
@@ -134,7 +135,7 @@ export class EmployeeOrderFormComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.snackbar.success('Products refreshed successfully');
           }
           this.isLoadingProducts = false;

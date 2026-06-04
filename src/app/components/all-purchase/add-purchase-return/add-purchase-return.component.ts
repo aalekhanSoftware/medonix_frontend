@@ -8,6 +8,7 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { PurchaseService } from '../../../services/purchase.service';
 import { ProductService } from '../../../services/product.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { buildProductDisplayName, toProductOptionsList } from '../../../shared/utils/product-display.util';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 
@@ -133,7 +134,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content || response.data || [];
+          this.products = toProductOptionsList(response.data);
         } else {
           this.products = [];
         }
@@ -383,7 +384,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
       if (productId) {
         const product = this.getProductByValue(productId);
         if (product) {
-          group.get('productName')?.setValue(product.name, { emitEvent: false });
+          group.get('productName')?.setValue(buildProductDisplayName(product), { emitEvent: false });
 
           if (!group.get('unitPrice')?.value && product.unitPrice != null) {
             group.get('unitPrice')?.setValue(product.unitPrice, { emitEvent: false });

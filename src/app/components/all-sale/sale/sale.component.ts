@@ -219,6 +219,21 @@ export class SaleComponent implements OnInit, OnDestroy {
       });
   }
 
+  exportSaleExcel(id: number, invoiceNumber?: string): void {
+    this.saleService.exportSaleExcel(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ blob, filename }) => {
+          const excelFilename = invoiceNumber ? `sale-invoice-${invoiceNumber}.xlsx` : filename;
+          this.downloadFile(blob, excelFilename);
+          this.snackbar.success('Excel file downloaded successfully');
+        },
+        error: (error) => {
+          this.snackbar.error(error?.error?.message || 'Failed to export Excel file');
+        }
+      });
+  }
+
   isExportButtonDisabled(): boolean {
     const startDate = this.searchForm.get('startDate')?.value;
     const endDate = this.searchForm.get('endDate')?.value;

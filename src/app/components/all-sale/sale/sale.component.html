@@ -136,6 +136,14 @@
                 <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
               <button 
+                class="btn-icon excel" 
+                (click)="exportSaleExcel(sale.id!, sale.invoiceNumber)"
+                (touchstart)="$event.stopPropagation()"
+                title="Export sale as Excel"
+                aria-label="Export sale as Excel">
+                <i class="fas fa-file-excel" aria-hidden="true"></i>
+              </button>
+              <button 
                 class="btn-icon edit" 
                 (click)="editSales(sale.id!)"
                 (touchstart)="$event.stopPropagation()"

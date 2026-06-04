@@ -12,6 +12,7 @@ import { SnackbarService } from '../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../shared/services/encryption.service';
+import { toProductOptionsList, transformProductsWithDisplayName } from '../../shared/utils/product-display.util';
 
 interface ProductForm {
   id?: number | null;
@@ -96,7 +97,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content || response.data;
+          this.products = toProductOptionsList(response.data);
           // Fetch sale return details after products are loaded (if in edit mode)
           if (this.isEdit && this.saleReturnId) {
             this.fetchSaleReturnDetails(this.saleReturnId);
@@ -287,7 +288,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content || response.data;
+          this.products = toProductOptionsList(response.data);
           this.buildProductMap();
         }
         this.isLoadingProducts = false;
@@ -314,7 +315,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.productService.refreshProducts().pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success) {
-          this.products = response.data;
+          this.products = transformProductsWithDisplayName(response.data || []);
           this.buildProductMap();
           this.snackbar.success('Products refreshed successfully');
         }

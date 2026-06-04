@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter, forwardRef, ElementRef, HostListener, OnDestroy, ViewChild, AfterViewInit, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Renderer2, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, forwardRef, ElementRef, HostListener, HostBinding, OnDestroy, ViewChild, AfterViewInit, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Renderer2, OnChanges, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -28,6 +28,8 @@ interface SelectOption {
 export class SearchableSelectComponent implements ControlValueAccessor, OnInit, OnChanges, OnDestroy, AfterViewInit {
   @Input() options: SelectOption[] = [];
   @Input() labelKey: string = 'name';
+  /** Optional extra option fields to include when filtering/jump-searching (e.g. productCode). */
+  @Input() searchKeys: string[] = [];
   @Input() valueKey: string = 'id';
   @Input() placeholder: string = 'Select an option';
   @Input() defaultOption: { label: string; value: any } | null = null;
@@ -51,6 +53,13 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
   searchText: string = '';
   isOpen: boolean = false;
+
+  /** Host class so parent tables can raise z-index while dropdown is open. */
+  @HostBinding('class.dropdown-host-open')
+  get dropdownHostOpen(): boolean {
+    return this.isOpen;
+  }
+
   selectedValue: any = '';
   selectedValues: any[] = [];
   filteredOptions: SelectOption[] = [];
@@ -904,7 +913,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
           
           for (let i = processed; i < endIndex; i++) {
             const option = this.options[i];
-            const label = this.getCachedLabel(option).toLowerCase();
+            const label = this.getSearchableText(option);
             
             // Prefix matches should stay on top.
             if (label.startsWith(searchLower)) {
@@ -946,7 +955,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       } else {
         // For smaller datasets, use direct filtering
         for (const option of this.options) {
-          const label = this.getCachedLabel(option).toLowerCase();
+          const label = this.getSearchableText(option);
           
           // Prefix matches should stay on top.
           if (label.startsWith(searchLower)) {
@@ -1027,7 +1036,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
         for (let i = processed; i < endIndex; i++) {
           const option = this.options[i];
-          const label = this.getCachedLabel(option).toLowerCase();
+          const label = this.getSearchableText(option);
           if (label.includes(searchLower)) {
             resolve(i);
             return;
@@ -1048,7 +1057,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
     for (let i = 0; i < optionsLength; i++) {
       const option = this.options[i];
-      const label = this.getCachedLabel(option).toLowerCase();
+      const label = this.getSearchableText(option);
       if (label.includes(searchLower)) {
         resolve(i);
         return;
@@ -1095,6 +1104,20 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     const label = this.getOptionLabel(option);
     this.labelCache.set(option, label);
     return label;
+  }
+
+  /** Lowercase text used for filter/jump search: display label plus optional searchKeys fields. */
+  private getSearchableText(option: SelectOption): string {
+    const parts: string[] = [this.getCachedLabel(option)];
+    for (const key of this.searchKeys) {
+      const value = option[key];
+      if (value == null) continue;
+      const text = typeof value === 'string' ? value.trim() : String(value).trim();
+      if (text) {
+        parts.push(text);
+      }
+    }
+    return parts.join(' ').toLowerCase();
   }
   
   private updateDisplayedOptions(): void {

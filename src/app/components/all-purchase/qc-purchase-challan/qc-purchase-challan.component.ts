@@ -7,6 +7,7 @@ import { PurchaseChallanService } from '../../../services/purchase-challan.servi
 import { ProductService } from '../../../services/product.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { EncryptionService } from '../../../shared/services/encryption.service';
+import { buildProductDisplayName, toProductOptionsList } from '../../../shared/utils/product-display.util';
 
 @Component({
   selector: 'app-qc-purchase-challan',
@@ -76,7 +77,7 @@ export class QcPurchaseChallanComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content || response.data;
+          this.products = toProductOptionsList(response.data);
         }
         this.mapProductNames();
       },
@@ -128,7 +129,7 @@ export class QcPurchaseChallanComponent implements OnInit, OnDestroy {
       if (productId) {
         const product = this.products.find((p: any) => p.id === productId);
         if (product) {
-          group.get('productName')?.setValue(product.name, { emitEvent: false });
+          group.get('productName')?.setValue(buildProductDisplayName(product), { emitEvent: false });
         }
       }
     });

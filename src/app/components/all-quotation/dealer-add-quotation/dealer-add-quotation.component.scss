@@ -312,6 +312,7 @@ $transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   ::ng-deep .cdk-virtual-scroll-content-wrapper {
     padding-bottom: 350px;
+    overflow: visible;
   }
 }
 
@@ -348,12 +349,8 @@ $transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   tbody {
     .product-row {
       position: relative;
+      z-index: 1;
       transition: $transition-base;
-
-      // When product dropdown is open, bring row (and dropdown) above other rows
-      &:has(app-searchable-select.select-dropdown-open) {
-        z-index: 20;
-      }
 
       &:hover {
         background: rgba($secondary-lightest, 0.3);
@@ -371,6 +368,8 @@ $transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         padding: 12px 10px;
         vertical-align: middle;
         border-bottom: 1px solid $neutral-lighter;
+        position: static;
+        overflow: visible;
       }
     }
   }
@@ -524,27 +523,56 @@ $transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   .form-field-container {
     position: relative;
     min-width: 200px;
+    overflow: visible;
 
     .select-group {
       display: flex;
       align-items: flex-start;
       gap: 6px;
+      width: 100%;
+      overflow: visible;
+      position: relative;
+
+      &:has(.searchable-select.active),
+      &:has(app-searchable-select.dropdown-host-open) {
+        z-index: 1000;
+      }
 
       app-searchable-select {
+        display: block;
         flex: 1;
-        z-index: 10;
+        position: relative;
+        min-width: 0;
+        z-index: 100;
+        overflow: visible;
+
+        &:focus-within {
+          z-index: 1001;
+          position: relative;
+        }
+
+        ::ng-deep .searchable-select.active {
+          z-index: 1001;
+        }
+
+        ::ng-deep .select-dropdown {
+          z-index: 1002 !important;
+          position: absolute !important;
+        }
 
         @media (max-width: 768px) {
-          ::ng-deep .dropdown-menu {
+          ::ng-deep .select-dropdown {
             position: fixed !important;
-            left: 12px !important;
-            right: 12px !important;
-            width: calc(100vw - 24px) !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100vw !important;
             max-width: none !important;
-            z-index: 1000 !important;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
-            border-radius: 12px !important;
-            max-height: 50vh !important;
+            z-index: 9999 !important;
+            box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.2) !important;
+            border-radius: 16px 16px 0 0 !important;
+            max-height: 60vh !important;
             overflow-y: auto !important;
           }
         }
@@ -558,6 +586,10 @@ $transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid $neutral-light;
         color: $primary;
         flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
 
         &:hover:not(:disabled) {
           background: $primary;
@@ -906,6 +938,34 @@ textarea.form-control {
       min-width: 55px;
       width: 55px;
     }
+  }
+}
+
+// Fix z-index stacking when product dropdown is open on any row (not just the last)
+.products-table {
+  tbody {
+    tr.product-row {
+      &:has(.searchable-select.active),
+      &:has(app-searchable-select.dropdown-host-open) {
+        z-index: 100;
+        position: relative;
+      }
+
+      td:has(.searchable-select.active),
+      td:has(app-searchable-select.dropdown-host-open) {
+        position: relative;
+        z-index: 100;
+        overflow: visible;
+      }
+    }
+  }
+}
+
+.form-field-container {
+  &:has(.searchable-select.active),
+  &:has(app-searchable-select.dropdown-host-open) {
+    z-index: 1000;
+    position: relative;
   }
 }
 

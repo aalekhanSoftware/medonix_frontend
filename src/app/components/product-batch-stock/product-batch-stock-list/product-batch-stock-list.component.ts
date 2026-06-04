@@ -8,6 +8,7 @@ import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 import { ProductService } from '../../../services/product.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
+import { buildProductDisplayName, transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -203,7 +204,7 @@ export class ProductBatchStockListComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response?.success && response.data) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.buildProductMap();
           }
           this.isLoadingProducts = false;
@@ -226,7 +227,7 @@ export class ProductBatchStockListComponent implements OnInit, OnDestroy {
 
   getProductName(productId: number): string {
     const product = this.productMap.get(productId);
-    return product?.name || 'N/A';
+    return product ? buildProductDisplayName(product) : 'N/A';
   }
 
   refreshProducts(): void {
@@ -236,7 +237,7 @@ export class ProductBatchStockListComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response?.success && response.data) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.buildProductMap();
             this.snackbar.success('Products refreshed successfully');
           }

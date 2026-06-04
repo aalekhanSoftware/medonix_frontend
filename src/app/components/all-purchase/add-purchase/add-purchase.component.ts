@@ -15,6 +15,7 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 interface ProductForm {
   id?: number | null;
@@ -558,15 +559,6 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private transformProductsWithDisplayName(products: any[]): any[] {
-    return products.map(product => ({
-      ...product,
-      displayName: product.materialName
-        ? `${product.name} (${product.materialName})`
-        : product.name
-    }));
-  }
-
   private loadProducts(): void {
     this.isLoadingProducts = true;
     this.productService.getProducts({ status: 'A' })
@@ -574,7 +566,7 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = this.transformProductsWithDisplayName(response.data);
+            this.products = transformProductsWithDisplayName(response.data);
             if (this.products.length === 0) {
               this.productMap.clear();
               this.productMapReady = true;
@@ -671,7 +663,7 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = this.transformProductsWithDisplayName(response.data);
+            this.products = transformProductsWithDisplayName(response.data);
             if (this.products.length === 0) {
               this.productMap.clear();
               this.productMapReady = true;

@@ -365,6 +365,23 @@
     }
   }
 
+  &.excel {
+    color: #198754;
+    background-color: rgba(25, 135, 84, 0.1);
+
+    &:hover:not(:disabled) {
+      background-color: #198754;
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      color: var(--text-secondary);
+      background-color: rgba(0, 0, 0, 0.05);
+      cursor: not-allowed;
+    }
+  }
+
   &.delete {
     color: #dc3545;
     background-color: rgba(220, 53, 69, 0.1);

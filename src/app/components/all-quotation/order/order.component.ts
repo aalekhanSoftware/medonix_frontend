@@ -12,6 +12,7 @@ import { EncryptionService } from '../../../shared/services/encryption.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 @Component({
   selector: 'app-order',
@@ -139,7 +140,7 @@ export class OrderComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
           }
           this.isLoadingProducts = false;
         },
@@ -176,7 +177,7 @@ export class OrderComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.snackbar.success('Products refreshed successfully');
           }
           this.isLoadingProducts = false;

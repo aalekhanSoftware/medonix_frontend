@@ -19,7 +19,8 @@
           <app-searchable-select 
             formControlName="productId" 
             [options]="products" 
-            labelKey="name"
+            labelKey="displayName"
+            [searchKeys]="['productCode', 'name', 'materialName']"
             valueKey="id" 
             [defaultOption]="{ label: 'All Products', value: '' }"
             [searchPlaceholder]="'Search products...'"

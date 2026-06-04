@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { RouterModule } from '@angular/router';
 import { Subject, takeUntil, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { SnackbarService } from '../../shared/services/snackbar.service';
+import { transformProductsWithDisplayName } from '../../shared/utils/product-display.util';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { ProductService } from '../../services/product.service';
@@ -115,7 +116,7 @@ export class AddCombinedPurchaseSaleComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.buildProductMap();
           }
           this.isLoadingProducts = false;
@@ -143,7 +144,7 @@ export class AddCombinedPurchaseSaleComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.buildProductMap();
             this.snackbar.success('Products refreshed successfully');
           }

@@ -12,6 +12,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AuthService, UserRole } from '../../../services/auth.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 export interface PendingItemSearchRequest {
   customerId?: number;
@@ -177,7 +178,7 @@ export class PendingItemComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
           }
           this.isLoadingProducts = false;
         },
@@ -214,7 +215,7 @@ export class PendingItemComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             this.snackbar.success('Products refreshed successfully');
           }
           this.isLoadingProducts = false;

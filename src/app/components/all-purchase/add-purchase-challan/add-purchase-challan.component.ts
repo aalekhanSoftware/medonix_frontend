@@ -14,6 +14,7 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 
 interface ProductForm {
@@ -431,7 +432,7 @@ export class AddPurchaseChallanComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             if (this.products.length === 0) {
               this.productMap.clear();
               this.productMapReady = true;
@@ -459,7 +460,7 @@ export class AddPurchaseChallanComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = response.data;
+            this.products = transformProductsWithDisplayName(response.data || []);
             if (this.products.length === 0) {
               this.productMap.clear();
               this.productMapReady = true;

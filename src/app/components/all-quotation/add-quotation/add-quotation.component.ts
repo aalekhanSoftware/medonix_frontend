@@ -19,6 +19,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 import { TransportMaster, TransportMasterService } from '../../../services/transport-master.service';
 import { QuotationItemStatus } from '../../../models/quotation.model copy';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 @Component({
   standalone: true,
@@ -486,15 +487,6 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
     return Math.round(itemsTotal + packagingCharges);
   }
 
-  private transformProductsWithDisplayName(products: any[]): any[] {
-    return products.map(product => ({
-      ...product,
-      displayName: product.materialName
-        ? `${product.name} (${product.materialName})`
-        : product.name
-    }));
-  }
-
   private loadProducts(): void {
     this.isLoadingProducts = true;
     this.productService.getProducts({ status: 'A' })
@@ -502,7 +494,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       .subscribe({
       next: (response) => {
         if (response.success) {
-          this.products = this.transformProductsWithDisplayName(response.data);
+          this.products = transformProductsWithDisplayName(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;
@@ -640,7 +632,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       .subscribe({
       next: (response) => {
         if (response.success) {
-          this.products = this.transformProductsWithDisplayName(response.data);
+          this.products = transformProductsWithDisplayName(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;

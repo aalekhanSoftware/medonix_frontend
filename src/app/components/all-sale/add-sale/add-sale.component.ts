@@ -16,6 +16,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 interface ProductForm {
   id?: number | null;
@@ -603,15 +604,6 @@ export class AddSaleComponent implements OnInit, OnDestroy {
     return this.getTotalFinalPrice() + packagingCharges;
   }
 
-  private transformProductsWithDisplayName(products: any[]): any[] {
-    return products.map(product => ({
-      ...product,
-      displayName: product.materialName 
-        ? `${product.name} (${product.materialName})` 
-        : product.name
-    }));
-  }
-
   private loadProducts(): void {
     this.isLoadingProducts = true;
     this.productService.getProducts({ status: 'A' })
@@ -619,7 +611,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = this.transformProductsWithDisplayName(response.data);
+            this.products = transformProductsWithDisplayName(response.data);
             if (this.products.length === 0) {
               this.productMap.clear();
               this.productMapReady = true;
@@ -716,7 +708,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = this.transformProductsWithDisplayName(response.data);
+            this.products = transformProductsWithDisplayName(response.data);
             if (this.products.length === 0) {
               this.productMap.clear();
               this.productMapReady = true;

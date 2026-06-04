@@ -92,6 +92,20 @@ export class SaleService {
     );
   }
 
+  exportSaleExcel(id: number): Observable<{ blob: Blob; filename: string }> {
+    return this.http.post(`${this.apiUrl}/export-sale-excel`, { id }, {
+      responseType: 'blob',
+      observe: 'response'
+    }).pipe(
+      map(response => {
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filename = contentDisposition?.split('filename=')[1]?.replace(/"/g, '') || 'sale-invoice.xlsx';
+        const blob = new Blob([response.body!], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        return { blob, filename };
+      })
+    );
+  }
+
   generateSaleReturnPdf(id: number): Observable<{ blob: Blob; filename: string }> {
     return this.http.post(`${environment.apiUrl}/api/sale-returns/generate-pdf`, { id }, {
       responseType: 'blob',

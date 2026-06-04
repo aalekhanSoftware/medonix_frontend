@@ -18,6 +18,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 import { TransportMaster, TransportMasterService } from '../../../services/transport-master.service';
 import { PackagingChargesModalComponent } from './packaging-charges-modal.component';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 @Component({
   standalone: true,
@@ -403,7 +404,7 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
       .subscribe({
       next: (response) => {
         if (response.success) {
-          this.products = this.transformProductsWithDisplayName(response.data);
+          this.products = transformProductsWithDisplayName(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;
@@ -431,7 +432,7 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
       .subscribe({
       next: (response) => {
         if (response.success) {
-          this.products = this.transformProductsWithDisplayName(response.data);
+          this.products = transformProductsWithDisplayName(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;
@@ -453,14 +454,6 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
     });
   }
 
-  private transformProductsWithDisplayName(products: any[]): any[] {
-    return products.map(product => ({
-      ...product,
-      displayName: product.materialName
-        ? `${product.name} (${product.materialName})`
-        : product.name
-    }));
-  }
 
   private buildProductMap(): void {
     this.productMap.clear();

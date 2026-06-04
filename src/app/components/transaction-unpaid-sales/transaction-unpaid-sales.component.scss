@@ -137,6 +137,19 @@
       background: var(--neutral-lightest);
       color: var(--text-secondary);
     }
+
+    .totals-row {
+      background-color: var(--background);
+
+      td {
+        padding: 12px 8px;
+        border-top: 2px solid var(--supporting);
+
+        &.text-end {
+          text-align: right;
+        }
+      }
+    }
   }
 
   @media (max-width: 1024px) {

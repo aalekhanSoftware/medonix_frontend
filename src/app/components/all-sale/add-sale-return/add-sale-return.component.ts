@@ -14,6 +14,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
+import { toProductOptionsList } from '../../../shared/utils/product-display.util';
 
 interface ProductForm {
   id?: number | null;
@@ -136,7 +137,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = response.data.content || response.data;
+          this.products = toProductOptionsList(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;
@@ -572,7 +573,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.productService.refreshProducts().pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success) {
-          this.products = response.data.content || response.data;
+          this.products = toProductOptionsList(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
             this.productMapReady = true;

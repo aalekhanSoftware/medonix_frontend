@@ -11,6 +11,7 @@ import { PriceService } from '../../../services/price.service';
 import { SearchableSelectComponent } from "../../../shared/components/searchable-select/searchable-select.component";
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 
 @Component({
   standalone: true,
@@ -392,15 +393,6 @@ export class DealerAddQuotationComponent implements OnInit, OnDestroy {
     return Math.round(itemsTotal);
   }
 
-  private transformProductsWithDisplayName(products: any[]): any[] {
-    return products.map(product => ({
-      ...product,
-      displayName: product.materialName
-        ? `${product.name} (${product.materialName})`
-        : product.name
-    }));
-  }
-
   private buildProductMap(): void {
     this.productMap.clear();
     for (const product of this.products) {
@@ -415,7 +407,7 @@ export class DealerAddQuotationComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = this.transformProductsWithDisplayName(response.data);
+            this.products = transformProductsWithDisplayName(response.data);
             this.buildProductMap();
           }
           this.isLoadingProducts = false;
@@ -436,7 +428,7 @@ export class DealerAddQuotationComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = this.transformProductsWithDisplayName(response.data);
+            this.products = transformProductsWithDisplayName(response.data);
             this.buildProductMap();
             this.snackbar.success('Products refreshed successfully');
           }

@@ -51,8 +51,9 @@
                 <!-- Product Selection -->
                 <td class="product-col">
                   <div class="form-field-container">
-                    <div class="select-group">
+                    <div class="select-group" (touchstart)="$event.stopPropagation()">
                       <app-searchable-select [formControlName]="'productId'" [options]="products" labelKey="displayName"
+                        [searchKeys]="['productCode', 'name', 'materialName']"
                         [valueKey]="'id'" [placeholder]="'Select Product'" [searchPlaceholder]="'Search products...'"
                         [class.is-invalid]="isItemFieldInvalid(i, 'productId')"
                         (selectionChange)="onProductSelect(i, $event)" [focusWidthPx]="700"
