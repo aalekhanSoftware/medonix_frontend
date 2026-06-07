@@ -105,6 +105,36 @@ export function resolveBarcodeTargetRow(ctx: BarcodeTargetRowContext): BarcodeTa
   return { rowIndex: ctx.rowCount, shouldCreateRow: true };
 }
 
+/** True when the product field had a selection before scan focus (edit/replace mode). */
+export function isProductFieldEditScan(preScanProductId: unknown): boolean {
+  return preScanProductId !== null && preScanProductId !== undefined && preScanProductId !== '';
+}
+
+/**
+ * Returns the last row index whose productId matches, or -1 if none.
+ * Walks from bottom to top so the most recently added duplicate wins.
+ */
+export function findLastRowIndexWithProductId(
+  rowCount: number,
+  getProductIdAt: (index: number) => unknown,
+  productId: unknown,
+  excludeIndex?: number
+): number {
+  if (productId === null || productId === undefined || productId === '') {
+    return -1;
+  }
+  for (let i = rowCount - 1; i >= 0; i--) {
+    if (excludeIndex !== undefined && i === excludeIndex) {
+      continue;
+    }
+    const rowProductId = getProductIdAt(i);
+    if (rowProductId !== null && rowProductId !== undefined && rowProductId !== '' && rowProductId == productId) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 /** Max elapsed time (ms) from first to last keystroke to treat input as a barcode scan. */
 export const BARCODE_INPUT_MAX_DURATION_MS = 150;
 

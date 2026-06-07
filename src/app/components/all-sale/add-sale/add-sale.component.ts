@@ -19,10 +19,12 @@ import { ProductBatchStockService } from '../../../services/product-batch-stock.
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import {
   buildProductCodeMap,
+  findLastRowIndexWithProductId,
   findProductByProductCode,
   getBarcodeKeyChar,
   isLikelyBarcodeInput,
   isInsideProductLineItemField,
+  isProductFieldEditScan,
   looksLikeLineFieldBarcodeBuffer,
   normalizeScannedProductCodeText,
   resolveBarcodeTargetRow,
@@ -360,7 +362,10 @@ export class AddSaleComponent implements OnInit, OnDestroy {
   }
 
   onProductCodeMatched(sourceRowIndex: number, event: { code: string; value: any }): void {
-    this.applyScannedProductToRow(sourceRowIndex, event.value);
+    this.applyBarcodeScanResult(event.value, {
+      sourceRowIndex,
+      isProductFieldEdit: isProductFieldEditScan(this.preScanProductIdByRow.get(sourceRowIndex))
+    });
   }
 
   onProductCodeNotFound(code: string): void {
@@ -375,11 +380,52 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       this.snackbar.error(`Product code <${code}> not found`);
       return;
     }
-    this.applyBarcodeProductToTargetRow(product.id);
+    this.applyBarcodeScanResult(product.id, {
+      sourceRowIndex: null,
+      isProductFieldEdit: false
+    });
   }
 
-  private applyBarcodeProductToTargetRow(productId: any): void {
+  private applyBarcodeScanResult(
+    productId: any,
+    options: { sourceRowIndex: number | null; isProductFieldEdit: boolean }
+  ): void {
     const sourceRestore = this.lineFieldScanRestore ? { ...this.lineFieldScanRestore } : null;
+
+    if (options.isProductFieldEdit) {
+      const rowIndex = options.sourceRowIndex ?? 0;
+      this.applyScannedProductToRow(rowIndex, productId);
+      this.clearLineFieldScanRestore();
+      return;
+    }
+
+    const existingIndex = findLastRowIndexWithProductId(
+      this.productsFormArray.length,
+      (index) => this.productsFormArray.at(index)?.get('productId')?.value,
+      productId
+    );
+
+    if (existingIndex >= 0) {
+      this.incrementProductQuantityAtRow(existingIndex);
+      if (sourceRestore && sourceRestore.rowIndex !== existingIndex) {
+        this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
+      } else {
+        this.barcodeScanLineFieldPreserve = null;
+        this.clearLineFieldScanRestore();
+      }
+      return;
+    }
+
+    if (options.sourceRowIndex !== null && options.sourceRowIndex >= 0) {
+      this.applyScannedProductToRow(options.sourceRowIndex, productId);
+      if (sourceRestore && sourceRestore.rowIndex !== options.sourceRowIndex) {
+        this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
+      } else {
+        this.clearLineFieldScanRestore();
+      }
+      return;
+    }
+
     const target = this.resolveBarcodeTargetOutsideProduct();
 
     if (target.shouldCreateRow) {
@@ -397,6 +443,17 @@ export class AddSaleComponent implements OnInit, OnDestroy {
     } else {
       this.clearLineFieldScanRestore();
     }
+  }
+
+  private incrementProductQuantityAtRow(rowIndex: number): void {
+    const group = this.productsFormArray.at(rowIndex) as FormGroup;
+    const qtyControl = group.get('quantity');
+    const currentQty = Number(qtyControl?.value || 0);
+    qtyControl?.setValue(Math.max(1, currentQty + 1), { emitEvent: true });
+    this.calculateProductPrice(group);
+    this.calculateTotalAmount();
+    this.focusQuantityForRow(rowIndex);
+    this.cdr.markForCheck();
   }
 
   /** Clears line-item fields then applies scanned product so price/batch APIs re-run. */
