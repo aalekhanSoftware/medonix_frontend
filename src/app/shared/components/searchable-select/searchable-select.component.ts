@@ -2,6 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, Output, EventEmitter, forwardRef, ElementRef, HostListener, HostBinding, OnDestroy, ViewChild, AfterViewInit, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Renderer2, OnChanges, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import {
+  BARCODE_INPUT_MAX_DURATION_MS,
+  buildProductCodeMap,
+  findProductByProductCode,
+  getBarcodeKeyChar,
+  isLikelyBarcodeInput,
+  normalizeScannedProductCodeText
+} from '../../utils/product-barcode-scan.util';
 
 interface SelectOption {
   [key: string]: any;
@@ -44,8 +52,15 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   @Input() initialDisplayLimit: number = 100; // Limit initial display for large lists (adaptive based on dataset size)
   @Input() virtualScrollItemHeight: number = 40; // Height of each option item in pixels
   @Input() virtualScrollBuffer: number = 25; // Number of items to render outside viewport (will be adaptive based on list size)
+  /** When true, Enter tries exact productCode match before highlighted option selection. */
+  @Input() enableProductCodeScan = false;
+  @Input() productCodeField = 'productCode';
 
   @Output() selectionChange = new EventEmitter<any>();
+  @Output() productCodeMatched = new EventEmitter<{ code: string; value: any }>();
+  @Output() productCodeNotFound = new EventEmitter<string>();
+  @Output() searchFocus = new EventEmitter<void>();
+  @Output() searchBlur = new EventEmitter<void>();
 
   @ViewChild('searchInput', { static: false }) searchInput!: ElementRef<HTMLDivElement>;
   @ViewChild('dropdown', { static: false }) dropdown!: ElementRef<HTMLDivElement>;
@@ -58,6 +73,11 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   @HostBinding('class.dropdown-host-open')
   get dropdownHostOpen(): boolean {
     return this.isOpen;
+  }
+
+  @HostBinding('attr.data-product-barcode-scan')
+  get productBarcodeScanAttr(): string | null {
+    return this.enableProductCodeScan ? 'true' : null;
   }
 
   selectedValue: any = '';
@@ -97,6 +117,15 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   private lastJumpMatchIndex = -1;
   // Index map for O(1) lookup instead of O(n) find operations
   private optionsIndexMap: Map<any, SelectOption> = new Map();
+  private productCodeMap: Map<string, SelectOption> = new Map();
+  private barcodeKeyTimes: number[] = [];
+  /** First unbuffered char of a rapid scan sequence (before inProgress starts). */
+  private barcodePendingFirstChar = '';
+  /** Buffered scan text — avoids contenteditable / writeValue races during rescan. */
+  private barcodeScanBuffer = '';
+  private barcodeScanInProgress = false;
+  /** Selection to restore when a rescan-from-selected-field fails. */
+  private barcodeScanRestoreValue: any = null;
   /** Above this size, map is built only when dropdown opens and cleared when it closes to save memory. */
   private readonly OPTIONS_INDEX_MAP_LAZY_THRESHOLD = 1000;
 
@@ -125,6 +154,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     if (this.options.length <= this.OPTIONS_INDEX_MAP_LAZY_THRESHOLD) {
       this.buildOptionsIndexMap();
     }
+    this.buildProductCodeLookupMap();
   }
   
   private buildOptionsIndexMap(): void {
@@ -336,6 +366,8 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     this.labelCache.clear();
     this.originalStyles.clear();
     this.optionsIndexMap.clear();
+    this.productCodeMap.clear();
+    this.endBarcodeScanCapture();
     
     // Clear all string properties
     this.searchText = '';
@@ -479,6 +511,9 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   writeValue(value: any): void {
+    if (this.barcodeScanInProgress) {
+      return;
+    }
     if (this.multiple) {
       this.selectedValues = value || [];
       this.searchText = '';
@@ -604,6 +639,10 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   onFocus(): void {
+    if (this.enableProductCodeScan) {
+      this.resetBarcodeKeyCaptureState();
+    }
+
     // Clear placeholder text on first focus
     if (this.isFirstClick || this.isPlaceholderVisible) {
       const currentText = this.searchInput?.nativeElement?.textContent || this.getDisplayText();
@@ -659,6 +698,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       }
     });
     
+    this.searchFocus.emit();
     this.cdr.markForCheck();
   }
   
@@ -789,10 +829,196 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         if (this.focusWidthPx) {
           this.revertFocusWidth();
         }
+        this.searchBlur.emit();
         this.cdr.markForCheck();
       }
     }, 200);
     this.timeouts.push(timeoutId);
+  }
+
+  private buildProductCodeLookupMap(): void {
+    this.productCodeMap.clear();
+    if (!this.enableProductCodeScan || !this.options.length) {
+      return;
+    }
+    this.productCodeMap = buildProductCodeMap(this.options, this.productCodeField);
+  }
+
+  private syncSearchTextFromInput(): void {
+    const el = this.searchInput?.nativeElement;
+    if (el) {
+      this.searchText = (el.textContent || el.innerText || '').trim();
+    }
+  }
+
+  private recordBarcodeKeyTime(): void {
+    this.barcodeKeyTimes.push(Date.now());
+    if (this.barcodeKeyTimes.length > 50) {
+      this.barcodeKeyTimes.shift();
+    }
+  }
+
+  private endBarcodeScanCapture(): void {
+    this.barcodeScanInProgress = false;
+    this.barcodeScanBuffer = '';
+    this.barcodeScanRestoreValue = null;
+    this.barcodeKeyTimes = [];
+    this.barcodePendingFirstChar = '';
+  }
+
+  private resetBarcodeKeyCaptureState(): void {
+    this.endBarcodeScanCapture();
+  }
+
+  private applyBarcodeScanBufferToDisplay(): void {
+    this.searchText = this.barcodeScanBuffer;
+    if (this.searchInput?.nativeElement) {
+      this.searchInput.nativeElement.textContent = this.barcodeScanBuffer;
+    }
+  }
+
+  /**
+   * Starts buffered barcode capture. When replacing an existing selection, clears display only
+   * (does not emit null to the form) so writeValue cannot overwrite mid-scan.
+   */
+  private beginBarcodeScanCapture(initialText: string, replacingSelection: boolean): void {
+    if (replacingSelection) {
+      this.barcodeScanRestoreValue = this.selectedValue;
+      this.isPlaceholderVisible = false;
+      this.isFirstClick = false;
+      this.lastSearchText = '';
+      this.lastFilteredOptions = [];
+      this.highlightedIndex = -1;
+    } else {
+      this.barcodeScanRestoreValue = null;
+      this.clearPlaceholderForBarcodeScan();
+    }
+    this.barcodeScanInProgress = true;
+    this.barcodeScanBuffer = initialText;
+    this.barcodePendingFirstChar = '';
+    this.applyBarcodeScanBufferToDisplay();
+    this.isOpen = true;
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.filterOptions();
+  }
+
+  private appendBarcodeScanChar(char: string): void {
+    this.barcodeScanBuffer += char;
+    this.applyBarcodeScanBufferToDisplay();
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.filterOptions();
+  }
+
+  private restoreAfterFailedBarcodeScan(): void {
+    const restoreValue = this.barcodeScanRestoreValue;
+    this.endBarcodeScanCapture();
+    if (restoreValue != null) {
+      this.writeValue(restoreValue);
+    } else {
+      this.clearSearchInputAfterFailedScan();
+    }
+  }
+
+  private clearSearchInputAfterFailedScan(): void {
+    this.searchText = '';
+    this.isPlaceholderVisible = true;
+    this.isFirstClick = true;
+    if (this.searchInput?.nativeElement) {
+      this.searchInput.nativeElement.textContent = this.getDisplayText();
+    }
+    this.filteredOptions = this.options;
+    this.lastSearchText = '';
+    this.lastFilteredOptions = [];
+    this.highlightedIndex = -1;
+  }
+
+  private isShowingPlaceholder(): boolean {
+    if (this.hasSelection()) {
+      return false;
+    }
+    if (this.isPlaceholderVisible || this.isFirstClick) {
+      return true;
+    }
+    const currentText = (this.searchInput?.nativeElement?.textContent || this.searchText || '').trim();
+    const labels = [this.placeholder, this.defaultOption?.label].filter(Boolean) as string[];
+    return labels.some(label => currentText === label.trim());
+  }
+
+  /** Synchronously clears placeholder text before the first barcode character is applied. */
+  private clearPlaceholderForBarcodeScan(): void {
+    this.searchText = '';
+    this.isPlaceholderVisible = false;
+    this.isFirstClick = false;
+    this.lastSearchText = '';
+    this.lastFilteredOptions = [];
+    if (this.searchInput?.nativeElement) {
+      this.searchInput.nativeElement.textContent = '';
+    }
+  }
+
+  private getBarcodePlaceholderLabels(): string[] {
+    const labels = [this.placeholder];
+    if (this.defaultOption?.label) {
+      labels.push(this.defaultOption.label);
+    }
+    return labels;
+  }
+
+  /** Returns true when the Enter key was fully handled by product code scan logic. */
+  private tryProductCodeScan(event: KeyboardEvent): boolean {
+    if (!this.enableProductCodeScan) {
+      return false;
+    }
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+
+    if (!this.barcodeScanInProgress) {
+      this.syncSearchTextFromInput();
+    }
+    const rawText = this.barcodeScanInProgress ? this.barcodeScanBuffer : this.searchText;
+    const text = normalizeScannedProductCodeText(
+      rawText.trim(),
+      this.getBarcodePlaceholderLabels()
+    );
+    if (!text) {
+      return false;
+    }
+
+    const match = findProductByProductCode(
+      text,
+      this.options,
+      this.productCodeMap,
+      this.productCodeField
+    );
+
+    if (match) {
+      this.isOpen = false;
+      this.endBarcodeScanCapture();
+      this.productCodeMatched.emit({ code: text, value: match[this.valueKey] });
+      event.preventDefault();
+      event.stopPropagation();
+      return true;
+    }
+
+    if (isLikelyBarcodeInput(this.barcodeKeyTimes, text)) {
+      this.productCodeNotFound.emit(text);
+      this.isOpen = false;
+      this.restoreAfterFailedBarcodeScan();
+      event.preventDefault();
+      event.stopPropagation();
+      return true;
+    }
+
+    return false;
   }
   
   private revertFocusWidth(): void {
@@ -830,6 +1056,10 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   onSearch(event: Event): void {
+    if (this.barcodeScanInProgress) {
+      return;
+    }
+
     // Prevent form submission
     const keyboardEvent = event as KeyboardEvent;
     if (keyboardEvent.type === 'keydown' && (keyboardEvent.key === 'Enter' || keyboardEvent.keyCode === 13)) {
@@ -1426,8 +1656,58 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   handleKeydown(event: KeyboardEvent): void {
-    // Prevent form submission on Enter
+    const barcodeChar = this.enableProductCodeScan ? getBarcodeKeyChar(event) : null;
+    if (barcodeChar) {
+      if (this.barcodeScanInProgress) {
+        this.appendBarcodeScanChar(barcodeChar);
+        this.recordBarcodeKeyTime();
+        event.preventDefault();
+        event.stopPropagation();
+        this.cdr.markForCheck();
+        return;
+      }
+
+      const now = Date.now();
+      const lastKeyTime = this.barcodeKeyTimes.length > 0
+        ? this.barcodeKeyTimes[this.barcodeKeyTimes.length - 1]
+        : 0;
+      const gap = this.barcodeKeyTimes.length === 0 ? Infinity : now - lastKeyTime;
+
+      if (gap > BARCODE_INPUT_MAX_DURATION_MS) {
+        this.barcodeKeyTimes = [];
+        this.barcodePendingFirstChar = '';
+      }
+
+      const isFirstKey = this.barcodeKeyTimes.length === 0;
+
+      if (isFirstKey && (this.hasSelection() || this.isShowingPlaceholder())) {
+        this.beginBarcodeScanCapture(barcodeChar, this.hasSelection());
+        this.recordBarcodeKeyTime();
+        event.preventDefault();
+        event.stopPropagation();
+        this.cdr.markForCheck();
+        return;
+      }
+
+      if (!isFirstKey && gap <= BARCODE_INPUT_MAX_DURATION_MS) {
+        const initialText = this.barcodePendingFirstChar + barcodeChar;
+        this.beginBarcodeScanCapture(initialText, this.hasSelection());
+        this.recordBarcodeKeyTime();
+        event.preventDefault();
+        event.stopPropagation();
+        this.cdr.markForCheck();
+        return;
+      }
+
+      this.barcodePendingFirstChar = barcodeChar;
+      this.recordBarcodeKeyTime();
+    }
+
+    // Prevent form submission on Enter; try barcode scan when dropdown is closed
     if (event.key === 'Enter' && !this.isOpen) {
+      if (this.tryProductCodeScan(event)) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -1471,6 +1751,9 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         break;
 
       case 'Enter':
+        if (this.tryProductCodeScan(event)) {
+          break;
+        }
         if (this.highlightedIndex >= 0 && this.filteredOptions[this.highlightedIndex]) {
           this.selectOption(this.filteredOptions[this.highlightedIndex], event);
           (event.target as HTMLElement).blur();
@@ -1501,6 +1784,10 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['options'] || changes['enableProductCodeScan'] || changes['productCodeField']) {
+      this.buildProductCodeLookupMap();
+    }
+
     if (changes['options']) {
       if (this.options.length <= this.OPTIONS_INDEX_MAP_LAZY_THRESHOLD) {
         this.buildOptionsIndexMap();
