@@ -287,6 +287,10 @@
                               formControlName="discountType" 
                               [value]="'percentage'"
                               [id]="'discountTypePercentage' + i"
+                              data-product-line-barcode
+                              (focus)="onLineFieldFocus(i, 'discountType')"
+                              (keydown)="onLineFieldKeydown($event, i, 'discountType')"
+                              (blur)="onLineFieldBlur(i, 'discountType')"
                               (change)="onDiscountTypeChange(i)"
                             >
                             <label class="form-check-label" [for]="'discountTypePercentage' + i">%</label>
@@ -298,6 +302,10 @@
                               formControlName="discountType" 
                               [value]="'amount'"
                               [id]="'discountTypeAmount' + i"
+                              data-product-line-barcode
+                              (focus)="onLineFieldFocus(i, 'discountType')"
+                              (keydown)="onLineFieldKeydown($event, i, 'discountType')"
+                              (blur)="onLineFieldBlur(i, 'discountType')"
                               (change)="onDiscountTypeChange(i)"
                             >
                             <label class="form-check-label" [for]="'discountTypeAmount' + i">₹</label>

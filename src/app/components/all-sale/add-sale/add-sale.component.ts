@@ -23,9 +23,10 @@ import {
   getBarcodeKeyChar,
   isLikelyBarcodeInput,
   isInsideProductLineItemField,
-  looksLikeScannedProductCode,
+  looksLikeLineFieldBarcodeBuffer,
   normalizeScannedProductCodeText,
   resolveBarcodeTargetRow,
+  shouldActivateLineFieldBarcodeCapture,
   shouldIgnoreGlobalBarcodeCapture,
   BARCODE_INPUT_MAX_DURATION_MS
 } from '../../../shared/utils/product-barcode-scan.util';
@@ -298,12 +299,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       this.lineFieldBarcodeBuffer += char;
       this.globalBarcodeKeyTimes.push(now);
 
-      if (
-        looksLikeScannedProductCode(this.lineFieldBarcodeBuffer) ||
-        (controlName === 'remarks' &&
-          this.lineFieldBarcodeBuffer.length >= 2 &&
-          /^[\d.]+$/.test(this.lineFieldBarcodeBuffer))
-      ) {
+      if (shouldActivateLineFieldBarcodeCapture(this.lineFieldBarcodeBuffer, controlName)) {
         this.lineFieldScanActive = true;
         event.preventDefault();
         event.stopPropagation();
@@ -320,12 +316,12 @@ export class AddSaleComponent implements OnInit, OnDestroy {
   }
 
   private handleLineFieldEnter(input: HTMLInputElement, event: KeyboardEvent): void {
+    const controlName = input.getAttribute('formcontrolname') || '';
     const code = normalizeScannedProductCodeText(this.lineFieldBarcodeBuffer.trim(), []);
     const isLineFieldBarcodeAttempt =
-      this.lineFieldScanActive &&
-      looksLikeScannedProductCode(code) &&
       code.length >= this.LINE_FIELD_BARCODE_MIN_LENGTH &&
-      isLikelyBarcodeInput(this.globalBarcodeKeyTimes, code);
+      isLikelyBarcodeInput(this.globalBarcodeKeyTimes, code) &&
+      looksLikeLineFieldBarcodeBuffer(code, controlName);
 
     if (isLineFieldBarcodeAttempt) {
       event.preventDefault();
@@ -334,7 +330,6 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       const sourceRowIndex = rowEl
         ? parseInt(rowEl.getAttribute('data-product-row-index') || '-1', 10)
         : -1;
-      const controlName = input.getAttribute('formcontrolname') || '';
       const restoreData = sourceRowIndex >= 0
         ? this.getLineFieldRestoreData(sourceRowIndex, controlName)
         : null;

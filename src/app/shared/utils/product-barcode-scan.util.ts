@@ -166,6 +166,82 @@ export function looksLikeScannedProductCode(buffer: string): boolean {
   return (trimmed.match(/\./g) || []).length >= 2;
 }
 
+const LINE_FIELD_BARCODE_SAFE_CHARS = /^[A-Za-z0-9.\-_]+$/;
+const LINE_FIELD_BARCODE_MIN_ALPHANUMERIC_LENGTH = 4;
+
+/** True for qty, rate, and discount inputs where pure-digit typing must not trigger barcode capture. */
+export function isNumericLineField(controlName: string): boolean {
+  return (
+    controlName === 'quantity' ||
+    controlName === 'unitPrice' ||
+    controlName === 'discountPercentage' ||
+    controlName === 'discountAmount'
+  );
+}
+
+/** Alphanumeric product codes (e.g. LS-3000R): at least one letter, min length, safe charset. */
+function looksLikeAlphanumericProductCode(buffer: string): boolean {
+  const trimmed = buffer.trim();
+  return (
+    trimmed.length >= LINE_FIELD_BARCODE_MIN_ALPHANUMERIC_LENGTH &&
+    /[A-Za-z]/.test(trimmed) &&
+    LINE_FIELD_BARCODE_SAFE_CHARS.test(trimmed)
+  );
+}
+
+/**
+ * Returns true when a line-field buffer looks like a scanned product code.
+ * Supports dotted codes (1001.02.3), alphanumeric codes (LS-3000R), and remarks digit/dot sequences.
+ */
+export function looksLikeLineFieldBarcodeBuffer(buffer: string, controlName: string): boolean {
+  const trimmed = buffer.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (looksLikeScannedProductCode(trimmed)) {
+    return true;
+  }
+
+  if (looksLikeAlphanumericProductCode(trimmed)) {
+    return true;
+  }
+
+  if (controlName === 'remarks' && trimmed.length >= 2 && /^[\d.]+$/.test(trimmed)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Whether to activate buffered barcode capture during keydown on a line field.
+ * Starts blocking input before the full code is typed so chars do not leak into the column.
+ */
+export function shouldActivateLineFieldBarcodeCapture(buffer: string, controlName: string): boolean {
+  if (looksLikeLineFieldBarcodeBuffer(buffer, controlName)) {
+    return true;
+  }
+
+  const trimmed = buffer.trim();
+  if (!trimmed || trimmed.length < 2) {
+    return false;
+  }
+
+  if (isNumericLineField(controlName) && /[A-Za-z]/.test(trimmed) && LINE_FIELD_BARCODE_SAFE_CHARS.test(trimmed)) {
+    return true;
+  }
+
+  if (
+    (controlName === 'batchNumber' || controlName === 'remarks' || controlName === 'discountType') &&
+    LINE_FIELD_BARCODE_SAFE_CHARS.test(trimmed)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Detects rapid keyboard input typical of barcode scanners (fast chars ending in Enter).
  * keyTimes: timestamps (Date.now()) for each character key; Enter is excluded.
@@ -206,8 +282,13 @@ export function isInsideProductLineItemField(element: Element | null): boolean {
   if (!el.closest?.('[data-product-row-index]')) {
     return false;
   }
-  const lineInput = el.closest?.('input[data-quantity-input], input[data-product-line-input]')
-    ?? (el.matches?.('input[data-quantity-input], input[data-product-line-input]') ? el : null);
+  const lineInput = el.closest?.(
+    'input[data-quantity-input], input[data-product-line-input], input[data-product-line-barcode]'
+  ) ?? (
+    el.matches?.('input[data-quantity-input], input[data-product-line-input], input[data-product-line-barcode]')
+      ? el
+      : null
+  );
   return !!lineInput;
 }
 
