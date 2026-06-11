@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, ViewChildren, QueryList, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -15,6 +15,22 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 import { toProductOptionsList } from '../../../shared/utils/product-display.util';
+import {
+  buildProductCodeMap,
+  findLastRowIndexWithProductId,
+  findProductByProductCode,
+  getBarcodeKeyChar,
+  isLikelyBarcodeInput,
+  isInsideProductLineItemField,
+  isProductFieldEditScan,
+  looksLikeLineFieldBarcodeBuffer,
+  normalizeScannedProductCodeText,
+  resolveBarcodeTargetRow,
+  shouldActivateLineFieldBarcodeCapture,
+  shouldIgnoreGlobalBarcodeCapture,
+  BARCODE_INPUT_MAX_DURATION_MS
+} from '../../../shared/utils/product-barcode-scan.util';
+import { focusQuantityInput } from '../../../shared/utils/product-line-focus.util';
 
 interface ProductForm {
   id?: number | null;
@@ -52,8 +68,27 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   private productSubscriptions: Subscription[] = [];
   
   private productMap: Map<any, any> = new Map();
+  private productCodeMap: Map<string, any> = new Map();
   private productMapReady = false;
   private readonly PRODUCT_MAP_SYNC_THRESHOLD = 1000;
+
+  /** Index of product row whose searchable-select currently has focus. */
+  activeProductRowIndex: number | null = null;
+  private preScanProductIdByRow = new Map<number, any>();
+  /** Saved value of the line field focused before a barcode scan. */
+  private preScanLineFieldSnapshot = new Map<number, { controlName: string; value: any }>();
+  private globalBarcodeBuffer = '';
+  private globalBarcodeKeyTimes: number[] = [];
+  /** Accurate scan text from key events — number inputs corrupt dots in `.value`. */
+  private lineFieldBarcodeBuffer = '';
+  /** When scan applies product on the same row as the focused line field, restore that field. */
+  private barcodeScanLineFieldPreserve: { rowIndex: number; controlName: string; value: any } | null = null;
+  /** Authoritative value captured on first barcode key — before input/form mutation. */
+  private lineFieldScanRestore: { rowIndex: number; controlName: string; value: any } | null = null;
+  /** True once rapid multi-key input confirms a barcode scan (not manual typing). */
+  private lineFieldScanActive = false;
+  /** Min buffered length before line-field Enter triggers product lookup. */
+  private readonly LINE_FIELD_BARCODE_MIN_LENGTH = 4;
 
   // Batch numbers fetched per-product from API
   apiBatchNumbersMap: Map<number, string[]> = new Map();
@@ -64,6 +99,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   batchDropdownCloseTimeout: any;
 
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
+  @ViewChild('productsSection') productsSectionRef!: ElementRef<HTMLElement>;
   @ViewChildren(SearchableSelectComponent) searchableSelects!: QueryList<SearchableSelectComponent>;
 
   productControlsForView: AbstractControl[] = [];
@@ -88,6 +124,437 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.addProduct();
     }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentBarcodeKeydown(event: KeyboardEvent): void {
+    const activeElement = document.activeElement;
+    const inLineField = isInsideProductLineItemField(activeElement);
+
+    if (shouldIgnoreGlobalBarcodeCapture(activeElement)) {
+      if (event.key !== 'Enter') {
+        this.resetGlobalBarcodeCapture();
+      }
+      return;
+    }
+
+    if (inLineField) {
+      if (event.key === 'Enter' && activeElement instanceof HTMLInputElement) {
+        this.handleLineFieldEnter(activeElement, event);
+        return;
+      }
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      const code = normalizeScannedProductCodeText(this.globalBarcodeBuffer.trim(), []);
+      if (code && isLikelyBarcodeInput(this.globalBarcodeKeyTimes, code)) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.processGlobalBarcodeScan(code);
+      }
+      this.resetGlobalBarcodeCapture();
+      return;
+    }
+
+    const char = getBarcodeKeyChar(event);
+    if (char) {
+      const now = Date.now();
+      this.globalBarcodeBuffer += char;
+      this.globalBarcodeKeyTimes.push(now);
+      if (this.globalBarcodeKeyTimes.length > 50) {
+        this.globalBarcodeKeyTimes.shift();
+      }
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  onProductSearchFocus(rowIndex: number): void {
+    this.activeProductRowIndex = rowIndex;
+    const currentId = this.productsFormArray.at(rowIndex)?.get('productId')?.value ?? '';
+    this.preScanProductIdByRow.set(rowIndex, currentId);
+  }
+
+  onLineFieldFocus(rowIndex: number, controlName: string): void {
+    const control = this.productsFormArray.at(rowIndex)?.get(controlName);
+    if (control) {
+      this.preScanLineFieldSnapshot.set(rowIndex, {
+        controlName,
+        value: control.value
+      });
+    }
+    this.resetLineFieldScanState();
+    this.resetGlobalBarcodeCapture();
+  }
+
+  onLineFieldInput(rowIndex: number, controlName: string): void {
+    if (this.lineFieldScanActive || this.lineFieldBarcodeBuffer !== '') {
+      return;
+    }
+    const control = this.productsFormArray.at(rowIndex)?.get(controlName);
+    if (control) {
+      this.preScanLineFieldSnapshot.set(rowIndex, {
+        controlName,
+        value: control.value
+      });
+    }
+  }
+
+  onLineFieldBlur(rowIndex: number, controlName: string): void {
+    if (!this.lineFieldScanActive) {
+      this.resetLineFieldScanState();
+    }
+  }
+
+  /**
+   * Handles printable keys on line-item inputs. Barcode capture runs here (not document-level)
+   * so manual edits to qty, rate, batch, etc. are never blocked.
+   */
+  onLineFieldKeydown(event: KeyboardEvent, rowIndex: number, controlName: string): void {
+    if (event.key === 'Enter') {
+      return;
+    }
+
+    const char = getBarcodeKeyChar(event);
+    if (!char) {
+      return;
+    }
+
+    const now = Date.now();
+    const lastKeyTime = this.globalBarcodeKeyTimes.length > 0
+      ? this.globalBarcodeKeyTimes[this.globalBarcodeKeyTimes.length - 1]
+      : 0;
+    const gap = this.globalBarcodeKeyTimes.length === 0 ? Infinity : now - lastKeyTime;
+
+    if (gap > BARCODE_INPUT_MAX_DURATION_MS) {
+      this.resetLineFieldPendingState();
+      this.lineFieldBarcodeBuffer = '';
+      this.captureLineFieldScanRestoreAt(rowIndex, controlName);
+    }
+
+    if (this.lineFieldScanActive) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.lineFieldBarcodeBuffer += char;
+      this.globalBarcodeKeyTimes.push(now);
+      this.patchLineFieldControlValue(rowIndex, controlName);
+      return;
+    }
+
+    if (this.globalBarcodeKeyTimes.length === 0) {
+      this.captureLineFieldScanRestoreAt(rowIndex, controlName);
+      this.lineFieldBarcodeBuffer = char;
+      this.globalBarcodeKeyTimes.push(now);
+      return;
+    }
+
+    if (gap <= BARCODE_INPUT_MAX_DURATION_MS) {
+      this.lineFieldBarcodeBuffer += char;
+      this.globalBarcodeKeyTimes.push(now);
+
+      if (shouldActivateLineFieldBarcodeCapture(this.lineFieldBarcodeBuffer, controlName)) {
+        this.lineFieldScanActive = true;
+        event.preventDefault();
+        event.stopPropagation();
+        this.patchLineFieldControlValue(rowIndex, controlName);
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+
+    this.resetLineFieldPendingState();
+    this.lineFieldBarcodeBuffer = char;
+    this.captureLineFieldScanRestoreAt(rowIndex, controlName);
+    this.globalBarcodeKeyTimes.push(now);
+  }
+
+  private handleLineFieldEnter(input: HTMLInputElement, event: KeyboardEvent): void {
+    const controlName = input.getAttribute('formcontrolname') || '';
+    const code = normalizeScannedProductCodeText(this.lineFieldBarcodeBuffer.trim(), []);
+    const isLineFieldBarcodeAttempt =
+      code.length >= this.LINE_FIELD_BARCODE_MIN_LENGTH &&
+      isLikelyBarcodeInput(this.globalBarcodeKeyTimes, code) &&
+      looksLikeLineFieldBarcodeBuffer(code, controlName);
+
+    if (isLineFieldBarcodeAttempt) {
+      event.preventDefault();
+      event.stopPropagation();
+      const rowEl = input.closest('[data-product-row-index]');
+      const sourceRowIndex = rowEl
+        ? parseInt(rowEl.getAttribute('data-product-row-index') || '-1', 10)
+        : -1;
+      const restoreData = sourceRowIndex >= 0
+        ? this.getLineFieldRestoreData(sourceRowIndex, controlName)
+        : null;
+      if (restoreData) {
+        this.barcodeScanLineFieldPreserve = { ...restoreData };
+      }
+      if (sourceRowIndex >= 0 && controlName) {
+        this.patchLineFieldControlValue(sourceRowIndex, controlName);
+        this.cdr.markForCheck();
+      }
+      input.blur();
+      this.processGlobalBarcodeScan(code);
+    }
+    this.resetLineFieldScanState();
+  }
+
+  onProductSearchBlur(rowIndex: number): void {
+    setTimeout(() => {
+      if (this.activeProductRowIndex !== rowIndex) {
+        return;
+      }
+      const active = document.activeElement;
+      const stillInProductSelect = active?.closest?.('app-searchable-select[data-product-barcode-scan="true"]');
+      if (!stillInProductSelect) {
+        this.activeProductRowIndex = null;
+      }
+    }, 150);
+  }
+
+  onProductCodeMatched(sourceRowIndex: number, event: { code: string; value: any }): void {
+    this.applyBarcodeScanResult(event.value, {
+      sourceRowIndex,
+      isProductFieldEdit: isProductFieldEditScan(this.preScanProductIdByRow.get(sourceRowIndex))
+    });
+  }
+
+  onProductCodeNotFound(code: string): void {
+    this.snackbar.error(`Product code <${code}> not found`);
+  }
+
+  private processGlobalBarcodeScan(code: string): void {
+    const product = findProductByProductCode(code, this.products, this.productCodeMap);
+    if (!product) {
+      this.barcodeScanLineFieldPreserve = null;
+      this.finalizeSourceLineFieldRestore();
+      this.snackbar.error(`Product code <${code}> not found`);
+      return;
+    }
+    this.applyBarcodeScanResult(product.id, {
+      sourceRowIndex: null,
+      isProductFieldEdit: false
+    });
+  }
+
+  private applyBarcodeScanResult(
+    productId: any,
+    options: { sourceRowIndex: number | null; isProductFieldEdit: boolean }
+  ): void {
+    const sourceRestore = this.lineFieldScanRestore ? { ...this.lineFieldScanRestore } : null;
+
+    const existingIndex = findLastRowIndexWithProductId(
+      this.productsFormArray.length,
+      (index) => this.productsFormArray.at(index)?.get('productId')?.value,
+      productId
+    );
+
+    if (existingIndex >= 0) {
+      this.incrementProductQuantityAtRow(existingIndex);
+      if (sourceRestore && sourceRestore.rowIndex !== existingIndex) {
+        this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
+      } else {
+        this.barcodeScanLineFieldPreserve = null;
+        this.clearLineFieldScanRestore();
+      }
+      return;
+    }
+
+    if (options.sourceRowIndex !== null && options.sourceRowIndex >= 0) {
+      this.applyScannedProductToRow(options.sourceRowIndex, productId, { setDefaultQuantity: true });
+      if (sourceRestore && sourceRestore.rowIndex !== options.sourceRowIndex) {
+        this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
+      } else {
+        this.clearLineFieldScanRestore();
+      }
+      return;
+    }
+
+    const target = this.resolveBarcodeTargetOutsideProduct();
+
+    if (target.shouldCreateRow) {
+      this.addProduct({ skipProductFocus: true });
+    }
+
+    const rowIndex = target.shouldCreateRow
+      ? this.productsFormArray.length - 1
+      : target.rowIndex;
+
+    this.applyScannedProductToRow(rowIndex, productId, { setDefaultQuantity: true });
+
+    if (sourceRestore && sourceRestore.rowIndex !== rowIndex) {
+      this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
+    } else {
+      this.clearLineFieldScanRestore();
+    }
+  }
+
+  private incrementProductQuantityAtRow(rowIndex: number): void {
+    const group = this.productsFormArray.at(rowIndex) as FormGroup;
+    const qtyControl = group.get('quantity');
+    const currentQty = Number(qtyControl?.value || 0);
+    qtyControl?.setValue(Math.max(1, currentQty + 1), { emitEvent: true });
+    this.calculateProductPrice(group);
+    this.calculateTotalAmount();
+    this.focusQuantityForRow(rowIndex);
+    this.cdr.markForCheck();
+  }
+
+  /** Clears line-item fields then applies scanned product so price/batch APIs re-run. */
+  private applyScannedProductToRow(
+    rowIndex: number,
+    productId: any,
+    options?: { setDefaultQuantity?: boolean }
+  ): void {
+    const group = this.productsFormArray.at(rowIndex) as FormGroup;
+    this.resetProductRowForBarcodeScan(group);
+    group.patchValue({ productId }, { emitEvent: true });
+
+    const preserve = this.barcodeScanLineFieldPreserve;
+    if (preserve && preserve.rowIndex === rowIndex) {
+      group.patchValue({ [preserve.controlName]: preserve.value }, { emitEvent: false });
+    }
+    this.barcodeScanLineFieldPreserve = null;
+
+    if (options?.setDefaultQuantity) {
+      group.get('quantity')?.setValue(1, { emitEvent: true });
+      this.calculateProductPrice(group);
+    }
+
+    this.focusQuantityForRow(rowIndex);
+    this.cdr.markForCheck();
+  }
+
+  private resetProductRowForBarcodeScan(group: FormGroup): void {
+    group.patchValue({
+      productId: '',
+      quantity: 0,
+      batchNumber: '',
+      unitPrice: '',
+      discountType: 'percentage',
+      discountPercentage: 0,
+      discountAmount: 0,
+      remarks: null
+    }, { emitEvent: false });
+  }
+
+  private resolveBarcodeTargetOutsideProduct() {
+    return resolveBarcodeTargetRow({
+      rowCount: this.productsFormArray.length,
+      activeProductRowIndex: null,
+      rowHasProduct: (index) => this.rowHasProductAt(index)
+    });
+  }
+
+  private rowHasProductAt(index: number): boolean {
+    const id = this.productsFormArray.at(index)?.get('productId')?.value;
+    return id !== null && id !== undefined && id !== '';
+  }
+
+  private focusQuantityForRow(rowIndex: number): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      focusQuantityInput(
+        rowIndex,
+        this.productsSectionRef?.nativeElement ?? null,
+        this.viewport
+      );
+    }, 120);
+  }
+
+  private resetGlobalBarcodeCapture(): void {
+    this.globalBarcodeBuffer = '';
+    this.globalBarcodeKeyTimes = [];
+  }
+
+  private resetLineFieldPendingState(): void {
+    this.lineFieldScanRestore = null;
+    this.globalBarcodeKeyTimes = [];
+  }
+
+  private resetLineFieldScanState(): void {
+    this.lineFieldScanActive = false;
+    this.lineFieldBarcodeBuffer = '';
+    this.lineFieldScanRestore = null;
+    this.globalBarcodeKeyTimes = [];
+  }
+
+  private clearLineFieldScanRestore(): void {
+    this.lineFieldScanRestore = null;
+  }
+
+  private captureLineFieldScanRestoreAt(rowIndex: number, controlName: string): void {
+    if (rowIndex < 0 || !controlName) {
+      return;
+    }
+    const control = this.productsFormArray.at(rowIndex)?.get(controlName);
+    if (control) {
+      this.lineFieldScanRestore = {
+        rowIndex,
+        controlName,
+        value: control.value
+      };
+    }
+  }
+
+  private patchLineFieldControlValue(rowIndex: number, controlName: string): void {
+    const restore = this.lineFieldScanRestore;
+    if (
+      !restore ||
+      restore.rowIndex !== rowIndex ||
+      restore.controlName !== controlName
+    ) {
+      return;
+    }
+    const group = this.productsFormArray.at(rowIndex) as FormGroup;
+    group?.get(controlName)?.setValue(restore.value, { emitEvent: false });
+  }
+
+  private getLineFieldRestoreData(
+    rowIndex: number,
+    controlName: string
+  ): { rowIndex: number; controlName: string; value: any } | null {
+    if (
+      this.lineFieldScanRestore &&
+      this.lineFieldScanRestore.rowIndex === rowIndex &&
+      this.lineFieldScanRestore.controlName === controlName
+    ) {
+      return { ...this.lineFieldScanRestore };
+    }
+    const snapshot = this.preScanLineFieldSnapshot.get(rowIndex);
+    if (snapshot?.controlName === controlName) {
+      return { rowIndex, controlName: snapshot.controlName, value: snapshot.value };
+    }
+    return null;
+  }
+
+  private scheduleSourceLineFieldRestoreAfterScan(
+    restore: { rowIndex: number; controlName: string; value: any }
+  ): void {
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.applySourceLineFieldRestoreByIndex(restore.rowIndex, restore.controlName, restore.value);
+      this.clearLineFieldScanRestore();
+      this.cdr.markForCheck();
+    }, 0);
+  }
+
+  private applySourceLineFieldRestoreByIndex(rowIndex: number, controlName: string, value: any): void {
+    const group = this.productsFormArray.at(rowIndex) as FormGroup;
+    if (!group?.get(controlName)) {
+      return;
+    }
+    group.get(controlName)?.setValue(value, { emitEvent: false });
+  }
+
+  private finalizeSourceLineFieldRestore(): void {
+    const restore = this.lineFieldScanRestore;
+    if (!restore) {
+      return;
+    }
+    this.applySourceLineFieldRestoreByIndex(restore.rowIndex, restore.controlName, restore.value);
+    this.clearLineFieldScanRestore();
   }
 
   // Memory optimization: cached totals to avoid recalculating in template
@@ -140,6 +607,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
           this.products = toProductOptionsList(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
+            this.productCodeMap.clear();
             this.productMapReady = true;
           } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
             this.buildProductMap();
@@ -190,7 +658,12 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.products = [];
     this.customers = [];
     this.productMap.clear();
+    this.productCodeMap.clear();
     this.productMapReady = false;
+    this.preScanProductIdByRow.clear();
+    this.preScanLineFieldSnapshot.clear();
+    this.resetLineFieldScanState();
+    this.resetGlobalBarcodeCapture();
 
     // Reset form to release form subscriptions
     if (this.returnForm) {
@@ -234,11 +707,13 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     });
   }
 
-  addProduct(): void {
+  addProduct(options?: { skipProductFocus?: boolean }): void {
     const productGroup = this.createProductFormGroup();
-    const prevProductId = this.productsFormArray.length > 0
-      ? this.productsFormArray.at(this.productsFormArray.length - 1).get('productId')?.value
-      : '';
+    const prevProductId = options?.skipProductFocus
+      ? ''
+      : (this.productsFormArray.length > 0
+        ? this.productsFormArray.at(this.productsFormArray.length - 1).get('productId')?.value
+        : '');
     productGroup.reset({
       id: null,
       productId: prevProductId ?? '',
@@ -273,7 +748,9 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         el.scrollTop = Math.max(0, maxScroll);
         this.calculateTotalAmount();
         this.cdr.markForCheck();
-        setTimeout(() => this.focusLastProductName(), 50);
+        if (!options?.skipProductFocus) {
+          setTimeout(() => this.focusLastProductName(), 50);
+        }
       });
     }, 100);
   }
@@ -513,6 +990,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         this.productMap.set(String(id), product);
       }
     }
+    this.productCodeMap = buildProductCodeMap(this.products);
     this.productMapReady = true;
   }
 
@@ -539,6 +1017,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   private scheduleChunkedProductMapBuild(): void {
     this.productMapReady = false;
     this.productMap.clear();
+    this.productCodeMap.clear();
     const list = this.products;
     const chunkSize = 2000;
     let processed = 0;
@@ -557,6 +1036,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         requestAnimationFrame(processChunk);
       } else {
         this.productMapReady = true;
+        this.productCodeMap = buildProductCodeMap(this.products);
         this.cdr.markForCheck();
       }
     };
@@ -576,6 +1056,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
           this.products = toProductOptionsList(response.data);
           if (this.products.length === 0) {
             this.productMap.clear();
+            this.productCodeMap.clear();
             this.productMapReady = true;
           } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
             this.buildProductMap();
@@ -832,6 +1313,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   }
 
   onBatchFocus(index: number): void {
+    this.onLineFieldFocus(index, 'batchNumber');
     if (this.batchDropdownCloseTimeout) {
       clearTimeout(this.batchDropdownCloseTimeout);
     }
@@ -846,6 +1328,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   }
 
   onBatchInput(index: number, event: any): void {
+    this.onLineFieldInput(index, 'batchNumber');
     const value = event.target.value || '';
     const group = this.productsFormArray.at(index);
     const productId = group.get('productId')?.value;
@@ -859,6 +1342,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   }
 
   onBatchBlur(index: number): void {
+    this.onLineFieldBlur(index, 'batchNumber');
     this.batchDropdownCloseTimeout = setTimeout(() => {
       if (this.activeBatchDropdownIndex === index) {
         this.activeBatchDropdownIndex = null;

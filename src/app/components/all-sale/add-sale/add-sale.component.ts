@@ -392,13 +392,6 @@ export class AddSaleComponent implements OnInit, OnDestroy {
   ): void {
     const sourceRestore = this.lineFieldScanRestore ? { ...this.lineFieldScanRestore } : null;
 
-    if (options.isProductFieldEdit) {
-      const rowIndex = options.sourceRowIndex ?? 0;
-      this.applyScannedProductToRow(rowIndex, productId);
-      this.clearLineFieldScanRestore();
-      return;
-    }
-
     const existingIndex = findLastRowIndexWithProductId(
       this.productsFormArray.length,
       (index) => this.productsFormArray.at(index)?.get('productId')?.value,
@@ -417,7 +410,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
     }
 
     if (options.sourceRowIndex !== null && options.sourceRowIndex >= 0) {
-      this.applyScannedProductToRow(options.sourceRowIndex, productId);
+      this.applyScannedProductToRow(options.sourceRowIndex, productId, { setDefaultQuantity: true });
       if (sourceRestore && sourceRestore.rowIndex !== options.sourceRowIndex) {
         this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
       } else {
@@ -436,7 +429,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       ? this.productsFormArray.length - 1
       : target.rowIndex;
 
-    this.applyScannedProductToRow(rowIndex, productId);
+    this.applyScannedProductToRow(rowIndex, productId, { setDefaultQuantity: true });
 
     if (sourceRestore && sourceRestore.rowIndex !== rowIndex) {
       this.scheduleSourceLineFieldRestoreAfterScan(sourceRestore);
@@ -457,7 +450,11 @@ export class AddSaleComponent implements OnInit, OnDestroy {
   }
 
   /** Clears line-item fields then applies scanned product so price/batch APIs re-run. */
-  private applyScannedProductToRow(rowIndex: number, productId: any): void {
+  private applyScannedProductToRow(
+    rowIndex: number,
+    productId: any,
+    options?: { setDefaultQuantity?: boolean }
+  ): void {
     const group = this.productsFormArray.at(rowIndex) as FormGroup;
     this.resetProductRowForBarcodeScan(group);
     group.patchValue({ productId }, { emitEvent: true });
@@ -467,6 +464,11 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       group.patchValue({ [preserve.controlName]: preserve.value }, { emitEvent: false });
     }
     this.barcodeScanLineFieldPreserve = null;
+
+    if (options?.setDefaultQuantity) {
+      group.get('quantity')?.setValue(1, { emitEvent: true });
+      this.calculateProductPrice(group);
+    }
 
     this.focusQuantityForRow(rowIndex);
     this.cdr.markForCheck();

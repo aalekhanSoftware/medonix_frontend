@@ -113,7 +113,7 @@
       </div>
 
       <!-- Products Section -->
-      <div class="products-section" formArrayName="products">
+      <div class="products-section" formArrayName="products" #productsSection>
         <div class="products-header">
           <h3><i class="fas fa-boxes"></i> Products</h3>
           <button type="button" class="btn btn-sm btn-primary" (click)="addProduct()" (touchstart)="$event.stopPropagation()">
@@ -142,7 +142,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product">
+                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product" [attr.data-product-row-index]="i">
                 <td>
                   <div class="form-field-container">
                     <div class="select-group">
@@ -154,12 +154,17 @@
                         [searchKeys]="['productCode', 'name', 'materialName']"
                         valueKey="id"
                         [placeholder]="'Select Product'"
-                        [searchPlaceholder]="'Search products...'"
+                        [searchPlaceholder]="'Search by name, material, or product code...'"
                         [virtualScroll]="true"
                         [initialDisplayLimit]="50"
                         [maxHeight]="'320px'"
                         [class.is-invalid]="isProductFieldInvalid(i, 'productId')"
                         [searchMode]="'filter'"
+                        [enableProductCodeScan]="true"
+                        (productCodeMatched)="onProductCodeMatched(i, $event)"
+                        (productCodeNotFound)="onProductCodeNotFound($event)"
+                        (searchFocus)="onProductSearchFocus(i)"
+                        (searchBlur)="onProductSearchBlur(i)"
                       ></app-searchable-select>
                       <button 
                         type="button" 
@@ -181,11 +186,17 @@
                   <div class="form-field-container">
                     <input 
                       type="number" 
-                      formControlName="quantity" 
+                      formControlName="quantity"
+                      data-quantity-input
+                      data-product-line-input
                       class="form-control"
                       [class.is-invalid]="isProductFieldInvalid(i, 'quantity')"
                       placeholder="Qty"
                       min="1"
+                      (focus)="onLineFieldFocus(i, 'quantity')"
+                      (input)="onLineFieldInput(i, 'quantity')"
+                      (keydown)="onLineFieldKeydown($event, i, 'quantity')"
+                      (blur)="onLineFieldBlur(i, 'quantity')"
                     >
                     <div class="invalid-feedback" *ngIf="isProductFieldInvalid(i, 'quantity')">
                       Quantity must be 1 or greater
@@ -196,13 +207,15 @@
                   <div class="form-field-container batch-autocomplete-container" style="position: relative;">
                     <input 
                       type="text" 
-                      formControlName="batchNumber" 
+                      formControlName="batchNumber"
+                      data-product-line-input
                       class="form-control"
                       [class.is-invalid]="isProductFieldInvalid(i, 'batchNumber')"
                       placeholder="Batch Number"
                       autocomplete="off"
                       (focus)="onBatchFocus(i)"
                       (input)="onBatchInput(i, $event)"
+                      (keydown)="onLineFieldKeydown($event, i, 'batchNumber')"
                       (blur)="onBatchBlur(i)"
                     >
                     <div 
@@ -229,12 +242,17 @@
                       <!-- <span class="input-group-text">₹</span> -->
                       <input 
                         type="number" 
-                        formControlName="unitPrice" 
+                        formControlName="unitPrice"
+                        data-product-line-input
                         class="form-control"
                         [class.is-invalid]="isProductFieldInvalid(i, 'unitPrice')"
                         placeholder="Price"
                         min="0.01"
                         step="0.01"
+                        (focus)="onLineFieldFocus(i, 'unitPrice')"
+                        (input)="onLineFieldInput(i, 'unitPrice')"
+                        (keydown)="onLineFieldKeydown($event, i, 'unitPrice')"
+                        (blur)="onLineFieldBlur(i, 'unitPrice')"
                       >
                     </div>
                     <div class="invalid-feedback" *ngIf="isProductFieldInvalid(i, 'unitPrice')">
@@ -264,6 +282,10 @@
                           formControlName="discountType" 
                           [value]="'percentage'"
                           [id]="'discountTypePercentage' + i"
+                          data-product-line-barcode
+                          (focus)="onLineFieldFocus(i, 'discountType')"
+                          (keydown)="onLineFieldKeydown($event, i, 'discountType')"
+                          (blur)="onLineFieldBlur(i, 'discountType')"
                           (change)="onDiscountTypeChange(i)"
                         >
                         <label class="form-check-label" [for]="'discountTypePercentage' + i">%</label>
@@ -275,6 +297,10 @@
                           formControlName="discountType" 
                           [value]="'amount'"
                           [id]="'discountTypeAmount' + i"
+                          data-product-line-barcode
+                          (focus)="onLineFieldFocus(i, 'discountType')"
+                          (keydown)="onLineFieldKeydown($event, i, 'discountType')"
+                          (blur)="onLineFieldBlur(i, 'discountType')"
                           (change)="onDiscountTypeChange(i)"
                         >
                         <label class="form-check-label" [for]="'discountTypeAmount' + i">₹</label>
@@ -288,13 +314,18 @@
                       <span class="input-group-text">%</span>
                       <input 
                         type="number" 
-                        formControlName="discountPercentage" 
+                        formControlName="discountPercentage"
+                        data-product-line-input
                         class="form-control"
                         [class.is-invalid]="isProductFieldInvalid(i, 'discountPercentage')"
                         placeholder="0.00"
                         min="0"
                         max="100"
                         step="0.01"
+                        (focus)="onLineFieldFocus(i, 'discountPercentage')"
+                        (input)="onLineFieldInput(i, 'discountPercentage')"
+                        (keydown)="onLineFieldKeydown($event, i, 'discountPercentage')"
+                        (blur)="onLineFieldBlur(i, 'discountPercentage')"
                       >
                     </div>
                     <div class="input-group" *ngIf="productsFormArray.at(i).get('discountType')?.value !== 'percentage'">
@@ -319,12 +350,17 @@
                       <span class="input-group-text">₹</span>
                       <input 
                         type="number" 
-                        formControlName="discountAmount" 
+                        formControlName="discountAmount"
+                        data-product-line-input
                         class="form-control"
                         [class.is-invalid]="isProductFieldInvalid(i, 'discountAmount')"
                         placeholder="0.00"
                         min="0"
                         step="0.01"
+                        (focus)="onLineFieldFocus(i, 'discountAmount')"
+                        (input)="onLineFieldInput(i, 'discountAmount')"
+                        (keydown)="onLineFieldKeydown($event, i, 'discountAmount')"
+                        (blur)="onLineFieldBlur(i, 'discountAmount')"
                       >
                     </div>
                     <div class="input-group" *ngIf="productsFormArray.at(i).get('discountType')?.value !== 'amount'">
@@ -371,9 +407,13 @@
                   <div class="form-field-container">
                     <input 
                       type="text" 
-                      formControlName="remarks" 
+                      formControlName="remarks"
+                      data-product-line-input
                       class="form-control"
-                      (keydown)="onRemarksKeydown($event, i)"
+                      (focus)="onLineFieldFocus(i, 'remarks')"
+                      (input)="onLineFieldInput(i, 'remarks')"
+                      (keydown)="onLineFieldKeydown($event, i, 'remarks'); onRemarksKeydown($event, i)"
+                      (blur)="onLineFieldBlur(i, 'remarks')"
                       placeholder="Remarks"
                     >
                   </div>
