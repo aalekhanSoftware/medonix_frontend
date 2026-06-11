@@ -87,6 +87,11 @@
                 <i class="fas fa-boxes"></i> Batch Wise Product
               </a>
             </li>
+            <li *ngIf="isAdmin()">
+              <a routerLink="/admin-staff-users" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-user-shield"></i> Admin Staff Users
+              </a>
+            </li>
             <!-- <li *ngIf="isAdmin()">
               <a routerLink="/users" routerLinkActive="active">Users</a>
             </li> -->

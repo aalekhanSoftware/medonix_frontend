@@ -21,6 +21,7 @@ import { DataCenterComponent } from './components/data-center/data-center.compon
 import { RoleGuard } from './guards/role.guard';
 import { UserListComponent } from './components/users/user-list/user-list.component';
 import { AddUserComponent } from './components/users/add-user/add-user.component';
+import { AdminStaffUsersComponent } from './components/admin-staff-users/admin-staff-users.component';
 import { AddDealerComponent } from './components/dealers/add-dealer/add-dealer.component';
 import { TransportMasterListComponent } from './components/Transports/transport-master-list/transport-master-list.component';
 import { AddTransportComponent } from './components/Transports/add-transport/add-transport.component';
@@ -238,6 +239,12 @@ const routes: Routes = [
     component: DataCenterComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['ADMIN', 'STAFF_ADMIN'] }
+  },
+  {
+    path: 'admin-staff-users',
+    component: AdminStaffUsersComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'users',

@@ -22,6 +22,15 @@ export interface UserSearchRequest {
   sortDir?: 'asc' | 'desc';
 }
 
+export interface AdminStaffUserListRequest {
+  search?: string;
+  status?: 'A' | 'I';
+  page: number;
+  size: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+}
+
 export interface UserSearchResponse {
   success: boolean;
   message: string;

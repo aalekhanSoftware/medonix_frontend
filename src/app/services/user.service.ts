@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+  AdminStaffUserListRequest,
   UserSearchRequest,
   UserSearchResponse,
   UserDetailRequest,
@@ -21,6 +22,10 @@ export class UserService {
 
   searchUsers(params: UserSearchRequest): Observable<UserSearchResponse> {
     return this.http.post<UserSearchResponse>(`${this.apiUrl}/search`, params);
+  }
+
+  listAdminStaffUsers(params: AdminStaffUserListRequest): Observable<UserSearchResponse> {
+    return this.http.post<UserSearchResponse>(`${this.apiUrl}/list`, params);
   }
 
   getUserDetail(params: UserDetailRequest): Observable<UserDetailResponse> {

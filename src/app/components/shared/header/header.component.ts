@@ -269,6 +269,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       matches('/transport-master') ||
       matches('/customer-price') ||
       matches('/product-batch-stock') ||
+      matches('/admin-staff-users') ||
       matches('/employee-master') ||
       matches('/expense-master') ||
       matches('/employee-order') ||
