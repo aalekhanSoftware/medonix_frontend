@@ -12,6 +12,7 @@ import { AddSaleReturnComponent } from './add-sale-return/add-sale-return.compon
 import { SaleReturnListComponent } from './sale-return-list/sale-return-list.component';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
+import { SaleProductSelectComponent } from './shared/sale-product-select/sale-product-select.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { RoundPipe } from '../../round.pipe';
 import { SaleModalComponent } from '../sale-modal/sale-modal.component';
@@ -33,6 +34,7 @@ import { SaleModalComponent } from '../sale-modal/sale-modal.component';
     SaleRoutingModule,
     LoaderComponent,
     SearchableSelectComponent,
+    SaleProductSelectComponent,
     PaginationComponent,
     RoundPipe,
     SaleModalComponent

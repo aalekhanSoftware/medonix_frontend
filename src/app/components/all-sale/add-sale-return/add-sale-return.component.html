@@ -146,7 +146,7 @@
                 <td>
                   <div class="form-field-container">
                     <div class="select-group">
-                      <app-searchable-select
+                      <app-sale-product-select
                         [focusWidthPx]="600"
                         formControlName="productId"
                         [options]="products"
@@ -160,12 +160,11 @@
                         [maxHeight]="'320px'"
                         [class.is-invalid]="isProductFieldInvalid(i, 'productId')"
                         [searchMode]="'filter'"
-                        [enableProductCodeScan]="true"
                         (productCodeMatched)="onProductCodeMatched(i, $event)"
                         (productCodeNotFound)="onProductCodeNotFound($event)"
                         (searchFocus)="onProductSearchFocus(i)"
                         (searchBlur)="onProductSearchBlur(i)"
-                      ></app-searchable-select>
+                      ></app-sale-product-select>
                       <button 
                         type="button" 
                         class="btn btn-sm btn-primary refresh" 

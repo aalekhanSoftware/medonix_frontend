@@ -294,6 +294,34 @@ export function isLikelyBarcodeInput(keyTimes: number[], text: string): boolean 
   return duration <= BARCODE_INPUT_MAX_DURATION_MS;
 }
 
+export interface ProductFieldBarcodeEnterResult {
+  matched: any | null;
+  code: string;
+}
+
+/**
+ * When Enter is pressed in a product search field, returns barcode scan result if input timing
+ * looks like a scanner and text normalizes to a product code lookup.
+ */
+export function tryProductFieldBarcodeEnter(
+  rawText: string,
+  keyTimes: number[],
+  products: any[],
+  codeMap: Map<string, any> | undefined | null,
+  placeholders: string[] = [],
+  productCodeField = 'productCode'
+): ProductFieldBarcodeEnterResult | null {
+  if (!isLikelyBarcodeInput(keyTimes, rawText)) {
+    return null;
+  }
+  const code = normalizeScannedProductCodeText(rawText.trim(), placeholders);
+  if (!code) {
+    return null;
+  }
+  const matched = findProductByProductCode(code, products, codeMap ?? undefined, productCodeField);
+  return { matched, code };
+}
+
 /** Returns true when the element is inside a product-row searchable-select with barcode scan enabled. */
 export function isInsideProductBarcodeSelect(element: Element | null): boolean {
   if (!element) {

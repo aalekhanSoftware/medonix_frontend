@@ -31,7 +31,8 @@
     width: 100%;
     overflow: visible; // Allow dropdown to overflow container
     
-    app-searchable-select {
+    app-searchable-select,
+    app-sale-product-select {
       display: block;
       flex: 1;
       position: relative;
@@ -683,7 +684,8 @@ form {
 
 // Dropdown positioning fix for mobile
 @media (max-width: 768px) {
-  app-searchable-select {
+  app-searchable-select,
+  app-sale-product-select {
     position: relative;
     z-index: 1000;
   }

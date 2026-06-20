@@ -11,7 +11,7 @@ import { ProductService } from '../../../services/product.service';
 import { CustomerService } from '../../../services/customer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
-import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SaleProductSelectComponent } from '../shared/sale-product-select/sale-product-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 import { toProductOptionsList } from '../../../shared/utils/product-display.util';
@@ -72,8 +72,9 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   private productMapReady = false;
   private readonly PRODUCT_MAP_SYNC_THRESHOLD = 1000;
 
-  /** Index of product row whose searchable-select currently has focus. */
+  /** Index of product row whose product select currently has focus. */
   activeProductRowIndex: number | null = null;
+  private pendingProductsList: any[] | null = null;
   private preScanProductIdByRow = new Map<number, any>();
   /** Saved value of the line field focused before a barcode scan. */
   private preScanLineFieldSnapshot = new Map<number, { controlName: string; value: any }>();
@@ -100,7 +101,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
 
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
   @ViewChild('productsSection') productsSectionRef!: ElementRef<HTMLElement>;
-  @ViewChildren(SearchableSelectComponent) searchableSelects!: QueryList<SearchableSelectComponent>;
+  @ViewChildren(SaleProductSelectComponent) searchableSelects!: QueryList<SaleProductSelectComponent>;
 
   productControlsForView: AbstractControl[] = [];
 
@@ -306,9 +307,10 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         return;
       }
       const active = document.activeElement;
-      const stillInProductSelect = active?.closest?.('app-searchable-select[data-product-barcode-scan="true"]');
+      const stillInProductSelect = active?.closest?.('app-sale-product-select');
       if (!stillInProductSelect) {
         this.activeProductRowIndex = null;
+        this.flushPendingProductsList();
       }
     }, 150);
   }
@@ -604,16 +606,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     this.productService.getProducts({ status: 'A' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success && response.data) {
-          this.products = toProductOptionsList(response.data);
-          if (this.products.length === 0) {
-            this.productMap.clear();
-            this.productCodeMap.clear();
-            this.productMapReady = true;
-          } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
-            this.buildProductMap();
-          } else {
-            this.scheduleChunkedProductMapBuild();
-          }
+          this.queueOrApplyProductsList(toProductOptionsList(response.data));
           // Fetch sale return details after products are loaded (if in edit mode)
           if (this.isEdit && this.saleReturnId) {
             this.fetchSaleReturnDetails(this.saleReturnId);
@@ -758,7 +751,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   private focusLastProductName(): void {
     this.cdr.detectChanges();
     const selects = this.searchableSelects?.toArray() ?? [];
-    if (selects.length < 2) return;
+    if (selects.length < 1) return;
     const lastProductSelect = selects[selects.length - 1];
     lastProductSelect.focus();
   }
@@ -1048,22 +1041,50 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Avoid resetting open product search inputs when options reload mid-typing. */
+  private queueOrApplyProductsList(products: any[], showRefreshSuccess = false): void {
+    if (this.activeProductRowIndex !== null) {
+      this.pendingProductsList = products;
+      if (showRefreshSuccess) {
+        this.snackbar.success('Products refreshed successfully');
+      }
+      return;
+    }
+    this.applyProductsList(products, showRefreshSuccess);
+  }
+
+  private flushPendingProductsList(): void {
+    if (this.pendingProductsList === null) {
+      return;
+    }
+    const pending = this.pendingProductsList;
+    this.pendingProductsList = null;
+    this.applyProductsList(pending);
+  }
+
+  private applyProductsList(products: any[], showRefreshSuccess = false): void {
+    this.products = products;
+    if (this.products.length === 0) {
+      this.productMap.clear();
+      this.productCodeMap.clear();
+      this.productMapReady = true;
+    } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
+      this.buildProductMap();
+    } else {
+      this.scheduleChunkedProductMapBuild();
+    }
+    if (showRefreshSuccess) {
+      this.snackbar.success('Products refreshed successfully');
+    }
+    this.cdr.markForCheck();
+  }
+
   refreshProducts(): void {
     this.isLoadingProducts = true;
     this.productService.refreshProducts().pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         if (response?.success) {
-          this.products = toProductOptionsList(response.data);
-          if (this.products.length === 0) {
-            this.productMap.clear();
-            this.productCodeMap.clear();
-            this.productMapReady = true;
-          } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
-            this.buildProductMap();
-          } else {
-            this.scheduleChunkedProductMapBuild();
-          }
-          this.snackbar.success('Products refreshed successfully');
+          this.queueOrApplyProductsList(toProductOptionsList(response.data), true);
         }
         this.isLoadingProducts = false;
         this.cdr.markForCheck();

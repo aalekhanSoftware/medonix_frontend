@@ -1,0 +1,20 @@
+<app-searchable-select
+  #innerSelect
+  [options]="options"
+  [labelKey]="labelKey"
+  [searchKeys]="searchKeys"
+  [valueKey]="valueKey"
+  [placeholder]="placeholder"
+  [searchPlaceholder]="searchPlaceholder"
+  [searchMode]="searchMode"
+  [focusWidthPx]="focusWidthPx"
+  [maxHeight]="maxHeight"
+  [virtualScroll]="virtualScroll"
+  [initialDisplayLimit]="initialDisplayLimit"
+  [enableProductCodeScan]="false"
+  [ngModel]="internalValue"
+  (ngModelChange)="onInnerValueChange($event)"
+  (selectionChange)="onInnerSelectionChange($event)"
+  (searchFocus)="searchFocus.emit()"
+  (searchBlur)="searchBlur.emit()"
+></app-searchable-select>

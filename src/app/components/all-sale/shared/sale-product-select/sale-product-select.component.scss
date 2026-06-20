@@ -1,0 +1,11 @@
+:host {
+  display: block;
+  flex: 1;
+  position: relative;
+  overflow: visible;
+  width: 100%;
+}
+
+:host(.is-invalid) ::ng-deep .search-input {
+  border-color: var(--danger);
+}

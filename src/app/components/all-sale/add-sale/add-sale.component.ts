@@ -13,7 +13,7 @@ import { CustomerService } from '../../../services/customer.service';
 import { PriceService } from '../../../services/price.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
-import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SaleProductSelectComponent } from '../shared/sale-product-select/sale-product-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
@@ -111,8 +111,9 @@ export class AddSaleComponent implements OnInit, OnDestroy {
   filteredBatchNumbers: string[] = [];
   batchDropdownCloseTimeout: any;
 
-  /** Index of product row whose searchable-select currently has focus. */
+  /** Index of product row whose product select currently has focus. */
   activeProductRowIndex: number | null = null;
+  private pendingProductsList: any[] | null = null;
   private preScanProductIdByRow = new Map<number, any>();
   /** Saved value of the line field focused before a barcode scan. */
   private preScanLineFieldSnapshot = new Map<number, { controlName: string; value: any }>();
@@ -131,7 +132,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
 
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
   @ViewChild('productsSection') productsSectionRef!: ElementRef<HTMLElement>;
-  @ViewChildren(SearchableSelectComponent) searchableSelects!: QueryList<SearchableSelectComponent>;
+  @ViewChildren(SaleProductSelectComponent) searchableSelects!: QueryList<SaleProductSelectComponent>;
 
   get productsFormArray() {
     return this.saleForm.get('products') as FormArray;
@@ -354,9 +355,10 @@ export class AddSaleComponent implements OnInit, OnDestroy {
         return;
       }
       const active = document.activeElement;
-      const stillInProductSelect = active?.closest?.('app-searchable-select[data-product-barcode-scan="true"]');
+      const stillInProductSelect = active?.closest?.('app-sale-product-select');
       if (!stillInProductSelect) {
         this.activeProductRowIndex = null;
+        this.flushPendingProductsList();
       }
     }, 150);
   }
@@ -806,11 +808,11 @@ export class AddSaleComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
-  /** Focus the product name (first column) of the last row. First searchable is customer; rest are product selects. */
+  /** Focus the product name (first column) of the last row. */
   private focusLastProductName(): void {
     this.cdr.detectChanges();
     const selects = this.searchableSelects?.toArray() ?? [];
-    if (selects.length < 2) return;
+    if (selects.length < 1) return;
     const lastProductSelect = selects[selects.length - 1];
     lastProductSelect.focus();
   }
@@ -1124,16 +1126,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = transformProductsWithDisplayName(response.data);
-            if (this.products.length === 0) {
-              this.productMap.clear();
-              this.productCodeMap.clear();
-              this.productMapReady = true;
-            } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
-              this.buildProductMap();
-            } else {
-              this.scheduleChunkedProductMapBuild();
-            }
+            this.queueOrApplyProductsList(transformProductsWithDisplayName(response.data));
           }
           this.isLoadingProducts = false;
           this.cdr.markForCheck();
@@ -1218,6 +1211,44 @@ export class AddSaleComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Avoid resetting open product search inputs when options reload mid-typing. */
+  private queueOrApplyProductsList(products: any[], showRefreshSuccess = false): void {
+    if (this.activeProductRowIndex !== null) {
+      this.pendingProductsList = products;
+      if (showRefreshSuccess) {
+        this.snackbar.success('Products refreshed successfully');
+      }
+      return;
+    }
+    this.applyProductsList(products, showRefreshSuccess);
+  }
+
+  private flushPendingProductsList(): void {
+    if (this.pendingProductsList === null) {
+      return;
+    }
+    const pending = this.pendingProductsList;
+    this.pendingProductsList = null;
+    this.applyProductsList(pending);
+  }
+
+  private applyProductsList(products: any[], showRefreshSuccess = false): void {
+    this.products = products;
+    if (this.products.length === 0) {
+      this.productMap.clear();
+      this.productCodeMap.clear();
+      this.productMapReady = true;
+    } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
+      this.buildProductMap();
+    } else {
+      this.scheduleChunkedProductMapBuild();
+    }
+    if (showRefreshSuccess) {
+      this.snackbar.success('Products refreshed successfully');
+    }
+    this.cdr.markForCheck();
+  }
+
   refreshProducts(): void {
     this.isLoadingProducts = true;
     this.productService.refreshProducts()
@@ -1225,17 +1256,7 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           if (response.success) {
-            this.products = transformProductsWithDisplayName(response.data);
-            if (this.products.length === 0) {
-              this.productMap.clear();
-              this.productCodeMap.clear();
-              this.productMapReady = true;
-            } else if (this.products.length <= this.PRODUCT_MAP_SYNC_THRESHOLD) {
-              this.buildProductMap();
-            } else {
-              this.scheduleChunkedProductMapBuild();
-            }
-            this.snackbar.success('Products refreshed successfully');
+            this.queueOrApplyProductsList(transformProductsWithDisplayName(response.data), true);
           }
           this.isLoadingProducts = false;
           this.cdr.markForCheck();
