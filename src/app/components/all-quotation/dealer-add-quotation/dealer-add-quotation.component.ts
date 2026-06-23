@@ -12,6 +12,7 @@ import { SearchableSelectComponent } from "../../../shared/components/searchable
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
+import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
 
 @Component({
   standalone: true,
@@ -148,13 +149,41 @@ export class DealerAddQuotationComponent implements OnInit, OnDestroy {
   }
 
   private focusLastProductName(): void {
-    this.cdr.detectChanges();
-    const selects = this.searchableSelects?.toArray() ?? [];
-    if (selects.length === 0) return;
-    selects[selects.length - 1].focus();
+    const rowIndex = this.itemsFormArray.length - 1;
+    if (rowIndex < 0 || !this.viewport) {
+      return;
+    }
+
+    const container = this.viewport.elementRef.nativeElement;
+    focusProductNameSelect(
+      rowIndex,
+      container,
+      this.viewport,
+      (idx) => openProductSelectAtRowIndex(
+        idx,
+        container,
+        () => this.searchableSelects?.toArray() ?? [],
+        () => this.cdr.detectChanges()
+      )
+    );
   }
 
   addItem(isInitializing = false): void {
+    runAddRowWithProductSelectFocus({
+      viewport: this.viewport,
+      itemCountBeforeAdd: this.itemsFormArray.length,
+      skipFocus: isInitializing,
+      detectChanges: () => this.cdr.detectChanges(),
+      getSelectHosts: () => this.searchableSelects?.toArray() ?? [],
+      pushRow: () => this.pushItemRow(isInitializing),
+      onAfterScroll: () => {
+        this.calculateTotalAmount();
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private pushItemRow(isInitializing: boolean): number {
     const prevProductId = this.itemsFormArray.length > 0
       ? this.itemsFormArray.at(this.itemsFormArray.length - 1).get('productId')?.value
       : '';
@@ -173,11 +202,9 @@ export class DealerAddQuotationComponent implements OnInit, OnDestroy {
       calculations: [[]]
     });
 
-    // Add to form array first so indexing (if needed anywhere else) is correct
     this.itemsFormArray.push(itemGroup);
     const newIndex = this.itemsFormArray.length - 1;
 
-    // Setup logic returning subscription
     const subscription = this.setupItemCalculations(itemGroup, newIndex);
     this.itemSubscriptions.push(subscription);
 
@@ -190,19 +217,7 @@ export class DealerAddQuotationComponent implements OnInit, OnDestroy {
 
     this.itemControlsForView = Array.from(this.itemsFormArray.controls);
     this.cdr.markForCheck();
-    setTimeout(() => {
-      this.cdr.detectChanges();
-      if (!this.viewport) return;
-      this.viewport.checkViewportSize();
-      requestAnimationFrame(() => {
-        const el = this.viewport.elementRef.nativeElement as HTMLElement;
-        const maxScroll = el.scrollHeight - el.clientHeight;
-        el.scrollTop = Math.max(0, maxScroll);
-        this.calculateTotalAmount();
-        this.cdr.markForCheck();
-        setTimeout(() => this.focusLastProductName(), 50);
-      });
-    }, 100);
+    return newIndex;
   }
 
   removeItem(index: number): void {

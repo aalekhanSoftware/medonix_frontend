@@ -80,6 +80,12 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     return this.enableProductCodeScan ? 'true' : null;
   }
 
+  /** Wide dropdown panel when open; trigger width stays at 100% of its column. */
+  @HostBinding('style.--dropdown-min-width')
+  get dropdownMinWidth(): string | null {
+    return this.isOpen && this.focusWidthPx ? `${this.focusWidthPx}px` : null;
+  }
+
   selectedValue: any = '';
   selectedValues: any[] = [];
   filteredOptions: SelectOption[] = [];
@@ -109,7 +115,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   private sanitizedHtmlCache: Map<string, SafeHtml> = new Map();
   private lastSearchText: string = '';
   private lastFilteredOptions: SelectOption[] = [];
-  private originalStyles: Map<HTMLElement, { [key: string]: string }> = new Map();
   private labelCache: Map<SelectOption, string> = new Map();
   private animationFrameId: number | null = null;
   private jumpSearchToken = 0;
@@ -150,6 +155,14 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   private bypassTouchGuard = false;
   private readonly inputTouchMoveThresholdPx = 10;
   private readonly inputTapMaxDurationMs = 400;
+
+  // Ancestor scroll guard (CDK virtual scroll table)
+  private lastAncestorScrollAt = 0;
+  private readonly ancestorScrollBlockMs = 200;
+  private ancestorScrollElement: HTMLElement | null = null;
+  private ancestorScrollHandler = (): void => this.onAncestorScroll();
+  /** Prevents scroll-to-index from closing dropdown immediately after programmatic open. */
+  private suppressScrollCloseUntil = 0;
 
   @HostListener('window:resize')
   @HostListener('window:orientationchange')
@@ -246,6 +259,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     
     // Setup passive touch listeners for container-level event delegation
     this.setupContainerTouchListeners();
+    this.setupAncestorScrollListener();
   }
   
   private setupContainerTouchListeners(): void {
@@ -266,6 +280,63 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     this.containerTouchStartListener = () => container.removeEventListener('touchstart', touchStartHandler);
     this.containerTouchMoveListener = () => container.removeEventListener('touchmove', touchMoveHandler);
     this.containerTouchEndListener = () => container.removeEventListener('touchend', touchEndHandler);
+  }
+
+  private setupAncestorScrollListener(): void {
+    const scrollParent = this.elementRef.nativeElement.closest(
+      'cdk-virtual-scroll-viewport, .products-table-viewport'
+    ) as HTMLElement | null;
+    if (!scrollParent) {
+      return;
+    }
+    this.ancestorScrollElement = scrollParent;
+    scrollParent.addEventListener('scroll', this.ancestorScrollHandler, { passive: true });
+  }
+
+  private teardownAncestorScrollListener(): void {
+    if (this.ancestorScrollElement) {
+      this.ancestorScrollElement.removeEventListener('scroll', this.ancestorScrollHandler);
+      this.ancestorScrollElement = null;
+    }
+  }
+
+  private onAncestorScroll(): void {
+    this.lastAncestorScrollAt = Date.now();
+    if (
+      this.isOpen &&
+      !this.interactingWithDropdown &&
+      Date.now() >= this.suppressScrollCloseUntil
+    ) {
+      this.closeDropdownFromScroll();
+    }
+  }
+
+  private shouldBlockActivationDueToScroll(): boolean {
+    return Date.now() - this.lastAncestorScrollAt < this.ancestorScrollBlockMs;
+  }
+
+  private closeDropdownFromScroll(): void {
+    if (!this.isOpen) {
+      return;
+    }
+    this.isOpen = false;
+    this.interactingWithDropdown = false;
+    this.highlightedIndex = -1;
+    if (this.clickOutsideListener) {
+      this.clickOutsideListener();
+      this.clickOutsideListener = null;
+    }
+    if (this.options.length > this.OPTIONS_INDEX_MAP_LAZY_THRESHOLD) {
+      this.optionsIndexMap.clear();
+    }
+    if (!this.multiple) {
+      const selected = this.getOptionByValue(this.selectedValue);
+      this.searchText = selected ? this.getOptionLabel(selected) : '';
+      if (this.searchInput?.nativeElement) {
+        this.writeInputText(this.getDisplayText(), 'start');
+      }
+    }
+    this.cdr.markForCheck();
   }
   
   private onContainerTouchStart(event: TouchEvent): void {
@@ -352,6 +423,8 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       this.containerTouchEndListener();
       this.containerTouchEndListener = undefined;
     }
+
+    this.teardownAncestorScrollListener();
     
     // Clear all timeouts
     this.timeouts.forEach(id => clearTimeout(id));
@@ -369,9 +442,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       this.clickOutsideListener = null;
     }
     
-    // Revert all style manipulations
-    this.revertAllStyles();
-    
     // Clear all arrays and references
     this.options = [];
     this.filteredOptions = [];
@@ -382,7 +452,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     // Clear all caches aggressively
     this.sanitizedHtmlCache.clear();
     this.labelCache.clear();
-    this.originalStyles.clear();
     this.optionsIndexMap.clear();
     this.productCodeMap.clear();
     this.endBarcodeScanCapture();
@@ -428,21 +497,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     (this as any).searchInput = undefined;
     (this as any).dropdown = undefined;
     (this as any).optionsContainer = undefined;
-  }
-  
-  private revertAllStyles(): void {
-    this.originalStyles.forEach((styles, element) => {
-      Object.keys(styles).forEach(prop => {
-        if (styles[prop]) {
-          (element.style as any)[prop] = styles[prop];
-        } else {
-          (element.style as any)[prop] = '';
-        }
-      });
-      // Remove custom classes
-      element.classList.remove('expanded', 'custom-width');
-    });
-    this.originalStyles.clear();
   }
   
   hasSelection(): boolean {
@@ -499,12 +553,9 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       !this.inputTouchMoved &&
       touchDuration < this.inputTapMaxDurationMs;
 
-    if (isValidTap) {
+    if (isValidTap && !this.shouldBlockActivationDueToScroll()) {
       this.activateDropdown();
     } else if (this.inputTouchMoved && this.searchInput?.nativeElement) {
-      if (this.focusWidthPx) {
-        this.revertFocusWidth();
-      }
       this.searchInput.nativeElement.blur();
     }
 
@@ -707,15 +758,21 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   /** Focus input and open dropdown (add-product / virtual-scroll row focus). */
-  focusAndOpen(): void {
+  focusAndOpen(): boolean {
     this.resetInputTouchState();
     this.bypassTouchGuard = true;
+    this.suppressScrollCloseUntil = Date.now() + 800;
     if (this.searchInput?.nativeElement) {
       this.searchInput.nativeElement.focus();
     }
     if (!this.isOpen) {
       this.activateDropdown();
     }
+    return this.isOpen;
+  }
+
+  get hostElement(): HTMLElement {
+    return this.elementRef.nativeElement;
   }
 
   private shouldActivateOnFocus(): boolean {
@@ -738,6 +795,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   private activateDropdown(): void {
+    this.suppressScrollCloseUntil = Date.now() + 800;
     this.isOpen = true;
     this.highlightedIndex = -1;
 
@@ -749,10 +807,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
     requestAnimationFrame(() => {
       this.filterOptions();
-
-      if (this.focusWidthPx) {
-        this.applyFocusWidth();
-      }
 
       this.adjustDropdownPosition();
 
@@ -797,7 +851,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       }
     }
 
-    if (this.shouldActivateOnFocus()) {
+    if (this.shouldActivateOnFocus() && !this.shouldBlockActivationDueToScroll()) {
       this.activateDropdown();
     } else {
       this.cdr.markForCheck();
@@ -872,49 +926,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     }, 0);
     this.timeouts.push(timeoutId);
   }
-  
-  private applyFocusWidth(): void {
-    const element = this.elementRef.nativeElement as HTMLElement;
-    
-    // Store and apply styles to parent container
-    const parentContainer = element.closest('.select-group') as HTMLElement;
-    if (parentContainer && !this.originalStyles.has(parentContainer)) {
-      this.originalStyles.set(parentContainer, {
-        minWidth: parentContainer.style.minWidth,
-        width: parentContainer.style.width
-      });
-      parentContainer.style.minWidth = `${this.focusWidthPx}px`;
-      parentContainer.style.width = `${this.focusWidthPx}px`;
-      parentContainer.style.transition = 'all 0.3s ease';
-      parentContainer.classList.add('expanded');
-    }
-    
-    // Store and apply styles to component element
-    if (!this.originalStyles.has(element)) {
-      this.originalStyles.set(element, {
-        width: element.style.width,
-        minWidth: element.style.minWidth,
-        maxWidth: element.style.maxWidth
-      });
-      element.style.width = `${this.focusWidthPx}px`;
-      element.style.minWidth = `${this.focusWidthPx}px`;
-      element.style.maxWidth = `${this.focusWidthPx}px`;
-      element.classList.add('custom-width');
-    }
-    
-    // Store and apply styles to inner div
-    const innerDiv = element.querySelector('.searchable-select') as HTMLElement;
-    if (innerDiv && !this.originalStyles.has(innerDiv)) {
-      this.originalStyles.set(innerDiv, {
-        width: innerDiv.style.width,
-        minWidth: innerDiv.style.minWidth,
-        maxWidth: innerDiv.style.maxWidth
-      });
-      innerDiv.style.width = `${this.focusWidthPx}px`;
-      innerDiv.style.minWidth = `${this.focusWidthPx}px`;
-      innerDiv.style.maxWidth = `${this.focusWidthPx}px`;
-    }
-  }
 
   onBlur(): void {
     const timeoutId = setTimeout(() => {
@@ -942,10 +953,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
           this.isFirstClick = true;
         }
         
-        // Reset width on blur
-        if (this.focusWidthPx) {
-          this.revertFocusWidth();
-        }
         this.searchBlur.emit();
         this.cdr.markForCheck();
       }
@@ -1179,40 +1186,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     }
 
     return false;
-  }
-  
-  private revertFocusWidth(): void {
-    const element = this.elementRef.nativeElement as HTMLElement;
-    
-    // Revert parent container styles
-    const parentContainer = element.closest('.select-group') as HTMLElement;
-    if (parentContainer && this.originalStyles.has(parentContainer)) {
-      const styles = this.originalStyles.get(parentContainer)!;
-      parentContainer.style.minWidth = styles['minWidth'] || '';
-      parentContainer.style.width = styles['width'] || '';
-      parentContainer.classList.remove('expanded');
-      this.originalStyles.delete(parentContainer);
-    }
-    
-    // Revert component element styles
-    if (this.originalStyles.has(element)) {
-      const styles = this.originalStyles.get(element)!;
-      element.style.width = styles['width'] || '';
-      element.style.minWidth = styles['minWidth'] || '';
-      element.style.maxWidth = styles['maxWidth'] || '';
-      element.classList.remove('custom-width');
-      this.originalStyles.delete(element);
-    }
-    
-    // Revert inner div styles
-    const innerDiv = element.querySelector('.searchable-select') as HTMLElement;
-    if (innerDiv && this.originalStyles.has(innerDiv)) {
-      const styles = this.originalStyles.get(innerDiv)!;
-      innerDiv.style.width = styles['width'] || '';
-      innerDiv.style.minWidth = styles['minWidth'] || '';
-      innerDiv.style.maxWidth = styles['maxWidth'] || '';
-      this.originalStyles.delete(innerDiv);
-    }
   }
 
   onSearch(event: Event): void {
@@ -2018,11 +1991,6 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         if (!this.selectedValue) {
           this.isPlaceholderVisible = true;
           this.isFirstClick = true;
-        }
-        
-        // Reset width when closing dropdown
-        if (this.focusWidthPx) {
-          this.revertFocusWidth();
         }
       }
       this.cdr.markForCheck();

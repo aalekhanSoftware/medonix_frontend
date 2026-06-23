@@ -130,7 +130,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product">
+                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product" [attr.data-product-row-index]="i">
                 <td>
                   <div class="form-field-container">
                     <div class="select-group">

@@ -16,6 +16,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
+import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
 
 interface ProductForm {
   id?: number | null;
@@ -219,6 +220,20 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
   }
 
   addProduct(): void {
+    runAddRowWithProductSelectFocus({
+      viewport: this.viewport,
+      itemCountBeforeAdd: this.productsFormArray.length,
+      detectChanges: () => this.cdr.detectChanges(),
+      getSelectHosts: () => this.searchableSelects?.toArray() ?? [],
+      pushRow: () => this.pushProductRow(),
+      onAfterScroll: () => {
+        this.calculateTotalAmount();
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private pushProductRow(): number {
     const productGroup = this.createProductFormGroup();
     const prevProductId = this.productsFormArray.length > 0
       ? this.productsFormArray.at(this.productsFormArray.length - 1).get('productId')?.value
@@ -239,7 +254,6 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       remarks: null
     }, { emitEvent: false });
 
-    // If previous row has a valid product, default unitPrice/tax from productMap (predefined rate)
     if (prevProductId) {
       const selectedProduct = this.getProductByValue(prevProductId);
       if (selectedProduct) {
@@ -254,33 +268,32 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     this.productSubscriptions.push(subscription);
     this.productsFormArray.push(productGroup);
     this.productControlsForView = Array.from(this.productsFormArray.controls);
-    // Ensure productId valueChanges triggers downstream calculations when defaulting
     if (prevProductId) {
       productGroup.get('productId')?.setValue(prevProductId, { emitEvent: true });
     }
     this.calculateTotalAmount();
     this.cdr.markForCheck();
-    setTimeout(() => {
-      this.cdr.detectChanges();
-      if (!this.viewport) return;
-      this.viewport.checkViewportSize();
-      requestAnimationFrame(() => {
-        const el = this.viewport.elementRef.nativeElement as HTMLElement;
-        const maxScroll = el.scrollHeight - el.clientHeight;
-        el.scrollTop = Math.max(0, maxScroll);
-        this.calculateTotalAmount();
-        this.cdr.markForCheck();
-        setTimeout(() => this.focusLastProductName(), 50);
-      });
-    }, 100);
+    return this.productsFormArray.length - 1;
   }
 
   private focusLastProductName(): void {
-    this.cdr.detectChanges();
-    const selects = this.searchableSelects?.toArray() ?? [];
-    if (selects.length < 2) return;
-    const lastProductSelect = selects[selects.length - 1];
-    lastProductSelect.focus();
+    const rowIndex = this.productsFormArray.length - 1;
+    if (rowIndex < 0 || !this.viewport) {
+      return;
+    }
+
+    const container = this.viewport.elementRef.nativeElement;
+    focusProductNameSelect(
+      rowIndex,
+      container,
+      this.viewport,
+      (idx) => openProductSelectAtRowIndex(
+        idx,
+        container,
+        () => this.searchableSelects?.toArray() ?? [],
+        () => this.cdr.detectChanges()
+      )
+    );
   }
 
   onRemarksKeydown(event: KeyboardEvent, index: number): void {

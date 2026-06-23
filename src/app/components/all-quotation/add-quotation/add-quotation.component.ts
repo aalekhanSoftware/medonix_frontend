@@ -20,6 +20,7 @@ import { TransportMaster, TransportMasterService } from '../../../services/trans
 import { QuotationItemStatus } from '../../../models/quotation.model copy';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
+import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
 
 @Component({
   standalone: true,
@@ -114,11 +115,23 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
   }
 
   private focusLastProductName(): void {
-    this.cdr.detectChanges();
-    const selects = this.searchableSelects?.toArray() ?? [];
-    if (selects.length === 0) return;
-    const lastProductSelect = selects[selects.length - 1];
-    lastProductSelect.focus();
+    const rowIndex = this.itemsFormArray.length - 1;
+    if (rowIndex < 0 || !this.viewport) {
+      return;
+    }
+
+    const container = this.viewport.elementRef.nativeElement;
+    focusProductNameSelect(
+      rowIndex,
+      container,
+      this.viewport,
+      (idx) => openProductSelectAtRowIndex(
+        idx,
+        container,
+        () => this.searchableSelects?.toArray() ?? [],
+        () => this.cdr.detectChanges()
+      )
+    );
   }
 
   constructor(
@@ -291,6 +304,21 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
   }
 
   addItem(isInitializing = false): void {
+    runAddRowWithProductSelectFocus({
+      viewport: this.viewport,
+      itemCountBeforeAdd: this.itemsFormArray.length,
+      skipFocus: isInitializing,
+      detectChanges: () => this.cdr.detectChanges(),
+      getSelectHosts: () => this.searchableSelects?.toArray() ?? [],
+      pushRow: () => this.pushItemRow(isInitializing),
+      onAfterScroll: () => {
+        this.calculateTotalAmount();
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private pushItemRow(isInitializing: boolean): number {
     const prevProductId = this.itemsFormArray.length > 0
       ? this.itemsFormArray.at(this.itemsFormArray.length - 1).get('productId')?.value
       : '';
@@ -315,10 +343,8 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       quotationItemStatus: null
     });
 
-    // Add to form array first so indexing (if needed anywhere else) is correct
     this.itemsFormArray.push(itemGroup);
 
-    // Setup logic returning subscription
     const subscription = this.setupItemCalculations(itemGroup);
     this.itemSubscriptions.push(subscription);
 
@@ -331,19 +357,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
 
     this.itemControlsForView = Array.from(this.itemsFormArray.controls);
     this.cdr.markForCheck();
-    setTimeout(() => {
-      this.cdr.detectChanges();
-      if (!this.viewport) return;
-      this.viewport.checkViewportSize();
-      requestAnimationFrame(() => {
-        const el = this.viewport.elementRef.nativeElement as HTMLElement;
-        const maxScroll = el.scrollHeight - el.clientHeight;
-        el.scrollTop = Math.max(0, maxScroll);
-        this.calculateTotalAmount();
-        this.cdr.markForCheck();
-        setTimeout(() => this.focusLastProductName(), 50);
-      });
-    }, 100);
+    return this.itemsFormArray.length - 1;
   }
 
   removeItem(index: number): void {

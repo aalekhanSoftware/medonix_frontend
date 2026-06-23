@@ -39,13 +39,6 @@
       z-index: 100;
       overflow: visible; // Ensure dropdown can render outside
       
-      // When the component has a custom width, allow it to break out of the grid
-      &.custom-width {
-        position: absolute;
-        z-index: 1000;
-        left: 0;
-      }
-      
       &:focus-within {
         z-index: 1000; // Ensure dropdown appears above other elements
         position: relative;

@@ -48,7 +48,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *cdkVirtualFor="let item of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="item" class="product-row">
+                  <tr *cdkVirtualFor="let item of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="item" class="product-row" [attr.data-product-row-index]="i">
                 <!-- Product Selection -->
                 <td class="product-col">
                   <div class="form-field-container">

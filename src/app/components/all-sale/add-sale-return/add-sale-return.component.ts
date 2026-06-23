@@ -30,7 +30,7 @@ import {
   shouldIgnoreGlobalBarcodeCapture,
   BARCODE_INPUT_MAX_DURATION_MS
 } from '../../../shared/utils/product-barcode-scan.util';
-import { focusProductNameSelect, focusQuantityInput } from '../../../shared/utils/product-line-focus.util';
+import { focusProductNameSelect, focusQuantityInput, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
 
 interface ProductForm {
   id?: number | null;
@@ -104,6 +104,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   @ViewChildren(SaleProductSelectComponent) searchableSelects!: QueryList<SaleProductSelectComponent>;
 
   productControlsForView: AbstractControl[] = [];
+  private pendingAddProductFocus = false;
 
   private readonly VIRTUAL_SCROLL_ITEM_SIZE_PX = 52;
 
@@ -701,6 +702,29 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   }
 
   addProduct(options?: { skipProductFocus?: boolean }): void {
+    const skipFocus = options?.skipProductFocus ?? false;
+    if (!skipFocus) {
+      this.pendingAddProductFocus = true;
+    }
+    runAddRowWithProductSelectFocus({
+      viewport: this.viewport,
+      itemCountBeforeAdd: this.productsFormArray.length,
+      skipFocus,
+      detectChanges: () => this.cdr.detectChanges(),
+      getSelectHosts: () => this.searchableSelects?.toArray() ?? [],
+      hostSelector: 'app-sale-product-select',
+      pushRow: () => this.pushProductRow(options),
+      onAfterScroll: () => {
+        this.calculateTotalAmount();
+        this.cdr.markForCheck();
+      },
+      onComplete: () => {
+        this.pendingAddProductFocus = false;
+      }
+    });
+  }
+
+  private pushProductRow(options?: { skipProductFocus?: boolean }): number {
     const productGroup = this.createProductFormGroup();
     const prevProductId = options?.skipProductFocus
       ? ''
@@ -731,48 +755,27 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     }
     this.calculateTotalAmount();
     this.cdr.markForCheck();
-    const lastIndex = this.productsFormArray.length - 1;
-    setTimeout(() => {
-      this.cdr.detectChanges();
-      if (!this.viewport) return;
-      this.viewport.checkViewportSize();
-      requestAnimationFrame(() => {
-        this.viewport.scrollToIndex(lastIndex, 'auto');
-        this.calculateTotalAmount();
-        this.cdr.markForCheck();
-        if (!options?.skipProductFocus) {
-          setTimeout(() => this.focusLastProductName(), 50);
-        }
-      });
-    }, 100);
+    return this.productsFormArray.length - 1;
   }
 
   private focusLastProductName(): void {
     const rowIndex = this.productsFormArray.length - 1;
-    if (rowIndex < 0) {
+    if (rowIndex < 0 || !this.viewport) {
       return;
     }
 
+    const container = this.viewport.elementRef.nativeElement;
     focusProductNameSelect(
       rowIndex,
-      this.viewport?.elementRef.nativeElement,
+      container,
       this.viewport,
-      (idx) => {
-        this.cdr.detectChanges();
-        const container = this.viewport?.elementRef.nativeElement;
-        const row = container?.querySelector(`[data-product-row-index="${idx}"]`);
-        if (!row) {
-          return false;
-        }
-
-        for (const select of this.searchableSelects?.toArray() ?? []) {
-          if (row.contains(select.hostElement)) {
-            select.focusAndOpen();
-            return true;
-          }
-        }
-        return false;
-      }
+      (idx) => openProductSelectAtRowIndex(
+        idx,
+        container,
+        () => this.searchableSelects?.toArray() ?? [],
+        () => this.cdr.detectChanges(),
+        'app-sale-product-select'
+      )
     );
   }
 

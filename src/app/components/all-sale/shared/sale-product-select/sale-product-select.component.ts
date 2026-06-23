@@ -103,8 +103,12 @@ export class SaleProductSelectComponent implements ControlValueAccessor, OnChang
     this.innerSelect?.focus();
   }
 
-  focusAndOpen(): void {
-    this.innerSelect?.focusAndOpen();
+  focusAndOpen(): boolean {
+    if (!this.innerSelect) {
+      return false;
+    }
+    this.innerSelect.focusAndOpen();
+    return true;
   }
 
   onInnerValueChange(value: any): void {

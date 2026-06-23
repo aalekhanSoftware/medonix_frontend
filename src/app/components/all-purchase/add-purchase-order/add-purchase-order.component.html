@@ -134,7 +134,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product">
+                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product" [attr.data-product-row-index]="i">
                 <td class="select-col" *ngIf="hasConvertibleItems()">
                   <div *ngIf="isConvertibleItem(i)">
                     <input 
