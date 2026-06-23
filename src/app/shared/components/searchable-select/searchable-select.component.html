@@ -8,6 +8,8 @@
       (blur)="onBlur()"
       (click)="onInputClick($event)"
       (touchstart)="onInputTouchStart($event)"
+      (touchmove)="onInputTouchMove($event)"
+      (touchend)="onInputTouchEnd($event)"
       (keydown)="handleKeydown($event)"
       autocomplete="off"
       autocorrect="off"
@@ -35,7 +37,6 @@
         [class.fa-chevron-down]="!isOpen" 
         [class.fa-chevron-up]="isOpen"
         (click)="toggleDropdown($event)"
-        (touchstart)="toggleDropdown($event)"
         role="button"
         [attr.aria-label]="isOpen ? 'Close dropdown' : 'Open dropdown'"
       ></i>

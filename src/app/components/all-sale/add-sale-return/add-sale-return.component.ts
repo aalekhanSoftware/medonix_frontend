@@ -30,7 +30,7 @@ import {
   shouldIgnoreGlobalBarcodeCapture,
   BARCODE_INPUT_MAX_DURATION_MS
 } from '../../../shared/utils/product-barcode-scan.util';
-import { focusQuantityInput } from '../../../shared/utils/product-line-focus.util';
+import { focusProductNameSelect, focusQuantityInput } from '../../../shared/utils/product-line-focus.util';
 
 interface ProductForm {
   id?: number | null;
@@ -731,14 +731,13 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     }
     this.calculateTotalAmount();
     this.cdr.markForCheck();
+    const lastIndex = this.productsFormArray.length - 1;
     setTimeout(() => {
       this.cdr.detectChanges();
       if (!this.viewport) return;
       this.viewport.checkViewportSize();
       requestAnimationFrame(() => {
-        const el = this.viewport.elementRef.nativeElement as HTMLElement;
-        const maxScroll = el.scrollHeight - el.clientHeight;
-        el.scrollTop = Math.max(0, maxScroll);
+        this.viewport.scrollToIndex(lastIndex, 'auto');
         this.calculateTotalAmount();
         this.cdr.markForCheck();
         if (!options?.skipProductFocus) {
@@ -749,11 +748,32 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   }
 
   private focusLastProductName(): void {
-    this.cdr.detectChanges();
-    const selects = this.searchableSelects?.toArray() ?? [];
-    if (selects.length < 1) return;
-    const lastProductSelect = selects[selects.length - 1];
-    lastProductSelect.focus();
+    const rowIndex = this.productsFormArray.length - 1;
+    if (rowIndex < 0) {
+      return;
+    }
+
+    focusProductNameSelect(
+      rowIndex,
+      this.viewport?.elementRef.nativeElement,
+      this.viewport,
+      (idx) => {
+        this.cdr.detectChanges();
+        const container = this.viewport?.elementRef.nativeElement;
+        const row = container?.querySelector(`[data-product-row-index="${idx}"]`);
+        if (!row) {
+          return false;
+        }
+
+        for (const select of this.searchableSelects?.toArray() ?? []) {
+          if (row.contains(select.hostElement)) {
+            select.focusAndOpen();
+            return true;
+          }
+        }
+        return false;
+      }
+    );
   }
 
   onRemarksKeydown(event: KeyboardEvent, index: number): void {

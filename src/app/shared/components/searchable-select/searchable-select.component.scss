@@ -32,6 +32,7 @@
       line-height: 1.5;
       min-height: 40px;
       box-sizing: border-box;
+      touch-action: pan-y;
       
       // Placeholder styling
       &:empty:before {

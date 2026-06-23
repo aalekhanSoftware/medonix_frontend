@@ -141,6 +141,16 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   private readonly mouseWheelScrollFactor = 0.45;
   private readonly maxWheelItemsPerEvent = 4;
 
+  // Input trigger touch: distinguish tap from scroll (separate from options-container touch)
+  private inputTouchActive = false;
+  private inputTouchStartX = 0;
+  private inputTouchStartY = 0;
+  private inputTouchStartTime = 0;
+  private inputTouchMoved = false;
+  private bypassTouchGuard = false;
+  private readonly inputTouchMoveThresholdPx = 10;
+  private readonly inputTapMaxDurationMs = 400;
+
   @HostListener('window:resize')
   @HostListener('window:orientationchange')
   onViewportChange(): void {
@@ -394,6 +404,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     this.touchStartY = 0;
     this.touchStartElement = null;
     this.touchStartOption = null;
+    this.resetInputTouchState();
 
     // Nullify callbacks
     this.onChange = () => {};
@@ -456,9 +467,48 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     this.interactingWithDropdown = true;
   }
 
-  /** Touch: allow native caret placement; do not preventDefault. */
-  onInputTouchStart(_event: TouchEvent): void {
+  /** Touch: record start for tap-vs-scroll; allow native caret placement. */
+  onInputTouchStart(event: TouchEvent): void {
+    if (event.touches && event.touches.length > 0) {
+      const touch = event.touches[0];
+      this.inputTouchActive = true;
+      this.inputTouchStartX = touch.clientX;
+      this.inputTouchStartY = touch.clientY;
+      this.inputTouchStartTime = Date.now();
+      this.inputTouchMoved = false;
+    }
     this.clearPlaceholderIfNeeded(false);
+  }
+
+  onInputTouchMove(event: TouchEvent): void {
+    if (!this.inputTouchActive || !event.touches || event.touches.length === 0) {
+      return;
+    }
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - this.inputTouchStartX);
+    const deltaY = Math.abs(touch.clientY - this.inputTouchStartY);
+    if (deltaX > this.inputTouchMoveThresholdPx || deltaY > this.inputTouchMoveThresholdPx) {
+      this.inputTouchMoved = true;
+    }
+  }
+
+  onInputTouchEnd(_event: TouchEvent): void {
+    const touchDuration = this.inputTouchStartTime > 0 ? Date.now() - this.inputTouchStartTime : 0;
+    const isValidTap =
+      this.inputTouchActive &&
+      !this.inputTouchMoved &&
+      touchDuration < this.inputTapMaxDurationMs;
+
+    if (isValidTap) {
+      this.activateDropdown();
+    } else if (this.inputTouchMoved && this.searchInput?.nativeElement) {
+      if (this.focusWidthPx) {
+        this.revertFocusWidth();
+      }
+      this.searchInput.nativeElement.blur();
+    }
+
+    this.resetInputTouchState();
   }
 
   onInputClick(event: MouseEvent): void {
@@ -650,9 +700,69 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
 
   /** Programmatic focus: focuses the trigger so user can type (e.g. after adding a new row). */
   focus(): void {
+    this.bypassTouchGuard = true;
     if (this.searchInput?.nativeElement) {
       this.searchInput.nativeElement.focus();
     }
+  }
+
+  /** Focus input and open dropdown (add-product / virtual-scroll row focus). */
+  focusAndOpen(): void {
+    this.resetInputTouchState();
+    this.bypassTouchGuard = true;
+    if (this.searchInput?.nativeElement) {
+      this.searchInput.nativeElement.focus();
+    }
+    if (!this.isOpen) {
+      this.activateDropdown();
+    }
+  }
+
+  private shouldActivateOnFocus(): boolean {
+    if (this.bypassTouchGuard) {
+      this.bypassTouchGuard = false;
+      return true;
+    }
+    if (this.inputTouchActive) {
+      return false;
+    }
+    return true;
+  }
+
+  private resetInputTouchState(): void {
+    this.inputTouchActive = false;
+    this.inputTouchStartX = 0;
+    this.inputTouchStartY = 0;
+    this.inputTouchStartTime = 0;
+    this.inputTouchMoved = false;
+  }
+
+  private activateDropdown(): void {
+    this.isOpen = true;
+    this.highlightedIndex = -1;
+
+    if (!this.clickOutsideListener) {
+      this.clickOutsideListener = this.renderer.listen('document', 'click', (event: Event) => {
+        this.onClickOutside(event);
+      });
+    }
+
+    requestAnimationFrame(() => {
+      this.filterOptions();
+
+      if (this.focusWidthPx) {
+        this.applyFocusWidth();
+      }
+
+      this.adjustDropdownPosition();
+
+      if (this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit()) {
+        this.setupVirtualScroll();
+      }
+    });
+
+    this.searchFocus.emit();
+    this.cdr.markForCheck();
   }
 
   onFocus(): void {
@@ -686,37 +796,12 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         this.writeInputText(this.searchText, 'preserve');
       }
     }
-    
-    this.isOpen = true;
-    this.highlightedIndex = -1;
 
-    // Attach click outside listener when opening
-    if (!this.clickOutsideListener) {
-      this.clickOutsideListener = this.renderer.listen('document', 'click', (event: Event) => {
-        this.onClickOutside(event);
-      });
+    if (this.shouldActivateOnFocus()) {
+      this.activateDropdown();
+    } else {
+      this.cdr.markForCheck();
     }
-    
-    // Use requestAnimationFrame to avoid blocking UI
-    requestAnimationFrame(() => {
-      this.filterOptions();
-      
-      // Apply custom width on focus if specified
-      if (this.focusWidthPx) {
-        this.applyFocusWidth();
-      }
-      
-      // Adjust dropdown position for mobile viewport
-      this.adjustDropdownPosition();
-      
-      // Setup virtual scrolling if enabled
-      if (this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit()) {
-        this.setupVirtualScroll();
-      }
-    });
-    
-    this.searchFocus.emit();
-    this.cdr.markForCheck();
   }
   
   private adjustDropdownPosition(): void {

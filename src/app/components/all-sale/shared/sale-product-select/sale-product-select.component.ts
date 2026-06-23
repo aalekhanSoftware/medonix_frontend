@@ -95,8 +95,16 @@ export class SaleProductSelectComponent implements ControlValueAccessor, OnChang
     // SearchableSelectComponent does not expose disabled input.
   }
 
+  get hostElement(): HTMLElement {
+    return this.elementRef.nativeElement;
+  }
+
   focus(): void {
     this.innerSelect?.focus();
+  }
+
+  focusAndOpen(): void {
+    this.innerSelect?.focusAndOpen();
   }
 
   onInnerValueChange(value: any): void {
