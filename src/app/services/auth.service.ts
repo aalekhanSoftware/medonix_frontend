@@ -177,6 +177,10 @@ export class AuthService {
     return this.hasRole(UserRole.STAFF_ADMIN);
   }
 
+  isDealer(): boolean {
+    return this.hasRole(UserRole.DEALER);
+  }
+
   getDefaultRoute(): string {
     const userRoles = this.getUserRoles();
 

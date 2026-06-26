@@ -1,9 +1,10 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 
 import { SaleService } from '../../../services/sale.service';
 import { CustomerService } from '../../../services/customer.service';
@@ -86,6 +87,8 @@ export class SaleReturnListComponent implements OnInit, OnDestroy {
   customers: any[] = [];
   isLoadingCustomers = false;
   canManagePurchases = false;
+  isDealerUser = false;
+  exportingPdfId: number | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -99,12 +102,14 @@ export class SaleReturnListComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {
+,
+    private txLabel: TransactionLabelService) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
     this.canManagePurchases = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    this.isDealerUser = this.authService.hasRole(UserRole.DEALER);
     this.loadSaleReturns();
     if (this.canManagePurchases) {
       this.loadCustomers();
@@ -272,7 +277,7 @@ export class SaleReturnListComponent implements OnInit, OnDestroy {
 
   viewDetails(id: number | undefined): void {
     if (!id) {
-      this.snackbar.error('Sale return ID is not available');
+      this.snackbar.error(this.txLabel.swap('Sale return ID is not available'));
       return;
     }
     const encryptedId = this.encryptionService.encrypt(id.toString());
@@ -281,7 +286,7 @@ export class SaleReturnListComponent implements OnInit, OnDestroy {
 
 
   deleteSaleReturn(id: number): void {
-    if (confirm('Are you sure you want to delete this sale return? This action cannot be undone.')) {
+    if (confirm(this.txLabel.swap('Are you sure you want to delete this sale return? This action cannot be undone.'))) {
       this.isLoading = true;
       this.saleService.deleteSaleReturn(id)
         .pipe(takeUntil(this.destroy$))
@@ -306,8 +311,19 @@ export class SaleReturnListComponent implements OnInit, OnDestroy {
   }
 
   generatePdf(id: number, invoiceNumber?: string): void {
+    if (this.exportingPdfId !== null) {
+      return;
+    }
+    this.exportingPdfId = id;
+    this.cdr.markForCheck();
     this.saleService.generateSaleReturnPdf(id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.exportingPdfId = null;
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
         next: ({ blob, filename }) => {
           // Use invoiceNumber if available, otherwise use the filename from response

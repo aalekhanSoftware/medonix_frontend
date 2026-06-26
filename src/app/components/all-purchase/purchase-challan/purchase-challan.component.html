@@ -2,7 +2,7 @@
   <app-loader [show]="isLoading"></app-loader>
 
   <div class="search-section card">
-    <h2>Search Purchase Challans</h2>
+    <h2>Search {{ 'Purchase Challans' | txLabel }}</h2>
     <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
       <div class="search-controls">
         <div class="form-group">
@@ -38,10 +38,9 @@
       </div>
     </form>
   </div>
-  <button *ngIf="canManagePurchaseChallans" (click)="clearLocalStorage()" class="btn btn-sm btn-primary mb-2">Add
-    Purchase Challan</button>
+  <button *ngIf="canManagePurchaseChallans" (click)="clearLocalStorage()" class="btn btn-sm btn-primary mb-2">{{ 'Add Purchase Challan' | txLabel }}</button>
   <div class="purchases-list card">
-    <h2>Purchase Challans</h2>
+    <h2>{{ 'Purchase Challans' | txLabel }}</h2>
 
     <div class="table-responsive">
       <table class="table">
@@ -71,7 +70,7 @@
             </td>
             <td class="actions">
               <button *ngIf="canManagePurchaseChallans" class="btn-icon edit"
-                (click)="editPurchaseChallan(purchaseChallan.id!)" title="Edit Purchase Challan"
+                (click)="editPurchaseChallan(purchaseChallan.id!)" title="Edit {{ 'Purchase Challan' | txLabel }}"
   >
                 <i class="fas fa-eye"></i>
               </button>
@@ -82,17 +81,26 @@
               </button>
               <button *ngIf="canManagePurchaseChallans" class="btn-icon convert"
                 (click)="convertToPurchase(purchaseChallan.id!, purchaseChallan.invoiceNumber)"
-                title="Convert to Purchase" [disabled]="isLoading">
+                title="Convert to {{ 'Purchase' | txLabel }}" [disabled]="isLoading">
                 <i class="fas fa-exchange-alt"></i>
               </button>
               <button *ngIf="canManagePurchaseChallans" class="btn-icon qc" (click)="openQc(purchaseChallan.id!)"
-                title="Purchase Challan QC">
+                title="{{ 'Purchase Challan' | txLabel }} QC">
                 <i class="fas fa-clipboard-check"></i>
               </button>
               <button *ngIf="canManagePurchaseChallans" class="btn-icon delete"
-                (click)="deletePurchaseChallan(purchaseChallan.id!)" title="Delete Purchase Challan"
+                (click)="deletePurchaseChallan(purchaseChallan.id!)" title="Delete {{ 'Purchase Challan' | txLabel }}"
   >
                 <i class="fas fa-trash"></i>
+              </button>
+              <button
+                *ngIf="isDealerUser"
+                class="btn-icon pdf"
+                (click)="generatePdf(purchaseChallan.id!, purchaseChallan.invoiceNumber)"
+                [disabled]="exportingPdfId !== null"
+                (touchstart)="$event.stopPropagation()"
+                title="Export PDF">
+                <i class="fas fa-file-pdf"></i>
               </button>
             </td>
           </tr>

@@ -9,6 +9,7 @@ import { SnackbarService } from '../../shared/services/snackbar.service';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
 import { LedgerEntry, LedgerPdfDataPayload } from '../../models/ledger-pdf-data.model';
+import { TransactionLabelService } from '../../shared/services/transaction-label.service';
 
 @Component({
   selector: 'app-ledger',
@@ -43,7 +44,8 @@ export class LedgerComponent implements OnInit, OnDestroy {
     private customerService: CustomerService,
     private snackbar: SnackbarService,
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private txLabel: TransactionLabelService
   ) {
     this.isDealer = this.authService.hasRole('DEALER');
     this.initForm();
@@ -291,7 +293,7 @@ export class LedgerComponent implements OnInit, OnDestroy {
   }
 
   transactionTypeLabel(type: string): string {
-    return this.transactionTypeLabels[type] ?? type;
+    return this.txLabel.swap(this.transactionTypeLabels[type] ?? type);
   }
 
   companyOtherEntries(): { key: string; value: string }[] {

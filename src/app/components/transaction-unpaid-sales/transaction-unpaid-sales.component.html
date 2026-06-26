@@ -7,7 +7,7 @@
         <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
       </div>
       <div class="header-text">
-        <h1>Unpaid Sales</h1>
+        <h1>{{ 'Unpaid Sales' | txLabel }}</h1>
         <p>Find customer-wise unpaid invoices by days and review pending collections.</p>
       </div>
     </div>
@@ -18,7 +18,7 @@
 
     <form [formGroup]="unpaidSalesForm" (ngSubmit)="onSearch($event)" aria-label="Unpaid sales search form">
       <div class="search-controls">
-        <div class="form-group">
+        <div class="form-group" *ngIf="canShowCustomerFilter" (touchstart)="$event.stopPropagation()">
           <label for="customerId">Customer</label>
           <div class="select-group inline">
             <app-searchable-select
@@ -84,47 +84,28 @@
           <tr>
             <th scope="col">No</th>
             <th scope="col">Invoice No.</th>
-            <th scope="col">Sale Date</th>
+            <th scope="col">{{ 'Sale Date' | txLabel }}</th>
             <th scope="col">Customer</th>
             <th scope="col">Total Sale Amount</th>
             <th scope="col">Payment Done</th>
             <th scope="col">Pending Amount</th>
-            <th scope="col" class="col-actions">Payment receipt</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let row of rows; let i = index; trackBy: trackBySaleId">
             <td data-label="No">{{ (currentPage * pageSize) + i + 1 }}</td>
             <td data-label="Invoice No."><strong>{{ row.invoiceNumber }}</strong></td>
-            <td data-label="Sale Date">{{ row.saleDate }}</td>
+            <td [attr.data-label]="'Sale Date' | txLabel">{{ row.saleDate }}</td>
             <td data-label="Customer">{{ row.customerName }}</td>
-            <td data-label="Total Sale Amount">{{ row.totalSaleAmount }}</td>
+            <td [attr.data-label]="'Total Sale Amount' | txLabel">{{ row.totalSaleAmount }}</td>
             <td data-label="Payment Done">{{ row.paymentDoneAmount }}</td>
             <td data-label="Pending Amount"><strong>{{ row.pendingAmount }}</strong></td>
-            <td data-label="Payment receipt" class="col-actions">
-              <button
-                type="button"
-                class="btn btn-sm btn-secondary receipt-btn"
-                (click)="printPaymentReceipt(row, $event)"
-                [disabled]="printingReceiptSaleId !== null"
-                [attr.aria-busy]="printingReceiptSaleId === row.id"
-                [title]="'Print payment receipt for ' + row.invoiceNumber"
-              >
-                <i
-                  class="fas"
-                  [ngClass]="printingReceiptSaleId === row.id ? 'fa-spinner fa-spin' : 'fa-print'"
-                  aria-hidden="true"
-                ></i>
-                <span class="receipt-btn-label"> Print receipt</span>
-              </button>
-            </td>
           </tr>
         </tbody>
         <tfoot>
           <tr class="totals-row">
             <td colspan="6" class="text-end"><strong>Total Pending Amount</strong></td>
             <td data-label="Pending Amount"><strong>{{ totalPendingAmount }}</strong></td>
-            <td class="col-actions"></td>
           </tr>
         </tfoot>
       </table>

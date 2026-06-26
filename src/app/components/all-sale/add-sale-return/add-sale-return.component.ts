@@ -1,3 +1,4 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, ViewChildren, QueryList, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -580,8 +581,8 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     private snackbar: SnackbarService,
     private encryptionService: EncryptionService,
     private productBatchStockService: ProductBatchStockService,
-    private cdr: ChangeDetectorRef
-  ) {
+    private cdr: ChangeDetectorRef,
+    private txLabel: TransactionLabelService) {
     this.initForm();
   }
 
@@ -1411,7 +1412,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         if (response && response.id) {
           this.populateForm(response);
         } else {
-          this.snackbar.error('Failed to load sale return details');
+          this.snackbar.error(this.txLabel.swap('Failed to load sale return details'));
         }
         this.loading = false;
         this.cdr.markForCheck();

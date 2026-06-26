@@ -21,6 +21,7 @@ import { SaleReturnListComponent } from './components/sale-return-list/sale-retu
 import { PaginationComponent } from "./shared/components/pagination/pagination.component";
 import { SearchableSelectComponent } from "./shared/components/searchable-select/searchable-select.component";
 import { LedgerComponent } from './components/ledger/ledger.component';
+import { TransactionLabelPipe } from './shared/pipes/transaction-label.pipe';
 
 @NgModule({
   declarations: [
@@ -44,7 +45,8 @@ import { LedgerComponent } from './components/ledger/ledger.component';
     MatSnackBarModule,
     PaginationComponent,
     LoaderComponent,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    TransactionLabelPipe
 ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

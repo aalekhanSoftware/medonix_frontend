@@ -16,7 +16,7 @@
             <strong>{{ purchaseDetails.invoiceNumber }}</strong>
           </div>
           <div class="meta-item">
-            <span>Purchase Date</span>
+            <span>{{ 'Purchase' | txLabel }} Date</span>
             <strong>{{ purchaseDetails.purchaseDate | date:'dd-MM-yyyy' }}</strong>
           </div>
           <div class="meta-item">
@@ -34,7 +34,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="purchaseReturnDate">
-                  <i class="fas fa-calendar"></i> Purchase Return Date
+                  <i class="fas fa-calendar"></i> {{ 'Purchase Return' | txLabel }} Date
                 </label>
                 <input
                   type="date"
@@ -101,7 +101,7 @@
                         <th>Discount Amount</th>
                         <th>After Discount</th>
                         <th>Tax Amount</th>
-                        <th>Purchase Return Quantity</th>
+                        <th>{{ 'Purchase Return' | txLabel }} Quantity</th>
                         <th>Remarks</th>
                       </tr>
                     </thead>
@@ -372,6 +372,6 @@
 <ng-template #emptyPurchaseTpl>
   <div class="empty-state">
     <i class="fas fa-file-invoice"></i>
-    <p>Purchase details not available.</p>
+    <p>{{ 'Purchase' | txLabel }} details not available.</p>
   </div>
 </ng-template>

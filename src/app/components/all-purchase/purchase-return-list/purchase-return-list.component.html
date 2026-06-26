@@ -2,8 +2,8 @@
   <app-loader [show]="isLoading"></app-loader>
   
   <section class="search-section card" aria-labelledby="search-purchase-returns-heading">
-    <h2 id="search-purchase-returns-heading">Search Purchase Returns</h2>
-    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" role="search" aria-label="Purchase return search form">
+    <h2 id="search-purchase-returns-heading">{{ 'Search Purchase Returns' | txLabel }}</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch($event)" role="search" [attr.aria-label]="'Purchase return search form' | txLabel">
       <div class="search-controls">
         <div class="form-group">
           <label for="invoice-search" class="sr-only">Search by invoice number</label>
@@ -99,24 +99,24 @@
       class="btn btn-sm btn-primary"
       aria-label="Add new purchase return"
       (touchstart)="$event.stopPropagation()">
-      <i class="fas fa-plus" aria-hidden="true"></i> Add Purchase Return
+      <i class="fas fa-plus" aria-hidden="true"></i> {{ 'Add Purchase Return' | txLabel }}
     </button>
   </div>
 
   <section class="purchases-list card" aria-labelledby="purchase-returns-heading">
-    <h2 id="purchase-returns-heading">Purchase Returns</h2>
+    <h2 id="purchase-returns-heading">{{ 'Purchase Returns' | txLabel }}</h2>
 
     <div class="table-responsive">
-      <table class="table" role="table" aria-label="Purchase returns list">
+      <table class="table" role="table" [attr.aria-label]="'Purchase returns list' | txLabel">
         <thead>
           <tr>
             <th scope="col">No</th>
             <th scope="col">Invoice No.</th>
             <th scope="col">Customer Name</th>
-            <th scope="col">Purchase Return Date</th>
+            <th scope="col">{{ 'Purchase Return' | txLabel }} Date</th>
             <th scope="col">Discount</th>
             <th scope="col">Total Amount</th>
-            <th scope="col" *ngIf="canManagePurchases">Actions</th>
+            <th scope="col" *ngIf="canManagePurchases || isDealerUser">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -130,8 +130,9 @@
               <span *ngIf="!purchaseReturn.discountAmount || purchaseReturn.discountAmount === 0">-</span>
             </td>
             <td data-label="Total Amount"><strong>{{ purchaseReturn.totalPurchaseAmount }}</strong></td>
-            <td class="actions" data-label="Actions" *ngIf="canManagePurchases">
+            <td class="actions" data-label="Actions" *ngIf="canManagePurchases || isDealerUser">
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon pdf" 
                 (click)="generatePdf(purchaseReturn.id, purchaseReturn.invoiceNumber)"
                 (touchstart)="$event.stopPropagation()"
@@ -139,6 +140,7 @@
                 <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon edit" 
                 (click)="purchaseReturn.purchaseId != null ? viewDetails(purchaseReturn.purchaseId) : viewStandaloneDetails(purchaseReturn.id)"
                 (touchstart)="$event.stopPropagation()"
@@ -146,11 +148,21 @@
                 <i class="fas fa-eye" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon delete" 
                 (click)="deletePurchaseReturn(purchaseReturn.id)"
                 (touchstart)="$event.stopPropagation()"
                 aria-label="Delete purchase return">
                 <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+              <button
+                *ngIf="isDealerUser"
+                class="btn-icon pdf"
+                (click)="generatePdf(purchaseReturn.id, purchaseReturn.invoiceNumber)"
+                [disabled]="exportingPdfId !== null"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Export as PDF">
+                <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
             </td>
           </tr>
@@ -165,7 +177,7 @@
       [totalElements]="totalElements"
       [pageSizeOptions]="pageSizeOptions"
       [totalAmountSum]="totalPurchaseReturnAmountSum"
-      [totalAmountLabel]="'Total Purchase Return Amount'"
+      [totalAmountLabel]="'Total Purchase Return Amount' | txLabel"
       (pageChange)="onPageChange($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     ></app-pagination>

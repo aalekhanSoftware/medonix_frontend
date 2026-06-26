@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pipe';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -43,7 +45,8 @@ interface ProductForm {
     RouterModule,
     ScrollingModule,
     LoaderComponent,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    TransactionLabelPipe
   ],
   templateUrl: './add-purchase.component.html',
   styleUrls: ['./add-purchase.component.scss'],
@@ -126,8 +129,8 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private router: Router,
     private encryptionService: EncryptionService,
-    private cdr: ChangeDetectorRef
-  ) {
+    private cdr: ChangeDetectorRef,
+    private txLabel: TransactionLabelService) {
     this.initForm();
   }
 
@@ -797,7 +800,7 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response: any) => {
             if (response?.success) {
-              this.snackbar.success(`Purchase ${this.isEdit ? 'updated' : 'created'} successfully`);
+              this.snackbar.success(this.txLabel.swap(`Purchase ${this.isEdit ? 'updated' : 'created'} successfully`));
               localStorage.removeItem('purchaseId');
               this.router.navigate(['/purchase']);
             }

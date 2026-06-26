@@ -7,7 +7,7 @@
     <div class="card-header">
       <div class="header-main">
         <h2 class="form-title">
-          <i class="fas fa-clipboard-check"></i> Purchase Challan QC
+          <i class="fas fa-clipboard-check"></i> {{ 'Purchase Challan' | txLabel }} QC
         </h2>
         <span
           class="status-chip header-status"
@@ -147,7 +147,7 @@
 <ng-template #emptyPurchaseTpl>
   <div class="empty-state">
     <i class="fas fa-file-invoice"></i>
-    <p>Purchase challan details not available.</p>
+    <p>{{ 'Purchase' | txLabel }} challan details not available.</p>
   </div>
 </ng-template>
 

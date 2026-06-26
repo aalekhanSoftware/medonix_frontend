@@ -1,3 +1,4 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -28,8 +29,8 @@ export class QcPurchaseComponent implements OnInit, OnDestroy {
     private purchaseService: PurchaseService,
     private productService: ProductService,
     private snackbar: SnackbarService,
-    private encryptionService: EncryptionService
-  ) {
+    private encryptionService: EncryptionService,
+    private txLabel: TransactionLabelService) {
     this.qcForm = this.fb.group({
       items: this.fb.array([])
     });
@@ -46,14 +47,14 @@ export class QcPurchaseComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const encryptedId = this.route.snapshot.paramMap.get('id');
     if (!encryptedId) {
-      this.snackbar.error('Invalid purchase id');
+      this.snackbar.error(this.txLabel.swap('Invalid purchase id'));
       return;
     }
 
     const decryptedId = this.encryptionService.decrypt(encryptedId);
     const id = decryptedId ? Number(decryptedId) : NaN;
     if (!id || isNaN(id)) {
-      this.snackbar.error('Invalid purchase id');
+      this.snackbar.error(this.txLabel.swap('Invalid purchase id'));
       return;
     }
 
@@ -191,7 +192,7 @@ export class QcPurchaseComponent implements OnInit, OnDestroy {
     const rawValue = qcPassControl?.value;
 
     if (!purchaseItemId) {
-      this.snackbar.error('purchaseItemId is required');
+      this.snackbar.error(this.txLabel.swap('purchaseItemId is required'));
       return;
     }
 

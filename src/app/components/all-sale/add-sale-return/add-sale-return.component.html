@@ -1,6 +1,6 @@
 <div class="add-sale-container">
   <button class="btn btn-sm btn-secondary back-btn" routerLink="/sale/return" (touchstart)="$event.stopPropagation()">
-    <i class="fas fa-arrow-left"></i> Back to Sale Returns
+    <i class="fas fa-arrow-left"></i> Back to {{ 'Sale Returns' | txLabel }}
   </button>
 
   <div class="form-card">
@@ -47,7 +47,7 @@
 
           <div class="form-group">
             <label for="saleReturnDate">
-              <i class="fas fa-calendar"></i> Sale Return Date <span class="required">*</span>
+              <i class="fas fa-calendar"></i> {{ 'Sale Return' | txLabel }} Date <span class="required">*</span>
             </label>
             <input 
               type="date" 
@@ -58,7 +58,7 @@
               (touchstart)="$event.stopPropagation()"
             >
             <div class="invalid-feedback" *ngIf="isFieldInvalid('saleReturnDate')">
-              Sale return date is required
+              {{ 'Sale' | txLabel }} return date is required
             </div>
           </div>
 
@@ -130,7 +130,7 @@
                     <th>Product Name</th>
                     <th>Quantity</th>
                     <th>Batch Number</th>
-                    <th>Sale Rate (₹)</th>
+                    <th>{{ 'Sale Rate' | txLabel }} (₹)</th>
                     <th>Subtotal (₹)</th>
                     <th>Discount Type</th>
                     <th>Discount %</th>
@@ -441,7 +441,7 @@
         <i class="fas fa-plus"></i> Add Product
       </button>
 
-      <!-- Sale Summary -->
+      <!-- {{ 'Sale' | txLabel }} Summary -->
       <div class="sale-summary">
         <div class="summary-item">
           <span>Total Products:</span>

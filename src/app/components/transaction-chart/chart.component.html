@@ -8,7 +8,7 @@
       </div>
       <div class="header-text">
         <h1>Transaction Charts</h1>
-        <p>Month-wise Sales, Purchase and Payment Done analytics</p>
+        <p>Month-wise {{ 'Sales' | txLabel }}, {{ 'Purchase' | txLabel }} and Payment Done analytics</p>
       </div>
     </div>
   </section>
@@ -33,8 +33,8 @@
             (change)="onReportTypeChange()"
             (touchstart)="$event.stopPropagation()"
           >
-            <option value="SALES">Sales Report</option>
-            <option value="PURCHASE">Purchase Report</option>
+            <option value="SALES">{{ 'Sales Report' | txLabel }}</option>
+            <option value="PURCHASE">{{ 'Purchase' | txLabel }} Report</option>
             <option value="PAYMENT_DONE">Payment Done Report</option>
           </select>
         </div>
@@ -67,7 +67,7 @@
           />
         </div>
 
-        <div class="form-group" (touchstart)="$event.stopPropagation()">
+        <div class="form-group" *ngIf="canShowCustomerFilter" (touchstart)="$event.stopPropagation()">
           <label for="chart-customer-select">Customer</label>
           <div class="select-wrapper">
             <app-searchable-select
@@ -150,7 +150,12 @@
     <div class="empty-state" *ngIf="!isLoading && chartPoints.length === 0">
       <i class="fas fa-info-circle" aria-hidden="true"></i>
       <span *ngIf="hasSearched; else notSearched">
-        No data found for the selected filters. Try adjusting the date range or customer.
+        <ng-container *ngIf="canShowCustomerFilter; else noCustomerHint">
+          No data found for the selected filters. Try adjusting the date range or customer.
+        </ng-container>
+        <ng-template #noCustomerHint>
+          No data found for the selected filters. Try adjusting the date range.
+        </ng-template>
       </span>
       <ng-template #notSearched>
         Select filters and click Search to load the month-wise chart.

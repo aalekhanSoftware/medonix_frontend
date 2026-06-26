@@ -127,42 +127,42 @@
             </li>
             <li *ngIf="permissions.canViewSale">
               <a routerLink="/transaction/unpaid-sales" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-file-invoice-dollar"></i> Unpaid Sales
+                <i class="fas fa-file-invoice-dollar"></i> {{ 'Unpaid Sales' | txLabel }}
               </a>
             </li>
             <li *ngIf="permissions.canViewPurchase">
               <a routerLink="/purchase" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-shopping-cart"></i> Purchase
+                <i class="fas fa-shopping-cart"></i> {{ 'Purchase' | txLabel }}
               </a>  
             </li>
             <li *ngIf="permissions.canViewPurchase">
               <a routerLink="/purchase-challan" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-file-invoice"></i> Purchase Challan
+                <i class="fas fa-file-invoice"></i> {{ 'Purchase Challan' | txLabel }}
               </a>
             </li>
             <li *ngIf="permissions.canViewPurchase">
               <a routerLink="/purchase-order" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-clipboard-list"></i> Purchase Order
+                <i class="fas fa-clipboard-list"></i> {{ 'Purchase Order' | txLabel }}
               </a>
             </li>
             <li *ngIf="permissions.canViewPurchase">
               <a routerLink="/purchase-order/pending-item" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-clock"></i> PO Pending Items
+                <i class="fas fa-clock"></i> {{ 'PO Pending Items' | txLabel }}
               </a>
             </li>
             <li *ngIf="permissions.canViewPurchaseReturn">
               <a routerLink="/purchase/return" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-undo"></i> Purchase Return
+                <i class="fas fa-undo"></i> {{ 'Purchase Return' | txLabel }}
               </a>
             </li>
             <li *ngIf="permissions.canViewSale">
               <a routerLink="/sale" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-hand-holding-usd"></i> Sale
+                <i class="fas fa-hand-holding-usd"></i> {{ 'Sale' | txLabel }}
               </a>
             </li>         
             <li *ngIf="permissions.canViewSaleReturn">
               <a routerLink="/sale/return" routerLinkActive="active" (click)="closeAllMenus()">
-                <i class="fas fa-undo"></i> Sale Return
+                <i class="fas fa-undo"></i> {{ 'Sale Return' | txLabel }}
               </a>
             </li>
             <li *ngIf="permissions.canViewLedger">

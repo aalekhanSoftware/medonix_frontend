@@ -2,14 +2,16 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { finalize, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 
 import { CustomerService } from '../../services/customer.service';
+import { AuthService } from '../../services/auth.service';
 import { UnpaidSaleRow, UnpaidSalesService } from '../../services/unpaid-sales.service';
 import { SnackbarService } from '../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
+import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 
 @Component({
   selector: 'app-transaction-unpaid-sales',
@@ -21,19 +23,19 @@ import { SearchableSelectComponent } from '../../shared/components/searchable-se
     ReactiveFormsModule,
     LoaderComponent,
     PaginationComponent,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    TransactionLabelPipe
   ]
 })
 export class TransactionUnpaidSalesComponent implements OnInit, OnDestroy {
   unpaidSalesForm!: FormGroup;
 
   customers: any[] = [];
+  canShowCustomerFilter = false;
   rows: UnpaidSaleRow[] = [];
 
   isLoading = false;
   isLoadingCustomers = false;
-  /** Sale id currently generating payment receipt PDF */
-  printingReceiptSaleId: number | null = null;
 
   currentPage = 0;
   pageSize = 10;
@@ -47,13 +49,17 @@ export class TransactionUnpaidSalesComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private customerService: CustomerService,
     private unpaidSalesService: UnpaidSalesService,
-    private snackbar: SnackbarService
+    private snackbar: SnackbarService,
+    private authService: AuthService
   ) {
     this.initForm();
   }
 
   ngOnInit(): void {
-    this.loadCustomers();
+    this.canShowCustomerFilter = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    if (this.canShowCustomerFilter) {
+      this.loadCustomers();
+    }
   }
 
   ngOnDestroy(): void {
@@ -193,61 +199,6 @@ export class TransactionUnpaidSalesComponent implements OnInit, OnDestroy {
 
   get totalPendingAmount(): number {
     return this.rows.reduce((sum, row) => sum + (Number(row.pendingAmount) || 0), 0);
-  }
-
-  printPaymentReceipt(row: UnpaidSaleRow, event?: Event): void {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    if (this.printingReceiptSaleId != null) {
-      return;
-    }
-    this.printingReceiptSaleId = row.id;
-    this.unpaidSalesService
-      .generatePaymentReceiptPdf(row.id)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-          this.printingReceiptSaleId = null;
-        })
-      )
-      .subscribe({
-        next: ({ blob }) => {
-          const url = window.URL.createObjectURL(blob);
-          const printFrame = document.createElement('iframe');
-          printFrame.style.position = 'fixed';
-          printFrame.style.right = '0';
-          printFrame.style.bottom = '0';
-          printFrame.style.width = '0';
-          printFrame.style.height = '0';
-          printFrame.style.border = 'none';
-          printFrame.style.opacity = '0';
-          printFrame.setAttribute('aria-hidden', 'true');
-          printFrame.src = url;
-          document.body.appendChild(printFrame);
-          printFrame.onload = () => {
-            setTimeout(() => {
-              try {
-                printFrame.contentWindow?.focus();
-                printFrame.contentWindow?.print();
-                this.snackbar.success('Payment receipt ready to print');
-              } catch {
-                this.snackbar.error('Could not open print dialog. Try saving the PDF from preview.');
-              }
-            }, 300);
-            setTimeout(() => {
-              if (document.body.contains(printFrame)) {
-                document.body.removeChild(printFrame);
-              }
-              window.URL.revokeObjectURL(url);
-            }, 60000);
-          };
-        },
-        error: (error: any) => {
-          this.snackbar.error(error?.error?.message || 'Failed to generate payment receipt');
-        }
-      });
   }
 
   private showValidationError(): void {

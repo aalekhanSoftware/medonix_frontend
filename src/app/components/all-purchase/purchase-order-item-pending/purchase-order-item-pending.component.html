@@ -1,7 +1,7 @@
 <section class="po-pending-container">
   <header class="header">
     <div>
-      <h1>Pending Purchase Order Items</h1>
+      <h1>Pending {{ 'Purchase Order' | txLabel }} Items</h1>
       <p class="lede">Review and act on items that are still pending across purchase orders.</p>
     </div>
   </header>
@@ -9,7 +9,8 @@
   <section class="search-card" aria-labelledby="filters-heading">
     <div class="search-card-header">
       <h2 id="filters-heading">Filters</h2>
-      <p class="muted">Refine by order, product, or customer to focus on what matters.</p>
+      <p class="muted" *ngIf="canManagePurchaseOrders">Refine by order, product, or customer to focus on what matters.</p>
+      <p class="muted" *ngIf="!canManagePurchaseOrders">Refine by order or product to focus on what matters.</p>
     </div>
     <form [formGroup]="searchForm" (ngSubmit)="onSubmit($event)" class="search-form" aria-label="Pending purchase order item filters">
     
@@ -40,7 +41,7 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" *ngIf="canManagePurchaseOrders" (touchstart)="$event.stopPropagation()">
         <label>Customer</label>
         <div class="product-select-group">
           <app-searchable-select

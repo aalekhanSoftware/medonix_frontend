@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pipe';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -15,7 +17,8 @@ import { buildProductDisplayName, toProductOptionsList } from '../../../shared/u
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterModule
+    RouterModule,
+    TransactionLabelPipe
   ],
   templateUrl: './qc-purchase-challan.component.html',
   styleUrls: ['./qc-purchase-challan.component.scss']
@@ -35,8 +38,8 @@ export class QcPurchaseChallanComponent implements OnInit, OnDestroy {
     private purchaseChallanService: PurchaseChallanService,
     private productService: ProductService,
     private snackbar: SnackbarService,
-    private encryptionService: EncryptionService
-  ) {
+    private encryptionService: EncryptionService,
+    private txLabel: TransactionLabelService) {
     this.qcForm = this.fb.group({
       items: this.fb.array([])
     });
@@ -53,14 +56,14 @@ export class QcPurchaseChallanComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const encryptedId = this.route.snapshot.paramMap.get('id');
     if (!encryptedId) {
-      this.snackbar.error('Invalid purchase challan id');
+      this.snackbar.error(this.txLabel.swap('Invalid purchase challan id'));
       return;
     }
 
     const decryptedId = this.encryptionService.decrypt(encryptedId);
     const id = decryptedId ? Number(decryptedId) : NaN;
     if (!id || isNaN(id)) {
-      this.snackbar.error('Invalid purchase challan id');
+      this.snackbar.error(this.txLabel.swap('Invalid purchase challan id'));
       return;
     }
 

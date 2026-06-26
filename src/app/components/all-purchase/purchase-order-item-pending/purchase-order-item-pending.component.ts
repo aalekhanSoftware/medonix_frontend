@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pipe';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -12,6 +14,7 @@ import { PurchaseOrderService } from '../../../services/purchase-order.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { EncryptionService } from '../../../shared/services/encryption.service';
+import { AuthService } from '../../../services/auth.service';
 
 interface PendingPurchaseItem {
   id: number;
@@ -51,7 +54,8 @@ interface PendingPurchaseResponse {
     ReactiveFormsModule,
     FormsModule,
     RouterModule,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    TransactionLabelPipe
   ],
   templateUrl: './purchase-order-item-pending.component.html',
   styleUrls: ['./purchase-order-item-pending.component.scss']
@@ -66,6 +70,7 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
   loading = false;
   customers: any[] = [];
   isLoadingCustomers = false;
+  canManagePurchaseOrders = false;
   products: any[] = [];
   isLoadingProducts = false;
   private destroy$ = new Subject<void>();
@@ -79,8 +84,9 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
     private router: Router,
     private encryptionService: EncryptionService,
     private sanitizer: DomSanitizer,
-    private meta: Meta
-  ) {
+    private meta: Meta,
+    private authService: AuthService,
+    private txLabel: TransactionLabelService) {
     this.searchForm = this.fb.group({
       orderId: [''],
       productId: [''],
@@ -91,15 +97,18 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.meta.updateTag({
       name: 'description',
-      content: 'Pending purchase order items with quantities, pricing, and customer filters.'
+      content: this.txLabel.swap('Pending purchase order items with quantities, pricing, and customer filters.')
     });
     this.meta.updateTag({
       name: 'robots',
       content: 'index,follow'
     });
+    this.canManagePurchaseOrders = this.authService.isAdmin() || this.authService.isStaffAdmin();
     this.loadPendingItems();
     this.loadProducts();
-    this.loadCustomers();
+    if (this.canManagePurchaseOrders) {
+      this.loadCustomers();
+    }
   }
 
   loadPendingItems(page: number = 0): void {
@@ -133,7 +142,7 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
           console.error('Error loading pending purchase items:', error);
           this.pendingItems = [];
           this.loading = false;
-          this.snackbar.error('Failed to load pending purchase items');
+          this.snackbar.error(this.txLabel.swap('Failed to load pending purchase items'));
         }
       });
   }

@@ -9,7 +9,8 @@ import { CustomerService } from '../../../services/customer.service';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { AuthService, UserRole } from '../../../services/auth.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 
 @Component({
   selector: 'app-sale',
@@ -36,6 +37,8 @@ export class SaleComponent implements OnInit, OnDestroy {
   isLoadingCustomers = false;
   canManageSales = false;
   canViewPaymentDoneAmount = false;
+  isDealerUser = false;
+  exportingPdfId: number | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -48,13 +51,15 @@ export class SaleComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {
+  ,
+    private txLabel: TransactionLabelService) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
     this.canManageSales = this.authService.isAdmin() || this.authService.isStaffAdmin();
     this.canViewPaymentDoneAmount = this.authService.hasAnyRole([UserRole.ADMIN, UserRole.SALES_AND_MARKETING]);
+    this.isDealerUser = this.authService.hasRole(UserRole.DEALER);
     this.loadSales();
     if (this.canManageSales) {
       this.loadCustomers();
@@ -113,14 +118,14 @@ export class SaleComponent implements OnInit, OnDestroy {
   }
 
   deleteSale(id: number): void {
-    if (confirm('Are you sure you want to delete this sale? This action cannot be undone.')) {
+    if (confirm(this.txLabel.swap('Are you sure you want to delete this sale? This action cannot be undone.'))) {
       this.isLoading = true;
       this.saleService.deleteSale(id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
             if (response.success) {
-              this.snackbar.success('Sale deleted successfully');
+              this.snackbar.success(this.txLabel.swap('Sale deleted successfully'));
               this.loadSales();
             } else {
               this.snackbar.error(response.message || 'Failed to delete sale');
@@ -205,8 +210,19 @@ export class SaleComponent implements OnInit, OnDestroy {
   }
 
   generatePdf(id: number, invoiceNumber?: string): void {
+    if (this.exportingPdfId !== null) {
+      return;
+    }
+    this.exportingPdfId = id;
+    this.cdr.markForCheck();
     this.saleService.generatePdf(id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.exportingPdfId = null;
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
         next: ({ blob, filename }) => {
           const pdfFilename = invoiceNumber ? `sale-${invoiceNumber}.pdf` : filename;

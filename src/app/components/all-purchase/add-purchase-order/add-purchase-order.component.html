@@ -108,7 +108,7 @@
           <h3 id="products-heading"><i class="fas fa-boxes" aria-hidden="true"></i> Products</h3>
           <div>
             <button type="button" class="btn btn-success me-2" *ngIf="isEdit && purchaseOrderForm.get('id')?.value && hasConvertibleItems()" (click)="convertToPurchase()">
-              <i class="fa-solid fa-shopping-cart"></i> Convert to Purchase
+              <i class="fa-solid fa-shopping-cart"></i> Convert to {{ 'Purchase' | txLabel }}
             </button>
             <button type="button" class="btn btn-sm btn-primary" (click)="addProduct()" (touchstart)="$event.stopPropagation()">
               <i class="fas fa-plus"></i> Add Product
@@ -179,11 +179,11 @@
                       Please select a product
                     </div>
                     <!-- <div class="mt-1" *ngIf="isEdit && getItemPurchaseIds(i).length > 0">
-                      <small class="text-muted">Purchases:</small>
+                      <small class="text-muted">{{ 'Purchases' | txLabel }}:</small>
                       <span class="badge bg-light text-dark ms-1" *ngFor="let pid of getItemPurchaseIds(i)">#{{ pid }}</span>
                     </div> -->
                     <!-- <div class="mt-1" *ngIf="isEdit && getItemPurchaseItemIds(i).length > 0">
-                      <small class="text-muted">Purchase items:</small>
+                      <small class="text-muted">{{ 'Purchase' | txLabel }} items:</small>
                       <span class="badge bg-light text-dark ms-1" *ngFor="let piid of getItemPurchaseItemIds(i)">#{{ piid }}</span>
                     </div> -->
                   </div>

@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pipe';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -15,7 +17,7 @@ import { CustomerService } from '../../../services/customer.service';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { AuthService, UserRole } from '../../../services/auth.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-purchase-order',
@@ -28,6 +30,8 @@ import { takeUntil } from 'rxjs/operators';
     LoaderComponent,
     SearchableSelectComponent,
     PaginationComponent
+,
+    TransactionLabelPipe
   ],
   templateUrl: './purchase-order.component.html',
   styleUrls: ['./purchase-order.component.scss']
@@ -51,6 +55,8 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
   customers: any[] = [];
   isLoadingCustomers = false;
   canManagePurchaseOrders = false;
+  isDealerUser = false;
+  exportingPdfId: number | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -62,12 +68,14 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
     private encryptionService: EncryptionService,
     private router: Router,
     private authService: AuthService
-  ) {
+,
+    private txLabel: TransactionLabelService) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
     this.canManagePurchaseOrders = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    this.isDealerUser = this.authService.hasRole(UserRole.DEALER);
     this.loadPurchaseOrders();
     if (this.canManagePurchaseOrders) {
       this.loadCustomers();
@@ -145,13 +153,13 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
   }
 
   deletePurchaseOrder(id: number): void {
-    if (confirm('Are you sure you want to delete this purchase order? This action cannot be undone.')) {
+    if (confirm(this.txLabel.swap('Are you sure you want to delete this purchase order? This action cannot be undone.'))) {
       this.isLoading = true;
       this.purchaseOrderService.deletePurchaseOrder(id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.snackbar.success('Purchase Order deleted successfully');
+            this.snackbar.success(this.txLabel.swap('Purchase Order deleted successfully'));
             this.loadPurchaseOrders();
           },
           error: (error) => {
@@ -222,8 +230,17 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
   }
 
   generatePdf(id: number, invoiceNumber?: string): void {
+    if (this.exportingPdfId !== null) {
+      return;
+    }
+    this.exportingPdfId = id;
     this.purchaseOrderService.generatePdf(id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.exportingPdfId = null;
+        })
+      )
       .subscribe({
         next: ({ blob, filename }) => {
           const pdfFilename = 'purchase-order-' + (invoiceNumber ? `${invoiceNumber}.pdf` : filename);

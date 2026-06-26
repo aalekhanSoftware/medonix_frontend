@@ -1,9 +1,10 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 
 import { PurchaseService } from '../../../services/purchase.service';
 import { CustomerService } from '../../../services/customer.service';
@@ -13,7 +14,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { DateUtils } from '../../../shared/utils/date-utils';
 import { EncryptionService } from '../../../shared/services/encryption.service';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService, UserRole } from '../../../services/auth.service';
 
 interface PurchaseReturn {
   id: number;
@@ -86,6 +87,8 @@ export class PurchaseReturnListComponent implements OnInit, OnDestroy {
   customers: any[] = [];
   isLoadingCustomers = false;
   canManagePurchases = false;
+  isDealerUser = false;
+  exportingPdfId: number | null = null;
 
   // Client ID - can be made configurable
   clientId = 1;
@@ -101,12 +104,14 @@ export class PurchaseReturnListComponent implements OnInit, OnDestroy {
     private encryptionService: EncryptionService,
     private router: Router,
     private authService: AuthService
-  ) {
+,
+    private txLabel: TransactionLabelService) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
     this.canManagePurchases = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    this.isDealerUser = this.authService.hasRole(UserRole.DEALER);
     this.loadPurchaseReturns();
     if (this.canManagePurchases) {
       this.loadCustomers();
@@ -264,7 +269,7 @@ export class PurchaseReturnListComponent implements OnInit, OnDestroy {
   /** Open standalone purchase return for view/edit by return id */
   viewStandaloneDetails(id: number): void {
     if (!id) {
-      this.snackbar.error('Purchase return ID is not available');
+      this.snackbar.error(this.txLabel.swap('Purchase return ID is not available'));
       return;
     }
     const encryptedId = this.encryptionService.encrypt(id.toString());
@@ -273,7 +278,7 @@ export class PurchaseReturnListComponent implements OnInit, OnDestroy {
 
 
   deletePurchaseReturn(id: number): void {
-    if (confirm('Are you sure you want to delete this purchase return? This action cannot be undone.')) {
+    if (confirm(this.txLabel.swap('Are you sure you want to delete this purchase return? This action cannot be undone.'))) {
       this.isLoading = true;
       this.purchaseService.deletePurchaseReturn(id)
         .pipe(takeUntil(this.destroy$))
@@ -296,8 +301,17 @@ export class PurchaseReturnListComponent implements OnInit, OnDestroy {
   }
 
   generatePdf(id: number, invoiceNumber?: string): void {
+    if (this.exportingPdfId !== null) {
+      return;
+    }
+    this.exportingPdfId = id;
     this.purchaseService.generatePurchaseReturnPdf(id)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.exportingPdfId = null;
+        })
+      )
       .subscribe({
         next: ({ blob, filename }) => {
           // Use invoiceNumber if available, otherwise use the filename from response

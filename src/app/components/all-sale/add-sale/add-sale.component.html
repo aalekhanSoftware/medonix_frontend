@@ -6,7 +6,7 @@
     <div class="form-card">
       <div class="card-header">
         <h2 class="form-title">
-          <i class="fas fa-cart-plus"></i> Add New Sale
+          <i class="fas fa-cart-plus"></i> Add New {{ 'Sale' | txLabel }}
         </h2>
       </div>
 
@@ -47,7 +47,7 @@
   
             <div class="form-group">
               <label for="saleDate">
-                <i class="fas fa-calendar"></i> Sale Date <span class="required">*</span>
+                <i class="fas fa-calendar"></i> {{ 'Sale Date' | txLabel }} <span class="required">*</span>
               </label>
               <input 
                 type="date" 
@@ -58,7 +58,7 @@
                 (touchstart)="$event.stopPropagation()"
               >
               <div class="invalid-feedback" *ngIf="isFieldInvalid('saleDate')">
-                Sale date is required
+                {{ 'Sale' | txLabel }} date is required
               </div>
             </div>
   
@@ -131,7 +131,7 @@
                       <th>Product Name</th>
                       <th>Quantity</th>
                       <th>Batch Number</th>
-                      <th>Sale Rate (₹)</th>
+                      <th>{{ 'Sale Rate' | txLabel }} (₹)</th>
                       <th>Subtotal</th>
                       <th>Discount Type</th>
                       <th>Discount %</th>
@@ -446,7 +446,7 @@
           <i class="fas fa-plus"></i> Add Product
         </button>
   
-        <!-- Sale Summary (bound to saleSummary so add/remove/edit refresh reliably with OnPush) -->
+        <!-- {{ 'Sale' | txLabel }} Summary (bound to saleSummary so add/remove/edit refresh reliably with OnPush) -->
         <div class="sale-summary">
           <div class="summary-item">
             <span>Total Products:</span>

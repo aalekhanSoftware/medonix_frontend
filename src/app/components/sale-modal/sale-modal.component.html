@@ -1,7 +1,7 @@
 <div class="modal-overlay" *ngIf="display$ | async" (click)="close()">
   <div class="modal-container" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2><i class="fas fa-shopping-cart"></i> Create Sale</h2>
+      <h2><i class="fas fa-shopping-cart"></i> Create {{ 'Sale' | txLabel }}</h2>
       <button class="btn-icon close" (click)="close()" title="Close">
         <i class="fas fa-times"></i>
       </button>
@@ -47,7 +47,7 @@
 
         <div class="form-group">
           <label for="saleDate">
-            <i class="fas fa-calendar"></i> Sale Date
+            <i class="fas fa-calendar"></i> {{ 'Sale Date' | txLabel }}
           </label>
           <input 
             type="datetime-local" 

@@ -2,8 +2,8 @@
   <app-loader [show]="isLoading"></app-loader>
 
   <section class="search-section card" aria-labelledby="search-purchases-heading">
-    <h2 id="search-purchases-heading">Search Purchases</h2>
-    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" role="search" aria-label="Purchase search form">
+    <h2 id="search-purchases-heading">{{ 'Search Purchases' | txLabel }}</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" role="search" [attr.aria-label]="'Purchase search form' | txLabel">
       <div class="search-controls">
         <div class="form-group">
           <label for="invoice-search" class="sr-only">Search by invoice number</label>
@@ -69,7 +69,7 @@
             class="search-btn btn btn-sm btn-success export-btn" 
             (click)="exportExcel()"
             [disabled]="isExportButtonDisabled()"
-            title="Export purchases to Excel">
+            [title]="'Export purchases to Excel' | txLabel">
             <i class="fas fa-file-excel"></i> Export
           </button>
         </div>
@@ -80,24 +80,24 @@
     <button 
       (click)="clearLocalStorage()" 
       class="btn btn-sm btn-primary mb-2"
-      aria-label="Add new purchase">
-      <i class="fas fa-plus" aria-hidden="true"></i> Add Purchase
+      [attr.aria-label]="'Add new purchase' | txLabel">
+      <i class="fas fa-plus" aria-hidden="true"></i> {{ 'Add Purchase' | txLabel }}
     </button>
   </div>
   <section class="purchases-list card" aria-labelledby="purchases-heading">
-    <h2 id="purchases-heading">Purchases</h2>
+    <h2 id="purchases-heading">{{ 'Purchases' | txLabel }}</h2>
 
     <div class="table-responsive">
-      <table class="table" role="table" aria-label="Purchases list">
+      <table class="table" role="table" [attr.aria-label]="'Purchases list' | txLabel">
         <thead>
           <tr>
             <th scope="col">No</th>
             <th scope="col">Invoice No.</th>
             <th scope="col">Customer Name</th>
-            <th scope="col">Purchase Date</th>
-            <th scope="col">Total Purchase Amount</th>
+            <th scope="col">{{ 'Purchase' | txLabel }} Date</th>
+            <th scope="col">Total {{ 'Purchase' | txLabel }} Amount</th>
             <th scope="col">QC Status</th>
-            <th scope="col" *ngIf="canManagePurchases">Actions</th>
+            <th scope="col" *ngIf="canManagePurchases || isDealerUser">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -105,8 +105,8 @@
             <td data-label="No">{{ startIndex + index + 1 }}</td>
             <td data-label="Invoice No."><strong>{{ purchase.invoiceNumber }}</strong></td>
             <td data-label="Customer Name">{{ purchase.customerName }}</td>
-            <td data-label="Purchase Date">{{ purchase.purchaseDate | date:'dd-MM-yyyy' }}</td>
-            <td data-label="Total Purchase Amount"><strong>{{ purchase.totalPurchaseAmount ?? 0 }}</strong></td>
+            <td [attr.data-label]="'Purchase Date' | txLabel">{{ purchase.purchaseDate | date:'dd-MM-yyyy' }}</td>
+            <td [attr.data-label]="'Total Purchase Amount' | txLabel"><strong>{{ purchase.totalPurchaseAmount ?? 0 }}</strong></td>
             <td data-label="QC Status">
               <span class="status-chip" 
                     [class.pass]="purchase.isQcPass" 
@@ -115,41 +115,55 @@
                 {{ purchase.isQcPass ? 'Pass' : 'Pending' }}
               </span>
             </td>
-            <td class="actions" data-label="Actions" *ngIf="canManagePurchases">
+            <td class="actions" data-label="Actions" *ngIf="canManagePurchases || isDealerUser">
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon edit" 
                 (click)="editPurchase(purchase.id!)"
                 (touchstart)="$event.stopPropagation()"
-                aria-label="View purchase details">
+                [attr.aria-label]="'View purchase details' | txLabel">
                 <i class="fas fa-eye" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon pdf"
                 (click)="generatePdf(purchase.id!, purchase.invoiceNumber)" 
                 (touchstart)="$event.stopPropagation()"
-                aria-label="Export purchase as PDF">
+                [attr.aria-label]="'Export purchase as PDF' | txLabel">
                 <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon add-return" 
                 (click)="openReturn(purchase.id!)"
                 (touchstart)="$event.stopPropagation()"
-                aria-label="Add purchase return">
+                [attr.aria-label]="'Add purchase return' | txLabel">
                 <i class="fas fa-undo" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon qc" 
                 (click)="openQc(purchase.id!)" 
                 (touchstart)="$event.stopPropagation()"
-                aria-label="Purchase quality check">
+                [attr.aria-label]="'Purchase quality check' | txLabel">
                 <i class="fas fa-clipboard-check" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManagePurchases"
                 class="btn-icon delete" 
                 (click)="deletePurchase(purchase.id!)"
                 (touchstart)="$event.stopPropagation()"
-                aria-label="Delete purchase">
+                [attr.aria-label]="'Delete purchase' | txLabel">
                 <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+              <button
+                *ngIf="isDealerUser"
+                class="btn-icon pdf"
+                (click)="generatePdf(purchase.id!, purchase.invoiceNumber)"
+                [disabled]="exportingPdfId !== null"
+                (touchstart)="$event.stopPropagation()"
+                [attr.aria-label]="'Export as PDF' | txLabel">
+                <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
             </td>
           </tr>
@@ -164,7 +178,7 @@
       [totalElements]="totalElements" 
       [pageSizeOptions]="pageSizeOptions" 
       [totalAmountSum]="totalPurchaseAmountSum"
-      [totalAmountLabel]="'Total Purchase Amount'"
+      [totalAmountLabel]="'Total Purchase Amount' | txLabel"
       (pageChange)="onPageChange($event)"
       (pageSizeChange)="onPageSizeChange($event)"></app-pagination>
   </section>

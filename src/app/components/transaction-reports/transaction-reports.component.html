@@ -8,7 +8,7 @@
       </div>
       <div class="header-text">
         <h1>Transaction Reports</h1>
-        <p>Search invoice-level Purchase and Sales reports and download Excel</p>
+        <p>Search invoice-level {{ 'Purchase and Sales reports and download Excel' | txLabel }}</p>
       </div>
     </div>
   </section>
@@ -27,8 +27,8 @@
             (change)="onReportTypeChange()"
             (touchstart)="$event.stopPropagation()"
           >
-            <option value="PURCHASE">Purchase Report</option>
-            <option value="SALES">Sales Report</option>
+            <option value="PURCHASE">{{ 'Purchase' | txLabel }} Report</option>
+            <option value="SALES">{{ 'Sales Report' | txLabel }}</option>
             <option value="COLLECTION_OUTSTANDING">Collection Outstanding Report</option>
             <option value="PAYMENT_DONE">Payment Done Report</option>
           </select>
@@ -123,7 +123,7 @@
     <h2 id="transaction-reports-results-heading">Results</h2>
 
     <div class="table-responsive" *ngIf="isPurchaseOrSales && rows.length > 0; else emptyOrOther">
-      <table class="table" role="table" aria-label="Purchase or Sales report results">
+      <table class="table" role="table" [attr.aria-label]="'Purchase or Sales report results' | txLabel">
         <thead>
           <tr>
             <th scope="col">No</th>

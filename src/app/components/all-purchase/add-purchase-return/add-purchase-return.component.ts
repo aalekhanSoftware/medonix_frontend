@@ -1,3 +1,4 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -63,8 +64,8 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private snackbar: SnackbarService,
     private encryptionService: EncryptionService,
-    private productBatchStockService: ProductBatchStockService
-  ) {
+    private productBatchStockService: ProductBatchStockService,
+    private txLabel: TransactionLabelService) {
     this.returnForm = this.fb.group({
       purchaseId: [null],
       customerId: [null],
@@ -82,7 +83,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const encryptedId = this.route.snapshot.paramMap.get('id');
     if (!encryptedId) {
-      this.snackbar.error('Invalid purchase id');
+      this.snackbar.error(this.txLabel.swap('Invalid purchase id'));
       return;
     }
 
@@ -90,7 +91,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
     const id = decryptedId ? Number(decryptedId) : NaN;
 
     if (!id || isNaN(id)) {
-      this.snackbar.error('Invalid purchase id');
+      this.snackbar.error(this.txLabel.swap('Invalid purchase id'));
       return;
     }
 
@@ -583,7 +584,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
 
   onSubmit(): void {
     if (!this.purchaseDetails) {
-      this.snackbar.error('Purchase details not loaded');
+      this.snackbar.error(this.txLabel.swap('Purchase details not loaded'));
       return;
     }
 

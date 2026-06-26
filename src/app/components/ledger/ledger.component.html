@@ -172,10 +172,10 @@
       </div>
 
       <div class="ledger-stats-chips" *ngIf="data.ledgerSummary">
-        <span class="stat-chip">Purchases: {{ data.ledgerSummary.totalPurchases ?? 0 }} ({{ (data.ledgerSummary.totalPurchaseAmount ?? 0) | currency:'INR' }})</span>
-        <span class="stat-chip">Pur. returns: {{ data.ledgerSummary.totalPurchaseReturns ?? 0 }} ({{ (data.ledgerSummary.totalPurchaseReturnAmount ?? 0) | currency:'INR' }})</span>
-        <span class="stat-chip">Sales: {{ data.ledgerSummary.totalSales ?? 0 }} ({{ (data.ledgerSummary.totalSaleAmount ?? 0) | currency:'INR' }})</span>
-        <span class="stat-chip">Sale returns: {{ data.ledgerSummary.totalSaleReturns ?? 0 }} ({{ (data.ledgerSummary.totalSaleReturnAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">{{ 'Purchases' | txLabel }}: {{ data.ledgerSummary.totalPurchases ?? 0 }} ({{ (data.ledgerSummary.totalPurchaseAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">{{ 'Pur. returns' | txLabel }}: {{ data.ledgerSummary.totalPurchaseReturns ?? 0 }} ({{ (data.ledgerSummary.totalPurchaseReturnAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">{{ 'Sales' | txLabel }}: {{ data.ledgerSummary.totalSales ?? 0 }} ({{ (data.ledgerSummary.totalSaleAmount ?? 0) | currency:'INR' }})</span>
+        <span class="stat-chip">{{ 'Sale returns' | txLabel }}: {{ data.ledgerSummary.totalSaleReturns ?? 0 }} ({{ (data.ledgerSummary.totalSaleReturnAmount ?? 0) | currency:'INR' }})</span>
         <span class="stat-chip">Pymt received: {{ data.ledgerSummary.totalPaymentsReceived ?? 0 }} ({{ (data.ledgerSummary.totalPaymentReceivedAmount ?? 0) | currency:'INR' }})</span>
         <span class="stat-chip">Pymt made: {{ data.ledgerSummary.totalPaymentsMade ?? 0 }} ({{ (data.ledgerSummary.totalPaymentMadeAmount ?? 0) | currency:'INR' }})</span>
       </div>

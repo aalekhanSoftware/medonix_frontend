@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,6 +8,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { CustomerService } from '../../services/customer.service';
+import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
@@ -22,7 +25,8 @@ type ReportType = 'SALES' | 'PURCHASE' | 'PAYMENT_DONE';
     CommonModule,
     ReactiveFormsModule,
     LoaderComponent,
-    SearchableSelectComponent
+    SearchableSelectComponent,
+    TransactionLabelPipe
   ]
 })
 export class ChartComponent implements OnInit, OnDestroy {
@@ -32,6 +36,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   isLoading = false;
 
   customers: any[] = [];
+  canShowCustomerFilter = false;
   chartPoints: MonthWiseChartPoint[] = [];
   chartTotal = 0;
   totalReceivedCount = 0;
@@ -56,14 +61,18 @@ export class ChartComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private customerService: CustomerService,
     private chartService: MonthWiseTransactionChartService,
-    private snackbar: SnackbarService
-  ) {
+    private snackbar: SnackbarService,
+    private authService: AuthService,
+    private txLabel: TransactionLabelService) {
     Chart.register(...registerables);
   }
 
   ngOnInit(): void {
     this.initForm();
-    this.loadCustomers();
+    this.canShowCustomerFilter = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    if (this.canShowCustomerFilter) {
+      this.loadCustomers();
+    }
   }
 
   ngOnDestroy(): void {
@@ -376,8 +385,8 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   private getReportTypeLabel(reportType: ReportType): string {
-    if (reportType === 'SALES') return 'Sales Report';
-    if (reportType === 'PURCHASE') return 'Purchase Report';
+    if (reportType === 'SALES') return this.txLabel.swap('Sales Report');
+    if (reportType === 'PURCHASE') return this.txLabel.swap('Purchase Report');
     return 'Payment Done Report';
   }
 

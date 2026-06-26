@@ -11,6 +11,7 @@ import { SalesPurchaseReportService, SalesPurchaseReportSearchPayload } from '..
 import { CollectionPaymentReportService } from '../../services/collection-payment-report.service';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 
 type ReportTypeUi = 'PURCHASE' | 'SALES' | 'COLLECTION_OUTSTANDING' | 'PAYMENT_DONE';
 
@@ -32,7 +33,8 @@ interface ReportRowUi {
     CommonModule,
     ReactiveFormsModule,
     LoaderComponent,
-    PaginationComponent
+    PaginationComponent,
+    TransactionLabelPipe
   ]
 })
 export class TransactionReportsComponent implements OnInit, OnDestroy {

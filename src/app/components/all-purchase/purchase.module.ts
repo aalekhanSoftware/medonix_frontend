@@ -14,6 +14,7 @@ import { PurchaseReturnListComponent } from './purchase-return-list/purchase-ret
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { PaginationComponent } from '../../shared/components/pagination/paginati
     PurchaseRoutingModule,
     LoaderComponent,
     SearchableSelectComponent,
-    PaginationComponent
+    PaginationComponent,
+    TransactionLabelPipe
   ]
 })
 export class PurchaseModule { }

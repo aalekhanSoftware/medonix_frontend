@@ -2,8 +2,8 @@
   <app-loader [show]="isLoading"></app-loader>
   
   <section class="search-section card" aria-labelledby="search-sales-heading">
-    <h2 id="search-sales-heading">Search Sales</h2>
-    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" role="search" aria-label="Sale search form">
+    <h2 id="search-sales-heading">Search {{ 'Sales' | txLabel }}</h2>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" role="search" [attr.aria-label]="'Sale search form' | txLabel">
       <div class="search-controls">
         <div class="form-group">
           <label for="invoice-search" class="sr-only">Search by invoice number</label>
@@ -92,23 +92,23 @@
       (click)="clearLocalStorage()" 
       class="btn btn-sm btn-primary mb-2"
       aria-label="Add new sale">
-      <i class="fas fa-plus" aria-hidden="true"></i> Add Sale
+      <i class="fas fa-plus" aria-hidden="true"></i> Add {{ 'Sale' | txLabel }}
     </button>
   </div>
   <section class="sales-list card" aria-labelledby="sales-heading">
-    <h2 id="sales-heading">Sales</h2>
+    <h2 id="sales-heading">{{ 'Sales' | txLabel }}</h2>
 
     <div class="table-responsive">
-      <table class="table" role="table" aria-label="Sales list">
+      <table class="table" role="table" [attr.aria-label]="'Sales list' | txLabel">
         <thead>
           <tr>
             <th scope="col">No</th>
             <th scope="col">Invoice No.</th>
             <th scope="col">Customer Name</th>
-            <th scope="col">Sale Date</th>
-            <th scope="col">Total Sales Amount</th>
+            <th scope="col">{{ 'Sale Date' | txLabel }}</th>
+            <th scope="col">Total {{ 'Sales' | txLabel }} Amount</th>
             <th scope="col" *ngIf="canViewPaymentDoneAmount">Payment Done Amount</th>
-            <th scope="col" *ngIf="canManageSales">Actions</th>
+            <th scope="col" *ngIf="canManageSales || isDealerUser">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -116,8 +116,8 @@
             <td data-label="No">{{ startIndex + index + 1 }}</td>
             <td data-label="Invoice No."><strong>{{ sale?.invoiceNumber }}</strong></td>
             <td data-label="Customer Name">{{ sale?.customerName ? sale?.customerName : '-'}}</td>
-            <td data-label="Sale Date">{{ sale?.saleDate | date:'dd-MM-yyyy' }}</td>
-            <td data-label="Total Sales Amount"><strong>{{ sale?.totalSaleAmount ?? 0 | round }}</strong></td>
+            <td [attr.data-label]="'Sale Date' | txLabel">{{ sale?.saleDate | date:'dd-MM-yyyy' }}</td>
+            <td [attr.data-label]="'Total Sales Amount' | txLabel"><strong>{{ sale?.totalSaleAmount ?? 0 | round }}</strong></td>
             <td data-label="Payment Done Amount" *ngIf="canViewPaymentDoneAmount">
               <strong>{{ sale?.paymentDoneAmount ?? 0 | round }}</strong>
               <i
@@ -127,8 +127,9 @@
                 title="Full payment done"
               ></i>
             </td>
-            <td class="actions" data-label="Actions" *ngIf="canManageSales">
+            <td class="actions" data-label="Actions" *ngIf="canManageSales || isDealerUser">
               <button 
+                *ngIf="canManageSales"
                 class="btn-icon pdf" 
                 (click)="generatePdf(sale.id!, sale.invoiceNumber)"
                 (touchstart)="$event.stopPropagation()"
@@ -136,6 +137,7 @@
                 <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManageSales"
                 class="btn-icon excel" 
                 (click)="exportSaleExcel(sale.id!, sale.invoiceNumber)"
                 (touchstart)="$event.stopPropagation()"
@@ -144,6 +146,7 @@
                 <i class="fas fa-file-excel" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManageSales"
                 class="btn-icon edit" 
                 (click)="editSales(sale.id!)"
                 (touchstart)="$event.stopPropagation()"
@@ -151,11 +154,21 @@
                 <i class="fas fa-eye" aria-hidden="true"></i>
               </button>
               <button 
+                *ngIf="canManageSales"
                 class="btn-icon delete" 
                 (click)="deleteSale(sale.id!)"
                 (touchstart)="$event.stopPropagation()"
                 aria-label="Delete sale">
                 <i class="fas fa-trash" aria-hidden="true"></i>
+              </button>
+              <button
+                *ngIf="isDealerUser"
+                class="btn-icon pdf"
+                (click)="generatePdf(sale.id!, sale.invoiceNumber)"
+                [disabled]="exportingPdfId !== null"
+                (touchstart)="$event.stopPropagation()"
+                aria-label="Export as PDF">
+                <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
             </td>
           </tr>
@@ -170,7 +183,7 @@
       [totalElements]="totalElements"
       [pageSizeOptions]="pageSizeOptions"
       [totalAmountSum]="totalSalesAmountSum"
-      [totalAmountLabel]="'Total Sales Amount'"
+      [totalAmountLabel]="'Total Sales Amount' | txLabel"
       (pageChange)="onPageChange($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     ></app-pagination>

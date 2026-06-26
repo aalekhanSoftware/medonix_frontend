@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -21,7 +23,7 @@ interface DiscountCalculation {
 @Component({
   selector: 'app-sale-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TransactionLabelPipe],
   templateUrl: './sale-modal.component.html',
   styleUrls: ['./sale-modal.component.scss']
 })
@@ -45,7 +47,8 @@ export class SaleModalComponent implements OnChanges, OnDestroy {
     private saleService: SaleService,
     private snackbar: SnackbarService,
     private modalService: ModalService
-  ) {
+,
+    private txLabel: TransactionLabelService) {
     this.initForm();
   }
 
@@ -143,7 +146,7 @@ export class SaleModalComponent implements OnChanges, OnDestroy {
 
       // Add check for purchaseId
       if (!formData.purchaseId) {
-        this.snackbar.error('Purchase ID is missing');
+        this.snackbar.error(this.txLabel.swap('Purchase ID is missing'));
         this.loading = false;
         return;
       }
@@ -189,7 +192,7 @@ export class SaleModalComponent implements OnChanges, OnDestroy {
           .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: (response) => {
-              this.snackbar.success('Sale created successfully');
+              this.snackbar.success(this.txLabel.swap('Sale created successfully'));
               this.saleCreated.emit(true);
               this.loading = false;
               this.close();

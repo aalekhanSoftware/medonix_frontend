@@ -1,3 +1,5 @@
+import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
+import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pipe';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -40,7 +42,8 @@ interface ProductForm {
     ScrollingModule,
     LoaderComponent,
     SearchableSelectComponent,
-    PackagingChargesModalComponent
+    PackagingChargesModalComponent,
+    TransactionLabelPipe
   ],
   templateUrl: './add-purchase-order.component.html',
   styleUrls: ['./add-purchase-order.component.scss'],
@@ -148,8 +151,8 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private router: Router,
     private encryptionService: EncryptionService,
-    private cdr: ChangeDetectorRef
-  ) {
+    private cdr: ChangeDetectorRef,
+    private txLabel: TransactionLabelService) {
     this.initForm();
   }
 
@@ -626,7 +629,7 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response: any) => {
             if (response?.success) {
-              this.snackbar.success(`Purchase Order ${this.isEdit ? 'updated' : 'created'} successfully`);
+              this.snackbar.success(this.txLabel.swap(`Purchase Order ${this.isEdit ? 'updated' : 'created'} successfully`));
               localStorage.removeItem('purchaseOrderId');
               this.router.navigate(['/purchase-order']);
             } else {
@@ -880,13 +883,13 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
   convertToPurchase(): void {
     const orderId = this.purchaseOrderForm.get('id')?.value;
     if (!orderId) {
-      this.snackbar.error('Purchase order ID not found');
+      this.snackbar.error(this.txLabel.swap('Purchase order ID not found'));
       return;
     }
 
     // Check if any items are selected
     if (!this.hasSelection()) {
-      this.snackbar.error('Please select at least one item to convert to purchase');
+      this.snackbar.error(this.txLabel.swap('Please select at least one item to convert to purchase'));
       return;
     }
 
@@ -906,7 +909,7 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     const purchaseOrderItemIds = Array.from(this.selectedItemIds);
     
     if (purchaseOrderItemIds.length === 0) {
-      this.snackbar.error('Please select at least one item to convert to purchase');
+      this.snackbar.error(this.txLabel.swap('Please select at least one item to convert to purchase'));
       return;
     }
     
@@ -938,7 +941,7 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
       const invoiceNumber = this.purchaseOrderForm.get('invoiceNumber')?.value;
       
       if (!orderId) {
-        this.snackbar.error('Purchase order ID not found');
+        this.snackbar.error(this.txLabel.swap('Purchase order ID not found'));
         return;
       }
 
@@ -951,7 +954,7 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     }
 
     if (!requestBody.id) {
-      this.snackbar.error('Purchase order ID not found');
+      this.snackbar.error(this.txLabel.swap('Purchase order ID not found'));
       return;
     }
 

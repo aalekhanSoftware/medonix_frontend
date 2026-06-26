@@ -16,6 +16,7 @@ import { SaleProductSelectComponent } from './shared/sale-product-select/sale-pr
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { RoundPipe } from '../../round.pipe';
 import { SaleModalComponent } from '../sale-modal/sale-modal.component';
+import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { SaleModalComponent } from '../sale-modal/sale-modal.component';
     SaleProductSelectComponent,
     PaginationComponent,
     RoundPipe,
-    SaleModalComponent
+    SaleModalComponent,
+    TransactionLabelPipe
   ]
 })
 export class SaleModule { }
