@@ -15,6 +15,7 @@ import { LoaderComponent } from '../../shared/components/loader/loader.component
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
+import { SerialNumberPipe } from '../../shared/pipes/serial-number.pipe';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe'
     LoaderComponent,
     SearchableSelectComponent,
     PaginationComponent,
-    TransactionLabelPipe
+    TransactionLabelPipe,
+    SerialNumberPipe
   ]
 })
 export class PurchaseModule { }

@@ -89,7 +89,7 @@
                   <table class="table products-table">
                     <thead>
                       <tr>
-                        <th>No</th>
+                        <th style="width: 45px; min-width: 45px;">No</th>
                         <th>Product Name</th>
                         <th>Quantity</th>
                         <th>Batch Number</th>
@@ -107,7 +107,7 @@
                     </thead>
                     <tbody>
                       <tr *cdkVirtualFor="let group of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="group">
-                    <td>{{ i + 1 }}</td>
+                    <td>{{ i | serialNumber }}</td>
                     <td>
                       <div class="product-cell">
                         <div class="product-name">

@@ -327,22 +327,28 @@
     font-size: 0.875rem;
 
     // Product Name header - increased width
-    &:first-child {
-      width: 30%;
-      min-width: 360px;
+    // &:first-child {
+    //   width: 30%;
+    //   min-width: 360px;
+    // }
+
+    
+    &:nth-child(2) {
+        width: 30%;
+        min-width: 360px;
     }
 
     // Sale Rate header - decreased width
-    &:nth-child(4) {
+    &:nth-child(5) {
       width: 8%;
       max-width: 100px;
     }
 
     // Discount columns - compact width
-    &:nth-child(6),
     &:nth-child(7),
     &:nth-child(8),
-    &:nth-child(9) {
+    &:nth-child(9),
+    &:nth-child(10) {
       width: 8%;
       min-width: 100px;
     }
@@ -359,7 +365,7 @@
     }
 
     // Product Name column - increased width
-    &:first-child {
+    &:nth-child(2) {
       width: 20%;
       min-width: 250px;
       
@@ -369,7 +375,7 @@
     }
 
     // Sale Rate column - decreased width
-    &:nth-child(4) {
+    &:nth-child(5) {
       width: 8%;
       max-width: 100px;
       
@@ -380,10 +386,10 @@
     }
 
     // Discount columns - compact width
-    &:nth-child(6),
     &:nth-child(7),
     &:nth-child(8),
-    &:nth-child(9) {
+    &:nth-child(9),
+    &:nth-child(10) {
       width: 8%;
       min-width: 100px;
       

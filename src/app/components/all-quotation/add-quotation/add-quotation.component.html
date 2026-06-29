@@ -163,6 +163,7 @@
                 <table class="table products-table">
                   <thead>
                     <tr>
+                      <th style="width: 45px; min-width: 45px;">No</th>
                       <th>Product</th>
                       <th>Quantity</th>
                       <th>Unit Price</th>
@@ -180,6 +181,7 @@
                   </thead>
                   <tbody>
                     <tr *cdkVirtualFor="let item of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="item" [attr.data-product-row-index]="i">
+                      <td class="text-center">{{ i | serialNumber }}</td>
                       <!-- Product Selection -->
                       <td>
                         <div class="form-field-container">
@@ -382,7 +384,7 @@
                   </tbody>
                   <tfoot>
                 <tr>
-                  <td colspan="5" class="text-end"><strong>Total:</strong></td>
+                   <td colspan="6" class="text-end"><strong>Total:</strong></td>
                   <td>
                     <div class="input-group">
                       <input type="number" [value]="totals.lineDiscountAmount" class="form-control" readonly title="Total line discount">

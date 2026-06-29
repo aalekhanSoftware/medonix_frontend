@@ -128,6 +128,7 @@
                 <table class="table products-table">
                   <thead>
                     <tr>
+                      <th style="width: 45px; min-width: 45px;">No</th>
                       <th>Product Name</th>
                       <th>Quantity</th>
                       <th>Batch Number</th>
@@ -144,6 +145,7 @@
                   </thead>
                   <tbody>
                     <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product" [attr.data-product-row-index]="i">
+                    <td class="text-center">{{ i | serialNumber }}</td>
                     <td>
                       <div class="form-field-container">
                         <div class="select-group">

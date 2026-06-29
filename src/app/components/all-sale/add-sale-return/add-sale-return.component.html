@@ -125,9 +125,10 @@
           <div class="products-table-scroll-inner">
             <cdk-virtual-scroll-viewport itemSize="52" class="products-table-viewport" [style.height.px]="getViewportHeight()">
               <table class="table products-table">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
+                  <thead>
+                    <tr>
+                      <th style="width: 45px; min-width: 45px;">No</th>
+                      <th>Product Name</th>
                     <th>Quantity</th>
                     <th>Batch Number</th>
                     <th>{{ 'Sale Rate' | txLabel }} (₹)</th>
@@ -142,7 +143,8 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product" [attr.data-product-row-index]="i">
+                    <tr *cdkVirtualFor="let product of productControlsForView; let i = index; trackBy: trackByProductControl" [formGroup]="product" [attr.data-product-row-index]="i">
+                <td class="text-center">{{ i | serialNumber }}</td>
                 <td>
                   <div class="form-field-container">
                     <div class="select-group">

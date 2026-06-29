@@ -19,6 +19,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 import { TransportMaster, TransportMasterService } from '../../../services/transport-master.service';
 import { QuotationItemStatus } from '../../../models/quotation.model copy';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { SerialNumberPipe } from '../../../shared/pipes/serial-number.pipe';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
 
@@ -31,7 +32,7 @@ import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProdu
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    RouterModule, MatDialogModule, LoaderComponent, ScrollingModule],
+    RouterModule, MatDialogModule, LoaderComponent, ScrollingModule, SerialNumberPipe],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AddQuotationComponent implements OnInit, OnDestroy {

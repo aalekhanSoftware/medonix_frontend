@@ -17,6 +17,7 @@ import { PaginationComponent } from '../../shared/components/pagination/paginati
 import { RoundPipe } from '../../round.pipe';
 import { SaleModalComponent } from '../sale-modal/sale-modal.component';
 import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
+import { SerialNumberPipe } from '../../shared/pipes/serial-number.pipe';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,8 @@ import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe'
     PaginationComponent,
     RoundPipe,
     SaleModalComponent,
-    TransactionLabelPipe
+    TransactionLabelPipe,
+    SerialNumberPipe
   ]
 })
 export class SaleModule { }

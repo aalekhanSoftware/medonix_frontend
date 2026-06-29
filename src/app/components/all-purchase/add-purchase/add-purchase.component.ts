@@ -1,5 +1,6 @@
 import { TransactionLabelService } from '../../../shared/services/transaction-label.service';
 import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pipe';
+import { SerialNumberPipe } from '../../../shared/pipes/serial-number.pipe';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -46,7 +47,8 @@ interface ProductForm {
     ScrollingModule,
     LoaderComponent,
     SearchableSelectComponent,
-    TransactionLabelPipe
+    TransactionLabelPipe,
+    SerialNumberPipe
   ],
   templateUrl: './add-purchase.component.html',
   styleUrls: ['./add-purchase.component.scss'],
