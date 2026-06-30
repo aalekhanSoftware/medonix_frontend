@@ -44,6 +44,7 @@
   
   <div class="select-dropdown" *ngIf="isOpen" [style.max-height]="maxHeight"
        (mousedown)="onDropdownPointerDown($event)"
+       (touchstart)="onDropdownPointerDown($event)"
        role="listbox"
        [attr.aria-label]="'Options list'">
     <div class="options-container" 

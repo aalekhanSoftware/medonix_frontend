@@ -256,27 +256,51 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       }
     }, 0);
     this.timeouts.push(timeoutId);
-    
-    // Setup passive touch listeners for container-level event delegation
-    this.setupContainerTouchListeners();
+
     this.setupAncestorScrollListener();
   }
-  
-  private setupContainerTouchListeners(): void {
+
+  /** Mobile/tablet breakpoints aligned with component SCSS (max-width: 991px). */
+  private isTouchViewport(): boolean {
+    return window.matchMedia('(max-width: 991px)').matches;
+  }
+
+  private teardownContainerTouchListeners(): void {
+    if (this.containerTouchStartListener) {
+      this.containerTouchStartListener();
+      this.containerTouchStartListener = undefined;
+    }
+    if (this.containerTouchMoveListener) {
+      this.containerTouchMoveListener();
+      this.containerTouchMoveListener = undefined;
+    }
+    if (this.containerTouchEndListener) {
+      this.containerTouchEndListener();
+      this.containerTouchEndListener = undefined;
+    }
+  }
+
+  /** Attach touch listeners when the dropdown panel is in the DOM (mobile/tablet only). */
+  private syncContainerTouchListeners(): void {
+    this.teardownContainerTouchListeners();
+    if (!this.isTouchViewport() || !this.isOpen) {
+      return;
+    }
+
     const container = this.optionsContainer?.nativeElement;
-    if (!container) return;
-    
-    // Use native addEventListener with passive option for smooth scrolling
-    // Renderer2.listen doesn't support passive option, so we use native API
+    if (!container) {
+      return;
+    }
+
     const touchStartHandler = (event: TouchEvent) => this.onContainerTouchStart(event);
     const touchMoveHandler = (event: TouchEvent) => this.onContainerTouchMove(event);
     const touchEndHandler = (event: TouchEvent) => this.onContainerTouchEnd(event);
-    
+
     container.addEventListener('touchstart', touchStartHandler, { passive: true });
     container.addEventListener('touchmove', touchMoveHandler, { passive: true });
-    container.addEventListener('touchend', touchEndHandler, { passive: true });
-    
-    // Store cleanup functions
+    // Non-passive so we can suppress the synthetic click after handling selection.
+    container.addEventListener('touchend', touchEndHandler, { passive: false });
+
     this.containerTouchStartListener = () => container.removeEventListener('touchstart', touchStartHandler);
     this.containerTouchMoveListener = () => container.removeEventListener('touchmove', touchMoveHandler);
     this.containerTouchEndListener = () => container.removeEventListener('touchend', touchEndHandler);
@@ -319,6 +343,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     if (!this.isOpen) {
       return;
     }
+    this.teardownContainerTouchListeners();
     this.isOpen = false;
     this.interactingWithDropdown = false;
     this.highlightedIndex = -1;
@@ -341,27 +366,25 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   
   private onContainerTouchStart(event: TouchEvent): void {
     if (!event.touches || event.touches.length === 0) return;
-    
+
+    this.interactingWithDropdown = true;
+
     const touch = event.touches[0];
     this.touchStartY = touch.clientY;
     this.touchStartTime = Date.now();
     this.touchStartElement = (event.target as HTMLElement)?.closest('.option') as HTMLElement;
     this.touchStartOption = null;
-    
-    // Find the option element
+
     if (this.touchStartElement) {
-      const optionIndex = Array.from(this.touchStartElement.parentElement?.children || []).indexOf(this.touchStartElement);
-      if (optionIndex >= 0 && optionIndex < this.displayedOptions.length) {
-        // Account for virtual scroll offset
-        const actualIndex = this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit() 
-          ? this.startIndex + optionIndex 
-          : optionIndex;
-        if (actualIndex >= 0 && actualIndex < this.filteredOptions.length) {
+      const indexAttr = this.touchStartElement.getAttribute('data-option-index');
+      if (indexAttr !== null) {
+        const actualIndex = parseInt(indexAttr, 10);
+        if (!Number.isNaN(actualIndex) && actualIndex >= 0 && actualIndex < this.filteredOptions.length) {
           this.touchStartOption = this.filteredOptions[actualIndex];
         }
       }
     }
-    
+
     this.cancelPendingSelection();
   }
   
@@ -378,25 +401,18 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   }
   
   private onContainerTouchEnd(event: TouchEvent): void {
-    // Only select if it was a tap (not a scroll) and we have a valid option
-    if (this.touchStartOption && this.touchStartTime > 0) {
-      const touchDuration = Date.now() - this.touchStartTime;
-      // Only select if it was a quick tap (< 400ms) - longer duration likely means scrolling
-      if (touchDuration < 400) {
-        // Small delay to ensure any scroll momentum has stopped
-        setTimeout(() => {
-          if (this.touchStartOption) {
-            this.selectOption(this.touchStartOption, event);
-          }
-        }, 100);
-      }
-    }
-    
-    // Reset touch state
+    const optionToSelect = this.touchStartOption;
+    const touchDuration = this.touchStartTime > 0 ? Date.now() - this.touchStartTime : 0;
+
     this.touchStartY = 0;
     this.touchStartTime = 0;
     this.touchStartElement = null;
     this.touchStartOption = null;
+
+    if (optionToSelect && touchDuration > 0 && touchDuration < 400) {
+      event.preventDefault();
+      this.selectOption(optionToSelect, event);
+    }
   }
 
   ngOnDestroy(): void {
@@ -410,19 +426,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       this.animationFrameId = null;
     }
     
-    // Remove container touch listeners
-    if (this.containerTouchStartListener) {
-      this.containerTouchStartListener();
-      this.containerTouchStartListener = undefined;
-    }
-    if (this.containerTouchMoveListener) {
-      this.containerTouchMoveListener();
-      this.containerTouchMoveListener = undefined;
-    }
-    if (this.containerTouchEndListener) {
-      this.containerTouchEndListener();
-      this.containerTouchEndListener = undefined;
-    }
+    this.teardownContainerTouchListeners();
 
     this.teardownAncestorScrollListener();
     
@@ -514,9 +518,13 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   onDropdownPointerDown(event?: Event): void {
     // Prevent input blur from closing dropdown prematurely on desktop
     // Only prevent default on mouse events, not touch events (to allow scrolling)
-    if (event && event.type === 'mousedown') {
-      event.preventDefault();
-      event.stopPropagation();
+    if (event) {
+      if (event.type === 'mousedown') {
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (event.type === 'touchstart' && this.isTouchViewport()) {
+        this.interactingWithDropdown = true;
+      }
     }
     this.interactingWithDropdown = true;
   }
@@ -724,13 +732,16 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         
         // Adjust dropdown position for mobile viewport
         this.adjustDropdownPosition();
-        
+        this.syncContainerTouchListeners();
+
         // Setup virtual scrolling if enabled
         if (this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit()) {
           this.setupVirtualScroll();
         }
       });
     } else {
+      this.teardownContainerTouchListeners();
+
       // Remove click outside listener when closing
       if (this.clickOutsideListener) {
         this.clickOutsideListener();
@@ -809,6 +820,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       this.filterOptions();
 
       this.adjustDropdownPosition();
+      this.syncContainerTouchListeners();
 
       if (this.virtualScroll && this.filteredOptions.length > this.getAdaptiveDisplayLimit()) {
         this.setupVirtualScroll();
@@ -922,6 +934,10 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         }
       }
 
+      if (this.isTouchViewport() && this.isOpen) {
+        this.syncContainerTouchListeners();
+      }
+
       this.cdr.markForCheck();
     }, 0);
     this.timeouts.push(timeoutId);
@@ -933,6 +949,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
         return;
       }
       if (!this.multiple) {
+        this.teardownContainerTouchListeners();
         this.isOpen = false;
         this.highlightedIndex = -1;
         if (this.options.length > this.OPTIONS_INDEX_MAP_LAZY_THRESHOLD) {
@@ -1698,6 +1715,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
       this.isPlaceholderVisible = false;
       this.isFirstClick = false;
       this.onChange(this.selectedValue);
+      this.teardownContainerTouchListeners();
       this.isOpen = false;
       
       // Update the contenteditable div with selected text
@@ -1973,6 +1991,7 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   private onClickOutside(event: Event): void {
     const target = event.target as Node;
     if (!this.elementRef.nativeElement.contains(target)) {
+      this.teardownContainerTouchListeners();
       this.isOpen = false;
       this.interactingWithDropdown = false;
       if (this.options.length > this.OPTIONS_INDEX_MAP_LAZY_THRESHOLD) {
