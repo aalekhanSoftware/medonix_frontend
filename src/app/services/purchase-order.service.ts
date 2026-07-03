@@ -3,7 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { PurchaseOrder, PurchaseOrderCreateUpdateRequest, PurchaseOrderResponse, PurchaseOrderSearchRequest } from '../models/purchase-order.model';
+import {
+  CreatePoFromQuotationRequest,
+  CreatePoFromQuotationResponse,
+  PurchaseOrder,
+  PurchaseOrderCreateUpdateRequest,
+  PurchaseOrderResponse,
+  PurchaseOrderSearchRequest,
+  UnlinkQuotationFromPoRequest
+} from '../models/purchase-order.model';
 
 @Injectable({
   providedIn: 'root'
@@ -53,6 +61,25 @@ export class PurchaseOrderService {
 
   updatePurchaseOrderItemGetQuantity(payload: { id: number; getQuantity: number | null }): Observable<any> {
     return this.http.put(`${environment.apiUrl}/api/purchase-order-items/update-get-quantity`, payload);
+  }
+
+  createFromQuotationItems(body: CreatePoFromQuotationRequest): Observable<any> {
+    const normalizedCharges = Number(body.packagingAndForwadingCharges ?? 0);
+    const payload: CreatePoFromQuotationRequest = {
+      quotationItemIds: body.quotationItemIds,
+      packagingAndForwadingCharges: Number.isFinite(normalizedCharges) ? normalizedCharges : 0
+    };
+    if (body.purchaseOrderId !== undefined && body.purchaseOrderId !== null) {
+      payload.purchaseOrderId = Number(body.purchaseOrderId);
+    }
+    if (body.orderDate) {
+      payload.orderDate = body.orderDate;
+    }
+    return this.http.post(`${this.apiUrl}/createFromQuotationItems`, payload);
+  }
+
+  unlinkQuotationFromPo(body: UnlinkQuotationFromPoRequest): Observable<any> {
+    return this.http.post(`${this.apiUrl}/unlink-quotation`, body);
   }
 
   searchPendingPurchaseOrderItems(request: {

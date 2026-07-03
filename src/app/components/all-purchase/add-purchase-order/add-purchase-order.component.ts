@@ -16,6 +16,7 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { EncryptionService } from '../../../shared/services/encryption.service';
+import { AuthService, UserRole } from '../../../services/auth.service';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
 import { PackagingChargesModalComponent } from '../../all-quotation/dispatch-quotation/packaging-charges-modal.component';
@@ -42,7 +43,8 @@ interface ProductForm {
     ScrollingModule,
     LoaderComponent,
     SearchableSelectComponent,
-    PackagingChargesModalComponent,
+    PackagingChargesModalComponent
+,
     TransactionLabelPipe
   ],
   templateUrl: './add-purchase-order.component.html',
@@ -67,6 +69,9 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
    * Source of truth: `purchaseIds` array from backend.
    */
   linkedPurchaseIds: number[] = [];
+  linkedQuotationIds: number[] = [];
+  canUnlinkQuotation = false;
+  private selectedUnlinkItemIds = new Set<number>();
   private productMap: Map<any, any> = new Map();
   private productMapReady = false;
   private readonly PRODUCT_MAP_SYNC_THRESHOLD = 1000;
@@ -151,12 +156,15 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private router: Router,
     private encryptionService: EncryptionService,
-    private cdr: ChangeDetectorRef,
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+,
     private txLabel: TransactionLabelService) {
     this.initForm();
   }
 
   ngOnInit() {
+    this.canUnlinkQuotation = this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STAFF_ADMIN]);
     this.loadProducts();
     this.loadCustomers();
     
@@ -236,7 +244,9 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
       remarks:[null, []],
       // New linkage arrays from backend (source of truth)
       purchaseIds: [[] as number[]],
-      purchaseItemIds: [[] as number[]]
+      purchaseItemIds: [[] as number[]],
+      quotationItemIds: [[] as number[]],
+      quotationIds: [[] as number[]]
     });
   }
 
@@ -606,7 +616,8 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
   resetForm() {
     this.isEdit = false;
     this.linkedPurchaseIds = [];
-    this.selectedItemIds.clear();
+    this.linkedQuotationIds = [];
+    this.selectedUnlinkItemIds.clear();
     this.purchaseOrderForm.patchValue({ id: null });
     this.initForm();
   }
@@ -784,6 +795,7 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
 
     // New backend linkage (source of truth)
     this.linkedPurchaseIds = Array.isArray(data.purchaseIds) ? data.purchaseIds : [];
+    this.linkedQuotationIds = Array.isArray(data.quotationIds) ? data.quotationIds : [];
 
     // Clear existing products
     this.productsFormArray.clear();
@@ -815,7 +827,9 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
         taxAmount: taxAmount, // Use exact API value
         remarks: item.remarks || '',
         purchaseIds: Array.isArray(item.purchaseIds) ? item.purchaseIds : [],
-        purchaseItemIds: Array.isArray(item.purchaseItemIds) ? item.purchaseItemIds : []
+        purchaseItemIds: Array.isArray(item.purchaseItemIds) ? item.purchaseItemIds : [],
+        quotationItemIds: Array.isArray(item.quotationItemIds) ? item.quotationItemIds : [],
+        quotationIds: Array.isArray(item.quotationIds) ? item.quotationIds : []
       }, { emitEvent: false });
 
       // Disable per-item when it has any purchase linkage
@@ -989,6 +1003,120 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  hasQuotationLinkage(): boolean {
+    return this.linkedQuotationIds.length > 0;
+  }
+
+  isPoConverted(): boolean {
+    return this.linkedPurchaseIds.length > 0;
+  }
+
+  getItemQuotationIds(index: number): number[] {
+    const group = this.productsFormArray.at(index) as FormGroup | null;
+    const value = group?.get('quotationIds')?.value;
+    return Array.isArray(value) ? value : [];
+  }
+
+  getItemQuotationItemIds(index: number): number[] {
+    const group = this.productsFormArray.at(index) as FormGroup | null;
+    const value = group?.get('quotationItemIds')?.value;
+    return Array.isArray(value) ? value : [];
+  }
+
+  hasItemQuotationLink(index: number): boolean {
+    return this.getItemQuotationItemIds(index).length > 0;
+  }
+
+  isUnlinkableItem(index: number): boolean {
+    if (!this.isEdit || this.isPoConverted()) return false;
+    return this.hasItemQuotationLink(index);
+  }
+
+  hasUnlinkableItems(): boolean {
+    return this.productsFormArray.controls.some((_, idx) => this.isUnlinkableItem(idx));
+  }
+
+  isUnlinkSelected(index: number): boolean {
+    const id = this.getItemIdByIndex(index);
+    if (!id) return false;
+    return this.selectedUnlinkItemIds.has(id);
+  }
+
+  toggleUnlinkSelection(index: number, event: Event): void {
+    if (!this.isUnlinkableItem(index)) return;
+    const id = this.getItemIdByIndex(index);
+    if (!id) return;
+    const input = event.target as HTMLInputElement;
+    if (input.checked) {
+      this.selectedUnlinkItemIds.add(id);
+    } else {
+      this.selectedUnlinkItemIds.delete(id);
+    }
+    this.cdr.markForCheck();
+  }
+
+  hasUnlinkSelection(): boolean {
+    return this.selectedUnlinkItemIds.size > 0;
+  }
+
+  unlinkFromQuotation(): void {
+    const orderId = this.purchaseOrderForm.get('id')?.value;
+    if (!orderId) {
+      this.snackbar.error(this.txLabel.swap('Purchase order ID not found'));
+      return;
+    }
+    if (!this.hasUnlinkSelection()) {
+      this.snackbar.error('Please select at least one linked item to unlink');
+      return;
+    }
+
+    const quotationItemIds: number[] = [];
+    this.productsFormArray.controls.forEach((control, index) => {
+      const itemId = control.get('id')?.value;
+      if (itemId && this.selectedUnlinkItemIds.has(itemId)) {
+        const qItemIds = this.getItemQuotationItemIds(index);
+        quotationItemIds.push(...qItemIds);
+      }
+    });
+
+    if (!quotationItemIds.length) {
+      this.snackbar.error('No quotation item linkage found for selected rows');
+      return;
+    }
+
+    if (!confirm('Unlink selected items from their quotation? This cannot be undone.')) {
+      return;
+    }
+
+    this.loading = true;
+    this.cdr.markForCheck();
+    this.purchaseOrderService.unlinkQuotationFromPo({ id: orderId, quotationItemIds })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          if (response?.success) {
+            this.snackbar.success(response?.message || 'Quotation items unlinked successfully');
+            this.selectedUnlinkItemIds.clear();
+            this.fetchPurchaseOrderDetails(orderId, true);
+          } else {
+            this.snackbar.error(response?.message || 'Failed to unlink quotation items');
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
+        },
+        error: (error: any) => {
+          this.snackbar.error(error?.error?.message || 'Failed to unlink quotation items');
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  navigateToQuotation(quotationId: number): void {
+    localStorage.setItem('editQuotationId', this.encryptionService.encrypt(String(quotationId)));
+    this.router.navigate(['/quotation/dispatch']);
   }
 
   onPackagingChargesCancel(): void {

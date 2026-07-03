@@ -16,6 +16,12 @@ export interface PurchaseOrder {
    * A purchase order can be linked to multiple purchases over time.
    */
   purchaseIds?: number[];
+  quotationIds?: number[];
+  quotations?: Array<{
+    quotationId: number;
+    quote_date: string;
+    quote_number: string;
+  }>;
 }
 
 /**
@@ -66,6 +72,7 @@ export interface PurchaseOrderDetail {
   createdBy?: number;
   customerName?: string;
   purchaseIds: number[];
+  quotationIds?: number[];
   items: PurchaseOrderDetailItem[];
 }
 
@@ -87,6 +94,8 @@ export interface PurchaseOrderDetailItem {
   hsnCode?: string;
   purchaseIds: number[];
   purchaseItemIds: number[];
+  quotationItemIds?: number[];
+  quotationIds?: number[];
 }
 
 export interface PurchaseOrderSearchRequest {
@@ -97,6 +106,24 @@ export interface PurchaseOrderSearchRequest {
   startDate?: string;
   endDate?: string;
   batchNumber?: string;
+  quotationId?: number;
+}
+
+export interface CreatePoFromQuotationRequest {
+  quotationItemIds: number[];
+  purchaseOrderId?: number | null;
+  orderDate?: string;
+  packagingAndForwadingCharges?: number;
+}
+
+export interface UnlinkQuotationFromPoRequest {
+  id: number;
+  quotationItemIds: number[];
+}
+
+export interface CreatePoFromQuotationResponse {
+  orderId: number;
+  invoiceNumber: string;
 }
 
 export interface PurchaseOrderResponse {

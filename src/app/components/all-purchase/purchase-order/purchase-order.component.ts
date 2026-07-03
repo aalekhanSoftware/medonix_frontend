@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PurchaseOrderService } from '../../../services/purchase-order.service';
 import { PurchaseOrder } from '../../../models/purchase-order.model';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { Product } from '../../../models/product.model';
@@ -67,6 +67,7 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
     private dateUtils: DateUtils,
     private encryptionService: EncryptionService,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService
 ,
     private txLabel: TransactionLabelService) {
@@ -76,7 +77,13 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.canManagePurchaseOrders = this.authService.isAdmin() || this.authService.isStaffAdmin();
     this.isDealerUser = this.authService.hasRole(UserRole.DEALER);
-    this.loadPurchaseOrders();
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const quotationId = params['quotationId'];
+      if (quotationId) {
+        this.searchForm.patchValue({ quotationId: Number(quotationId) });
+      }
+      this.loadPurchaseOrders();
+    });
     if (this.canManagePurchaseOrders) {
       this.loadCustomers();
     }
@@ -88,7 +95,8 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
       customerId: [''],
       startDate: [''],
       endDate: [''],
-      batchNumber: ['']
+      batchNumber: [''],
+      quotationId: ['']
     });
   }
 
@@ -109,13 +117,18 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
   loadPurchaseOrders(): void {
     this.isLoading = true;
     this.totalOrderAmountSum = null;
-    const params = {
+    const params: any = {
       currentPage: this.currentPage,
       perPageRecord: this.pageSize,
       startDate: this.searchForm.value.startDate ? this.dateUtils.formatDate(this.searchForm.value.startDate) : '',
       endDate: this.searchForm.value.endDate ? this.dateUtils.formatDate(this.searchForm.value.endDate) : '',
       ...this.searchForm.value,
     };
+    if (params.quotationId === '' || params.quotationId === null || params.quotationId === undefined) {
+      delete params.quotationId;
+    } else {
+      params.quotationId = Number(params.quotationId);
+    }
 
     this.purchaseOrderService.searchPurchaseOrders(params)
       .pipe(takeUntil(this.destroy$))
@@ -290,6 +303,11 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
         });
     }
   }*/
+
+  navigateToQuotation(quotationId: number): void {
+    localStorage.setItem('editQuotationId', this.encryptionService.encrypt(String(quotationId)));
+    this.router.navigate(['/quotation/dispatch']);
+  }
 
   ngOnDestroy(): void {
     this.destroy$.next();

@@ -201,12 +201,143 @@
 				"description": "Generate a PDF document for a purchase order. The response will be a PDF file that can be downloaded or viewed."
 			},
 			"response": []
+		},
+		{
+			"name": "Create PO From Quotation Items",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{authToken}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"quotationItemIds\": [1, 2, 3],\n  \"orderDate\": \"21-06-2026\",\n  \"packagingAndForwadingCharges\": 0\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/createFromQuotationItems",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "purchase-orders", "createFromQuotationItems"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Append Quotation Items To PO",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{authToken}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"purchaseOrderId\": 10,\n  \"quotationItemIds\": [4, 5],\n  \"packagingAndForwadingCharges\": 100\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/createFromQuotationItems",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "purchase-orders", "createFromQuotationItems"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search PO By Quotation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{authToken}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"currentPage\": 0,\n  \"perPageRecord\": 10,\n  \"quotationId\": 1\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/search",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "purchase-orders", "search"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PO Detail With Quotation Linkage",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{authToken}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 10\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/detail",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "purchase-orders", "detail"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Unlink Quotation From PO",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{authToken}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 10,\n  \"quotationItemIds\": [1, 2]\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/purchase-orders/unlink-quotation",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "purchase-orders", "unlink-quotation"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Quotation Detail With Linked POs",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "Bearer {{authToken}}" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/quotations/detail",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "quotations", "detail"]
+				}
+			},
+			"response": []
 		}
 	],
 	"variable": [
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
 			"type": "string"
 		}
 	]

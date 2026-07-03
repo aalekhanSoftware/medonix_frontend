@@ -8,6 +8,8 @@ import { PurchaseService } from '../../../services/purchase.service';
 import { PurchaseRecent } from '../../../models/purchase.model';
 import { SaleRecent } from '../../../models/sale.model';
 import { SaleService } from '../../../services/sale.service';
+import { PurchaseOrderService } from '../../../services/purchase-order.service';
+import { PurchaseOrder } from '../../../models/purchase-order.model';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
@@ -49,6 +51,46 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
               <small class="text-muted">
                 Purchases shown are from the last 6 months. Leave blank to create a new Purchase automatically; select one to append items into an existing Purchase.
               </small>
+            </div>
+
+            <div class="form-group" *ngIf="openedFromQuotationForPo">
+              <label>
+                <i class="fas fa-link"></i> Purchase Order (optional)
+              </label>
+              <div class="select-group">
+                <app-searchable-select
+                  formControlName="purchaseOrderId"
+                  [options]="purchaseOrderOptions"
+                  labelKey="displayLabel"
+                  valueKey="id"
+                  [defaultOption]="{ label: 'Create new Purchase Order (auto)', value: null }"
+                  [searchPlaceholder]="'Search POs by invoice/customer...'"
+                ></app-searchable-select>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary refresh"
+                  (click)="refreshPurchaseOrders()"
+                  [disabled]="isLoadingPurchaseOrders"
+                  title="Refresh Purchase Orders"
+                >
+                  <i class="fas" [ngClass]="isLoadingPurchaseOrders ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+                </button>
+              </div>
+              <small class="text-muted">
+                Leave blank to create a new PO; select an open PO to append quotation items.
+              </small>
+            </div>
+
+            <div class="form-group" *ngIf="openedFromQuotationForPo && !chargesForm.get('purchaseOrderId')?.value">
+              <label for="orderDate">
+                <i class="fas fa-calendar"></i> Order Date
+              </label>
+              <input
+                type="date"
+                id="orderDate"
+                formControlName="orderDate"
+                class="form-control"
+              >
             </div>
 
             <div class="form-group" *ngIf="openedFromDispatchQuotation">
@@ -124,7 +166,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
             </button>
             <button type="submit" class="btn btn-primary" [disabled]="chargesForm.invalid || isLoading">
               <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-              {{ isLoading ? 'Creating...' : 'Create Sale' }}
+              {{ getSubmitButtonLabel() }}
             </button>
           </div>
         </form>
@@ -155,12 +197,14 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
    */
   @Input() openedFromPurchaseOrder: boolean = false;
   @Input() openedFromDispatchQuotation: boolean = false;
+  @Input() openedFromQuotationForPo: boolean = false;
   @Input() customerId?: number | string | null;
 
   @Output() confirm = new EventEmitter<
     | number
     | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number; purchaseId?: number | null }
     | { packagingAndForwadingCharges: number; saleId?: number | null }
+    | { packagingAndForwadingCharges: number; purchaseOrderId?: number | null; orderDate?: string }
   >();
   @Output() cancel = new EventEmitter<void>();
 
@@ -168,10 +212,13 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
   isLoading = false;
   isLoadingPurchases = false;
   isLoadingSales = false;
+  isLoadingPurchaseOrders = false;
   purchaseOptions: Array<PurchaseRecent & { displayLabel: string }> = [];
   private purchaseOptionsRaw: PurchaseRecent[] = [];
   saleOptions: Array<SaleRecent & { displayLabel: string }> = [];
   private saleOptionsRaw: SaleRecent[] = [];
+  purchaseOrderOptions: Array<PurchaseOrder & { displayLabel: string }> = [];
+  private purchaseOrderOptionsRaw: PurchaseOrder[] = [];
 
   private destroy$ = new Subject<void>();
   private open$ = new Subject<void>();
@@ -179,12 +226,15 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private purchaseService: PurchaseService,
-    private saleService: SaleService
+    private saleService: SaleService,
+    private purchaseOrderService: PurchaseOrderService
   ) {
     this.chargesForm = this.fb.group({
       invoiceNumber: [''],
       purchaseId: [null],
       saleId: [null],
+      purchaseOrderId: [null],
+      orderDate: [formatDate(new Date(), 'yyyy-MM-dd', 'en')],
       packagingAndForwadingCharges: [
         0,
         [Validators.required, Validators.min(0)]
@@ -204,7 +254,9 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
         packagingAndForwadingCharges: this.defaultCharges !== undefined ? this.defaultCharges : 0,
         invoiceNumber: '',
         purchaseId: null,
-        saleId: null
+        saleId: null,
+        purchaseOrderId: null,
+        orderDate: formatDate(new Date(), 'yyyy-MM-dd', 'en')
       });
 
       // Dynamically toggle invoice requirement when purchase changes (Purchase Order flow)
@@ -221,7 +273,24 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
       if (this.openedFromDispatchQuotation) {
         this.loadSales();
       }
+
+      if (this.openedFromQuotationForPo) {
+        this.loadPurchaseOrders();
+      }
     }
+  }
+
+  getSubmitButtonLabel(): string {
+    if (this.isLoading) {
+      return 'Creating...';
+    }
+    if (this.openedFromQuotationForPo) {
+      return 'Create Purchase Order';
+    }
+    if (this.openedFromPurchaseOrder) {
+      return 'Convert to Purchase';
+    }
+    return 'Create Sale';
   }
 
   isInvoiceRequired(): boolean {
@@ -388,6 +457,61 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
     return `${s.invoiceNumber} • ${s.customerName} • ${dateLabel} • ₹${amountLabel} • Items: ${s.numberOfItems} • #${s.id}`;
   }
 
+  refreshPurchaseOrders(): void {
+    this.loadPurchaseOrders(true);
+  }
+
+  private loadPurchaseOrders(force: boolean = false): void {
+    if (!force && this.purchaseOrderOptionsRaw.length > 0) {
+      this.updatePurchaseOrderOptions();
+      return;
+    }
+
+    const rawCustomerId = this.customerId;
+    const customerId =
+      rawCustomerId === null || rawCustomerId === undefined || rawCustomerId === ''
+        ? undefined
+        : Number(rawCustomerId);
+
+    this.isLoadingPurchaseOrders = true;
+    this.purchaseOrderService.searchPurchaseOrders({
+      currentPage: 0,
+      perPageRecord: 100,
+      ...(customerId ? { customerId } : {})
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const list = Array.isArray(response?.content) ? response.content : [];
+          this.purchaseOrderOptionsRaw = list.filter(po => {
+            const purchaseIds = (po as PurchaseOrder & { purchaseIds?: number[] }).purchaseIds;
+            return !purchaseIds || purchaseIds.length === 0;
+          });
+          this.updatePurchaseOrderOptions();
+          this.isLoadingPurchaseOrders = false;
+        },
+        error: () => {
+          this.purchaseOrderOptionsRaw = [];
+          this.purchaseOrderOptions = [];
+          this.isLoadingPurchaseOrders = false;
+        }
+      });
+  }
+
+  private updatePurchaseOrderOptions(): void {
+    this.purchaseOrderOptions = this.purchaseOrderOptionsRaw.map(po => ({
+      ...po,
+      displayLabel: this.formatPurchaseOrderLabel(po)
+    }));
+  }
+
+  private formatPurchaseOrderLabel(po: PurchaseOrder): string {
+    const dateLabel = po.orderDate ? formatDate(new Date(po.orderDate), 'dd-MM-yyyy', 'en') : '-';
+    const amount = typeof po.totalOrderAmount === 'number' ? po.totalOrderAmount : Number(po.totalOrderAmount || 0);
+    const amountLabel = Number.isFinite(amount) ? amount.toFixed(2) : '0.00';
+    return `${po.invoiceNumber} • ${po.customerName || '-'} • ${dateLabel} • ₹${amountLabel} • #${po.id}`;
+  }
+
   onCancel(): void {
     this.cancel.emit();
   }
@@ -401,6 +525,26 @@ export class PackagingChargesModalComponent implements OnChanges, OnDestroy {
           ? null
           : Number(purchaseIdControlValue);
       
+      // Quotation → PO flow
+      if (this.openedFromQuotationForPo) {
+        const purchaseOrderIdControlValue = this.chargesForm.get('purchaseOrderId')?.value;
+        const purchaseOrderId =
+          purchaseOrderIdControlValue === null || purchaseOrderIdControlValue === undefined || purchaseOrderIdControlValue === ''
+            ? null
+            : Number(purchaseOrderIdControlValue);
+        const orderDateValue = this.chargesForm.get('orderDate')?.value;
+        const orderDate = purchaseOrderId === null && orderDateValue
+          ? formatDate(new Date(orderDateValue), 'dd-MM-yyyy', 'en')
+          : undefined;
+
+        this.confirm.emit({
+          packagingAndForwadingCharges: Number.isFinite(charges) ? charges : 0,
+          ...(purchaseOrderId !== null ? { purchaseOrderId } : {}),
+          ...(orderDate ? { orderDate } : {})
+        });
+        return;
+      }
+
       // Dispatch quotation flow emits object with optional selected sale id.
       if (this.openedFromDispatchQuotation) {
         const saleIdControlValue = this.chargesForm.get('saleId')?.value;

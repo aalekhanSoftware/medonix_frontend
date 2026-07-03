@@ -245,7 +245,9 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       taxAmount: [{ value: initialData?.taxAmount || 0, disabled: true }],
       finalPrice: [{ value: initialData?.finalPrice || 0, disabled: true }],
       quotationDiscountAmount: [{ value: initialData?.quotationDiscountAmount || 0, disabled: true }],
-      calculations: [initialData?.calculations || []]
+      calculations: [initialData?.calculations || []],
+      purchaseOrderIds: [initialData?.purchaseOrderIds || []],
+      purchaseOrderItemIds: [initialData?.purchaseOrderItemIds || []]
     });
   }
 
@@ -362,6 +364,10 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
   }
 
   removeItem(index: number): void {
+    if (this.hasItemPoLink(index)) {
+      this.snackbar.error('Cannot remove item linked to a purchase order');
+      return;
+    }
     if (this.itemsFormArray.length <= 1) return;
     if (index < 0 || index >= this.itemsFormArray.length) return;
 
@@ -500,6 +506,12 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       .reduce((total, group: any) => total + (Number(group.get('finalPrice').value) || 0), 0);
     const packagingCharges = Number(this.quotationForm.get('packagingAndForwadingCharges')?.value || 0);
     return Math.round(itemsTotal + packagingCharges);
+  }
+
+  hasItemPoLink(index: number): boolean {
+    const group = this.itemsFormArray.at(index) as FormGroup;
+    const poIds = group?.get('purchaseOrderIds')?.value;
+    return Array.isArray(poIds) && poIds.length > 0;
   }
 
   private loadProducts(): void {
@@ -1083,7 +1095,9 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
           finalPrice: [item.finalPrice || 0],
           quotationDiscountAmount: [item.quotationDiscountAmount || 0],
           calculations: [item.calculations || []],
-          quotationItemStatus: [item.quotationItemStatus || null]
+          quotationItemStatus: [item.quotationItemStatus || null],
+          purchaseOrderIds: [Array.isArray(item.purchaseOrderIds) ? item.purchaseOrderIds : []],
+          purchaseOrderItemIds: [Array.isArray(item.purchaseOrderItemIds) ? item.purchaseOrderItemIds : []]
         });
 
         this.itemsFormArray.push(itemGroup);
@@ -1091,6 +1105,12 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
         this.itemSubscriptions.push(subscription);
       });
     }
+
+    this.itemsFormArray.controls.forEach((control, index) => {
+      if (this.hasItemPoLink(index)) {
+        control.get('productId')?.disable({ emitEvent: false });
+      }
+    });
 
     this.itemControlsForView = Array.from(this.itemsFormArray.controls);
     this.calculateTotalAmount();

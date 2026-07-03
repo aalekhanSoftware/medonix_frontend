@@ -8,6 +8,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { AuthService, UserRole } from '../../../services/auth.service';
 import { SaleService } from '../../../services/sale.service';
+import { PurchaseOrderService } from '../../../services/purchase-order.service';
 import { ProductService } from '../../../services/product.service';
 import { CustomerService } from '../../../services/customer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
@@ -19,6 +20,7 @@ import { TransportMaster, TransportMasterService } from '../../../services/trans
 import { PackagingChargesModalComponent } from './packaging-charges-modal.component';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
+import { LinkedPurchaseOrderSummary } from '../../../models/quotation.model';
 
 @Component({
   standalone: true,
@@ -50,9 +52,13 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
   private lastCreatedRollByIndex: { [index: number]: number | null } = {};
   private lastQuantityByIndex: { [index: number]: number } = {};
   private selectedQuotationItemIds = new Set<number>();
+  private selectedPoQuotationItemIds = new Set<number>();
   private selectedDispatchItemIds = new Set<number>();
   canSeeSaleOption = false;
+  canCreatePurchaseOrder = false;
   showPackagingChargesModal = false;
+  showPoPackagingChargesModal = false;
+  linkedPurchaseOrders: LinkedPurchaseOrderSummary[] = [];
   private productMap: Map<any, any> = new Map();
   private productMapReady = false;
   private readonly PRODUCT_MAP_SYNC_THRESHOLD = 1000;
@@ -95,12 +101,14 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
     private dialog: Dialog,
     private cdr: ChangeDetectorRef,
     private saleService: SaleService,
+    private purchaseOrderService: PurchaseOrderService,
     private authService: AuthService
   ) {
     const today = new Date();
     this.minValidUntilDate = formatDate(today, 'yyyy-MM-dd', 'en');
     this.initForm();
     this.canSeeSaleOption = this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STAFF_ADMIN, UserRole.SALES_AND_MARKETING]);
+    this.canCreatePurchaseOrder = this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STAFF_ADMIN]);
   }
 
   ngOnInit() {
@@ -129,6 +137,7 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
     this.lastCreatedRollByIndex = {};
     this.lastQuantityByIndex = {};
     this.selectedQuotationItemIds.clear();
+    this.selectedPoQuotationItemIds.clear();
     this.selectedDispatchItemIds.clear();
 
     // Clear arrays to release memory
@@ -666,6 +675,7 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
       caseNumber: data.caseNumber || '',
       packagingAndForwadingCharges: data.packagingAndForwadingCharges ?? 0
     });
+    this.linkedPurchaseOrders = Array.isArray(data.linkedPurchaseOrders) ? data.linkedPurchaseOrders : [];
     if (data.items && Array.isArray(data.items)) {
       data.items.forEach((item: any, idx: number) => {
         const itemGroup = this.fb.group({
@@ -681,6 +691,8 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
           isDispatch: [item.isDispatch ?? false],
           quotationItemStatus: [item.quotationItemStatus ?? 'O', Validators.required],
           createdRoll: [item.createdRoll ?? null, [Validators.min(0)]],
+          purchaseOrderIds: [Array.isArray(item.purchaseOrderIds) ? item.purchaseOrderIds : []],
+          purchaseOrderItemIds: [Array.isArray(item.purchaseOrderItemIds) ? item.purchaseOrderItemIds : []],
           // price fields for backend
           price: [item.price || 0],
           taxPercentage: [item.taxPercentage ?? 0],
@@ -1123,6 +1135,133 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
           this.snackbar.error(err?.error?.message || 'Failed to create sale');
           this.isLoading = false;
           this.cdr.detectChanges();
+        }
+      });
+  }
+
+  hasPoSelection(): boolean {
+    return this.selectedPoQuotationItemIds.size > 0;
+  }
+
+  isPoSelectable(index: number): boolean {
+    const id = this.getQuotationItemIdByIndex(index);
+    if (!id) return false;
+    const group = this.itemsFormArray.at(index) as FormGroup;
+    const poIds = group?.get('purchaseOrderIds')?.value;
+    return !Array.isArray(poIds) || poIds.length === 0;
+  }
+
+  isPoSelected(index: number): boolean {
+    const id = this.getQuotationItemIdByIndex(index);
+    if (!id) return false;
+    return this.selectedPoQuotationItemIds.has(id);
+  }
+
+  togglePoSelection(index: number, event: Event): void {
+    if (!this.isPoSelectable(index)) return;
+    const id = this.getQuotationItemIdByIndex(index);
+    if (!id) return;
+    const input = event.target as HTMLInputElement;
+    if (input.checked) {
+      this.selectedPoQuotationItemIds.add(id);
+    } else {
+      this.selectedPoQuotationItemIds.delete(id);
+    }
+  }
+
+  hasItemPoLink(index: number): boolean {
+    const group = this.itemsFormArray.at(index) as FormGroup;
+    const poIds = group?.get('purchaseOrderIds')?.value;
+    return Array.isArray(poIds) && poIds.length > 0;
+  }
+
+  createPurchaseOrderFromSelected(): void {
+    const ids = Array.from(this.selectedPoQuotationItemIds);
+    if (!ids.length) {
+      this.snackbar.error('Please select at least one item');
+      return;
+    }
+    this.showPoPackagingChargesModal = true;
+  }
+
+  onPoPackagingChargesConfirm(
+    data:
+      | number
+      | { packagingAndForwadingCharges: number; purchaseOrderId?: number | null; orderDate?: string }
+      | { packagingAndForwadingCharges: number; saleId?: number | null }
+      | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number; purchaseId?: number | null }
+  ): void {
+    this.showPoPackagingChargesModal = false;
+    if (typeof data === 'number') {
+      this.snackbar.error('Invalid packaging charges data');
+      return;
+    }
+    if (!('packagingAndForwadingCharges' in data)) {
+      this.snackbar.error('Invalid packaging charges data');
+      return;
+    }
+    const ids = Array.from(this.selectedPoQuotationItemIds);
+    const charges = Number.isFinite(Number(data.packagingAndForwadingCharges)) ? Number(data.packagingAndForwadingCharges) : 0;
+    const purchaseOrderId = 'purchaseOrderId' in data ? data.purchaseOrderId : undefined;
+    const orderDate = 'orderDate' in data ? data.orderDate : undefined;
+
+    this.isLoading = true;
+    this.purchaseOrderService.createFromQuotationItems({
+      quotationItemIds: ids,
+      packagingAndForwadingCharges: charges,
+      ...(purchaseOrderId != null ? { purchaseOrderId } : {}),
+      ...(orderDate ? { orderDate } : {})
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.snackbar.success(res?.message || 'Purchase order created successfully');
+            this.selectedPoQuotationItemIds.clear();
+            if (this.quotationId) {
+              this.reloadQuotationDetail();
+            }
+          } else {
+            this.snackbar.error(res?.message || 'Failed to create purchase order');
+          }
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.snackbar.error(err?.error?.message || 'Failed to create purchase order');
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  onPoPackagingChargesCancel(): void {
+    this.showPoPackagingChargesModal = false;
+  }
+
+  navigateToPurchaseOrder(poId: number): void {
+    localStorage.setItem('purchaseOrderId', this.encryptionService.encrypt(String(poId)));
+    this.router.navigate(['/purchase-order/create']);
+  }
+
+  viewLinkedPurchaseOrders(): void {
+    if (!this.quotationId) return;
+    this.router.navigate(['/purchase-order'], { queryParams: { quotationId: this.quotationId } });
+  }
+
+  private reloadQuotationDetail(): void {
+    if (!this.quotationId) return;
+    this.quotationService.getQuotationDetail(this.quotationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response?.data) {
+            this.populateForm(response.data);
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.snackbar.error('Failed to refresh quotation details');
         }
       });
   }

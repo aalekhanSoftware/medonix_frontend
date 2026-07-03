@@ -201,6 +201,7 @@
                               [initialDisplayLimit]="50"
                               [maxHeight]="'320px'"
                               [searchMode]="'filter'"
+                              [disabled]="hasItemPoLink(i)"
                             ></app-searchable-select>
                             <button
                               type="button"
@@ -213,6 +214,7 @@
                               <i class="fas" [ngClass]="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
                             </button>
                           </div>
+                          <span *ngIf="hasItemPoLink(i)" class="badge bg-info mt-1" title="Linked to purchase order">PO linked</span>
                         </div>
                       </td>
 
@@ -371,7 +373,7 @@
                       <!-- Actions -->
                       <td>
                         <button
-                          *ngIf="item?.get('quotationItemStatus')?.value !== 'B'"
+                          *ngIf="item?.get('quotationItemStatus')?.value !== 'B' && !hasItemPoLink(i)"
                           type="button"
                           (click)="removeItem(i)"
                           class="btn btn-sm btn-danger"

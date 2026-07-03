@@ -89,6 +89,45 @@
         </div>
       </div>
 
+      <div class="linked-po-section card mt-3" *ngIf="linkedPurchaseOrders.length > 0">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h3 class="mb-0"><i class="fas fa-file-invoice"></i> Linked Purchase Orders</h3>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="viewLinkedPurchaseOrders()">
+            <i class="fas fa-search"></i> View all linked POs
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>PO Number</th>
+                <th>Order Date</th>
+                <th>Total Amount</th>
+                <th>QC</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let po of linkedPurchaseOrders">
+                <td>{{ po.invoiceNumber }}</td>
+                <td>{{ po.orderDate | date:'dd-MM-yyyy' }}</td>
+                <td>{{ po.totalOrderAmount }}</td>
+                <td>
+                  <span class="badge" [ngClass]="po.isQcPass ? 'bg-success' : 'bg-warning'">
+                    {{ po.isQcPass ? 'QC Pass' : 'QC Pending' }}
+                  </span>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="navigateToPurchaseOrder(po.id)">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="products-section" formArrayName="items">
         <div class="products-header">
           <h3><i class="fas fa-boxes"></i> Products</h3>
@@ -100,6 +139,10 @@
             <button type="button" class="btn btn-success me-2" *ngIf="canSeeSaleOption && hasSelection()"
               (click)="createSaleFromSelected()">
               <i class="fa-solid fa-cart-plus"></i> Create Sale
+            </button>
+            <button type="button" class="btn btn-primary me-2" *ngIf="canCreatePurchaseOrder && hasPoSelection()"
+              (click)="createPurchaseOrderFromSelected()">
+              <i class="fa-solid fa-file-invoice"></i> Create Purchase Order
             </button>
             <!-- <button type="button" class="btn btn-sm btn-primary" (click)="addItem()">
               <i class="fas fa-plus"></i> Add Product
@@ -128,16 +171,24 @@
                   <tr *cdkVirtualFor="let item of itemControlsForView; let i = index; trackBy: trackByItemControl" [formGroup]="item"
                     [class.dispatched-row]="item.get('isDispatch')?.value === true">
                     <td>
-                      <div class="d-flex flex-column gap-2">
-                        <div *ngIf="canSeeSaleOption">
-                          <label class="small text-muted">Sale:</label>
+                      <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div *ngIf="canSeeSaleOption" class="d-flex align-items-center gap-1">
+                          <label class="small text-muted mb-0">Sale:</label>
                           <ng-container *ngIf="item.get('quotationItemStatus')?.value != 'B'">
                             <input type="checkbox" [checked]="isSelected(i)" (change)="toggleSelection(i, $event)"
                               title="Select for sale creation">
                           </ng-container>
                         </div>
-                        <div>
-                          <label class="small text-muted">Dispatch:</label>
+                        <div *ngIf="canCreatePurchaseOrder" class="d-flex align-items-center gap-1">
+                          <label class="small text-muted mb-0">PO:</label>
+                          <ng-container *ngIf="isPoSelectable(i)">
+                            <input type="checkbox" [checked]="isPoSelected(i)" (change)="togglePoSelection(i, $event)"
+                              title="Select for purchase order creation">
+                          </ng-container>
+                          <span *ngIf="hasItemPoLink(i)" class="badge bg-info ms-1" title="Linked to purchase order">PO linked</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                          <label class="small text-muted mb-0">Dispatch:</label>
                           <input type="checkbox" [checked]="isDispatchSelected(i)"
                             (change)="toggleDispatchSelection(i, $event)" title="Select for dispatch slip">
                         </div>
@@ -232,4 +283,13 @@
   [customerId]="quotationForm.get('customerId')?.value"
   (confirm)="onPackagingChargesConfirm($event)"
   (cancel)="onPackagingChargesCancel()"
+></app-packaging-charges-modal>
+
+<app-packaging-charges-modal
+  [show]="showPoPackagingChargesModal"
+  [defaultCharges]="0"
+  [openedFromQuotationForPo]="true"
+  [customerId]="quotationForm.get('customerId')?.value"
+  (confirm)="onPoPackagingChargesConfirm($event)"
+  (cancel)="onPoPackagingChargesCancel()"
 ></app-packaging-charges-modal>

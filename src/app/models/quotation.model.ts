@@ -50,6 +50,32 @@ export interface QuotationResponse {
   message: string;
 }
 
+export interface LinkedPurchaseOrderSummary {
+  id: number;
+  invoiceNumber: string;
+  orderDate: string;
+  totalOrderAmount: number;
+  isQcPass: boolean;
+}
+
+export interface QuotationDetail {
+  id?: number;
+  customerId?: number;
+  customerName?: string;
+  purchaseOrderIds?: number[];
+  linkedPurchaseOrders?: LinkedPurchaseOrderSummary[];
+  items?: QuotationItemDetail[];
+  [key: string]: unknown;
+}
+
+export interface QuotationItemDetail {
+  id?: number;
+  productId?: number;
+  purchaseOrderIds?: number[];
+  purchaseOrderItemIds?: number[];
+  [key: string]: unknown;
+}
+
 export interface StatusOption {
   label: string;
   value: string;
