@@ -1187,7 +1187,7 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
   onPoPackagingChargesConfirm(
     data:
       | number
-      | { packagingAndForwadingCharges: number; purchaseOrderId?: number | null; orderDate?: string }
+      | { customerId: number; packagingAndForwadingCharges: number; purchaseOrderId?: number | null; orderDate?: string }
       | { packagingAndForwadingCharges: number; saleId?: number | null }
       | { id: number; invoiceNumber: string; packagingAndForwadingCharges: number; purchaseId?: number | null }
   ): void {
@@ -1204,11 +1204,13 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
     const charges = Number.isFinite(Number(data.packagingAndForwadingCharges)) ? Number(data.packagingAndForwadingCharges) : 0;
     const purchaseOrderId = 'purchaseOrderId' in data ? data.purchaseOrderId : undefined;
     const orderDate = 'orderDate' in data ? data.orderDate : undefined;
+    const customerId = 'customerId' in data ? data.customerId : undefined;
 
     this.isLoading = true;
     this.purchaseOrderService.createFromQuotationItems({
       quotationItemIds: ids,
       packagingAndForwadingCharges: charges,
+      customerId: customerId,
       ...(purchaseOrderId != null ? { purchaseOrderId } : {}),
       ...(orderDate ? { orderDate } : {})
     })

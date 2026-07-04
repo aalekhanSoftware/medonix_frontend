@@ -114,6 +114,7 @@ export interface CreatePoFromQuotationRequest {
   purchaseOrderId?: number | null;
   orderDate?: string;
   packagingAndForwadingCharges?: number;
+  customerId?: number;
 }
 
 export interface UnlinkQuotationFromPoRequest {

@@ -113,3 +113,5 @@ replay_pid*
 
 environments/
 src/environments/environment.ts
+.opencode/opencode.json
+.opencode/**

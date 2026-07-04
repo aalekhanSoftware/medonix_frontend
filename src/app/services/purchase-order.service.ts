@@ -72,6 +72,9 @@ export class PurchaseOrderService {
     if (body.purchaseOrderId !== undefined && body.purchaseOrderId !== null) {
       payload.purchaseOrderId = Number(body.purchaseOrderId);
     }
+    if (body.customerId !== undefined && body.customerId !== null) {
+      payload.customerId = Number(body.customerId);
+    }
     if (body.orderDate) {
       payload.orderDate = body.orderDate;
     }

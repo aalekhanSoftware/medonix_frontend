@@ -289,7 +289,7 @@
   [show]="showPoPackagingChargesModal"
   [defaultCharges]="0"
   [openedFromQuotationForPo]="true"
-  [customerId]="quotationForm.get('customerId')?.value"
+  [customerId]="null"
   (confirm)="onPoPackagingChargesConfirm($event)"
   (cancel)="onPoPackagingChargesCancel()"
 ></app-packaging-charges-modal>
