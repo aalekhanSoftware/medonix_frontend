@@ -17,6 +17,7 @@ import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
 import { toProductOptionsList } from '../../../shared/utils/product-display.util';
 import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
+import { calculateGstTaxes, getCustomerGst } from '../../../utils/gst.utils';
 
 @Component({
   selector: 'app-add-standalone-purchase-return',
@@ -76,6 +77,7 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
   totalAmount = 0;
   totalDiscountAmount = 0;
   totalTaxAmount = 0;
+  totalBillDiscountAmount = 0;
   grandTotal = 0;
 
   get productsFormArray(): FormArray {
@@ -145,6 +147,16 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
         this.calculateTotals();
         this.cdr.markForCheck();
       });
+
+    this.returnForm.get('totalPurchaseReturnDiscountPercentage')?.valueChanges
+      .pipe(takeUntil(this.destroy$), debounceTime(150))
+      .subscribe(() => {
+        this.productsFormArray.controls.forEach((group: any) => {
+          this.calculateProductPrice(group);
+        });
+        this.calculateTotals();
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnDestroy(): void {
@@ -169,6 +181,7 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       purchaseReturnDate: [formatDate(new Date(), 'yyyy-MM-dd', 'en'), Validators.required],
       isDiscount: [false],
       packagingAndForwadingCharges: [0, [Validators.required, Validators.min(0)]],
+      totalPurchaseReturnDiscountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       products: this.fb.array([])
     });
     if (!this.isEdit) {
@@ -189,6 +202,9 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       discountAmount: [0, [Validators.min(0)]],
       discountPrice: [{ value: 0, disabled: true }],
+      purchaseReturnDiscountPercentage: [{ value: 0, disabled: true }],
+      purchaseReturnDiscountAmount: [{ value: 0, disabled: true }],
+      totalDiscount: [{ value: 0, disabled: true }],
       taxPercentage: [{ value: 0, disabled: true }],
       taxAmount: [{ value: 0, disabled: true }],
       remarks: [null as string | null]
@@ -252,13 +268,33 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       calculatedDiscountAmount = Math.min(discountAmount, subtotal);
       if (discountAmount > subtotal) group.patchValue({ discountAmount: subtotal }, { emitEvent: false });
     }
-    const calculatedDiscountPrice = Number((subtotal - calculatedDiscountAmount).toFixed(2));
-    const taxAmount = Number((calculatedDiscountPrice * taxPercentage / 100).toFixed(2));
+    const discountPriceAfterItemDisc = Number((subtotal - calculatedDiscountAmount).toFixed(2));
+
+    // Apply bill-level purchase return discount % on after-item-discount price (same as sale)
+    const totalPurchaseReturnDiscountPercentage = Number(this.returnForm.get('totalPurchaseReturnDiscountPercentage')?.value || 0);
+    let purchaseReturnDiscountAmount = 0;
+    let purchaseReturnDiscountPct = 0;
+    if (totalPurchaseReturnDiscountPercentage > 0 && discountPriceAfterItemDisc > 0) {
+      purchaseReturnDiscountPct = totalPurchaseReturnDiscountPercentage;
+      purchaseReturnDiscountAmount = Number((discountPriceAfterItemDisc * totalPurchaseReturnDiscountPercentage / 100).toFixed(2));
+    }
+    const totalDiscount = Number((calculatedDiscountAmount + purchaseReturnDiscountAmount).toFixed(2));
+    const taxableValue = Number((discountPriceAfterItemDisc - purchaseReturnDiscountAmount).toFixed(2));
+    const taxAmount = Number((taxableValue * taxPercentage / 100).toFixed(2));
+
+    // Apply GST split matching backend TaxCalculationUtil
+    const customerGst = getCustomerGst(this.customers, this.returnForm.get('customerId')?.value);
+    const gstSplit = calculateGstTaxes(taxAmount, customerGst);
+    const adjustedTaxAmount = gstSplit.adjustedTaxAmount;
+
     group.patchValue({
       price: subtotal,
       discountAmount: calculatedDiscountAmount,
-      discountPrice: calculatedDiscountPrice,
-      taxAmount
+      purchaseReturnDiscountPercentage: purchaseReturnDiscountPct,
+      purchaseReturnDiscountAmount: purchaseReturnDiscountAmount,
+      totalDiscount: totalDiscount,
+      discountPrice: discountPriceAfterItemDisc,
+      taxAmount: adjustedTaxAmount
     }, { emitEvent: false });
     this.calculateTotals();
     this.cdr.markForCheck();
@@ -291,34 +327,36 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       (sum, c) => sum + (Number((c as FormGroup).get('discountAmount')?.value) || 0),
       0
     );
+    this.totalBillDiscountAmount = this.productsFormArray.controls.reduce(
+      (sum, c) => sum + (Number((c as FormGroup).get('purchaseReturnDiscountAmount')?.value) || 0),
+      0
+    );
     this.totalTaxAmount = this.productsFormArray.controls.reduce(
       (sum, c) => sum + (Number((c as FormGroup).get('taxAmount')?.value) || 0),
       0
     );
     const packaging = Number(this.returnForm.get('packagingAndForwadingCharges')?.value || 0);
-    const finalPrice = this.productsFormArray.controls.reduce(
-      (sum, c) => {
-        const g = c as FormGroup;
-        const d = Number(g.get('discountPrice')?.value || g.get('price')?.value || 0);
-        const t = Number(g.get('taxAmount')?.value || 0);
-        return sum + d + t;
-      },
-      0
-    );
-    this.grandTotal = Number((finalPrice + packaging).toFixed(2));
+    const finalPrice = this.productsFormArray.controls.reduce((sum, c) => {
+      const g = c as FormGroup;
+      const discountPrice = Number(g.get('discountPrice')?.value || 0);
+      const purchaseReturnDiscountAmount = Number(g.get('purchaseReturnDiscountAmount')?.value || 0);
+      const taxableValue = discountPrice - purchaseReturnDiscountAmount;
+      const t = Number(g.get('taxAmount')?.value || 0);
+      return sum + taxableValue + t;
+    }, 0);
+    this.grandTotal = Math.round(finalPrice + packaging);
     this.cdr.markForCheck();
   }
 
   getTotalFinalPrice(): number {
-    return this.productsFormArray.controls.reduce(
-      (sum, c) => {
-        const g = c as FormGroup;
-        const d = Number(g.get('discountPrice')?.value || g.get('price')?.value || 0);
-        const t = Number(g.get('taxAmount')?.value || 0);
-        return sum + d + t;
-      },
-      0
-    );
+    return this.productsFormArray.controls.reduce((sum, c) => {
+      const g = c as FormGroup;
+      const discountPrice = Number(g.get('discountPrice')?.value || 0);
+      const purchaseReturnDiscountAmount = Number(g.get('purchaseReturnDiscountAmount')?.value || 0);
+      const taxableValue = discountPrice - purchaseReturnDiscountAmount;
+      const t = Number(g.get('taxAmount')?.value || 0);
+      return sum + taxableValue + t;
+    }, 0);
   }
 
   addProduct(): void {
@@ -631,6 +669,7 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       customerId: Number(v.customerId),
       isDiscount: !!v.isDiscount,
       packagingAndForwadingCharges: Number(v.packagingAndForwadingCharges || 0),
+      totalPurchaseReturnDiscountPercentage: Number(v.totalPurchaseReturnDiscountPercentage || 0),
       products: (v.products || []).map((p: any, index: number) => {
         const group = this.productsFormArray.at(index) as FormGroup;
         const discountType = p.discountType || 'percentage';
@@ -648,6 +687,9 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
           product.discountAmount = Number(p.discountAmount ?? 0);
           product.discountPercentage = 0;
         }
+        product.purchaseReturnDiscountPercentage = Number(group.get('purchaseReturnDiscountPercentage')?.value ?? 0);
+        product.purchaseReturnDiscountAmount = Number(group.get('purchaseReturnDiscountAmount')?.value ?? 0);
+        product.totalDiscount = Number(group.get('totalDiscount')?.value ?? 0);
         product.taxPercentage = Number(group.get('taxPercentage')?.value ?? 0);
         return product;
       })
@@ -662,6 +704,7 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       customerId: Number(v.customerId),
       isDiscount: !!v.isDiscount,
       packagingAndForwadingCharges: Number(v.packagingAndForwadingCharges || 0),
+      totalPurchaseReturnDiscountPercentage: Number(v.totalPurchaseReturnDiscountPercentage || 0),
       products: (v.products || []).map((p: any, index: number) => {
         const group = this.productsFormArray.at(index) as FormGroup;
         const discountType = p.discountType || 'percentage';
@@ -679,6 +722,9 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
           product.discountAmount = Number(p.discountAmount ?? 0);
           product.discountPercentage = 0;
         }
+        product.purchaseReturnDiscountPercentage = Number(group.get('purchaseReturnDiscountPercentage')?.value ?? 0);
+        product.purchaseReturnDiscountAmount = Number(group.get('purchaseReturnDiscountAmount')?.value ?? 0);
+        product.totalDiscount = Number(group.get('totalDiscount')?.value ?? 0);
         product.taxPercentage = Number(group.get('taxPercentage')?.value ?? 0);
         return product;
       })
@@ -722,7 +768,8 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
       customerId: data.customerId ?? '',
       purchaseReturnDate: dateVal,
       isDiscount: data.isDiscount ?? false,
-      packagingAndForwadingCharges: data.packagingAndForwadingCharges ?? 0
+      packagingAndForwadingCharges: data.packagingAndForwadingCharges ?? 0,
+      totalPurchaseReturnDiscountPercentage: data.totalPurchaseReturnDiscountPercentage ?? data.total_purchase_return_discount_percentage ?? 0
     });
 
     if (items.length > 0) {
@@ -751,6 +798,9 @@ export class AddStandalonePurchaseReturnComponent implements OnInit, OnDestroy {
           discountPercentage: discountPct,
           discountAmount: discountAmt,
           discountPrice,
+          purchaseReturnDiscountPercentage: item.purchaseReturnDiscountPercentage ?? item.purchase_return_discount_percentage ?? 0,
+          purchaseReturnDiscountAmount: item.purchaseReturnDiscountAmount ?? item.purchase_return_discount_amount ?? 0,
+          totalDiscount: item.totalDiscount ?? item.total_discount ?? 0,
           taxPercentage: taxPct,
           taxAmount: taxAmt,
           remarks: item.remarks ?? null

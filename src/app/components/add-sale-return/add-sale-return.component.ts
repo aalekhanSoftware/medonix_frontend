@@ -50,6 +50,8 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   
   // Memory optimization: cached totals to avoid recalculating in template
   totalAmount: number = 0;
+  totalDiscountAmount: number = 0;
+  totalBillDiscountAmount: number = 0;
   totalTaxAmount: number = 0;
   grandTotal: number = 0;
 
@@ -121,6 +123,19 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         this.calculateTotalAmount();
         this.cdr.markForCheck();
       });
+
+    // Listen to bill-level discount percentage changes
+    this.returnForm.get('totalSaleReturnDiscountPercentage')?.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(150)
+      )
+      .subscribe(() => {
+        this.productsFormArray.controls.forEach((group: any) => {
+          this.calculateProductPrice(group);
+        });
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnDestroy(): void {
@@ -153,6 +168,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
       customerId: ['', Validators.required],
       saleReturnDate: [formatDate(new Date(), 'yyyy-MM-dd', 'en'), Validators.required],
       invoiceNumber: [''],
+      totalSaleReturnDiscountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       products: this.fb.array([]),
       packagingAndForwadingCharges: [0, [Validators.required, Validators.min(0)]]
     });
@@ -171,6 +187,13 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
       batchNumber: ['', [this.noDoubleQuotesValidator()]],
       unitPrice: ['', [Validators.required, Validators.min(0.01)]],
       price: [{ value: 0, disabled: true }],
+      discountType: ['percentage'],
+      discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
+      discountAmount: [0, [Validators.min(0)]],
+      saleReturnDiscountPercentage: [0],
+      saleReturnDiscountAmount: [{ value: 0, disabled: true }],
+      totalDiscount: [{ value: 0, disabled: true }],
+      discountPrice: [{ value: 0, disabled: true }],
       taxPercentage: [{ value: 0, disabled: true }],
       taxAmount: [{ value: 0, disabled: true }],
       remarks: [null, []]
@@ -242,15 +265,54 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     const quantity = Number(group.get('quantity')?.value || 0);
     const unitPrice = Number(group.get('unitPrice')?.value || 0);
     const taxPercentage = Number(group.get('taxPercentage')?.value || 0);
+    const discountType = group.get('discountType')?.value || 'percentage';
+    const discountPercentage = Number(group.get('discountPercentage')?.value || 0);
+    let discountAmount = Number(group.get('discountAmount')?.value || 0);
+    const totalSaleReturnDiscountPercentage = Number(this.returnForm.get('totalSaleReturnDiscountPercentage')?.value || 0);
     
-    // Calculate price = unitPrice * quantity
-    const price = Number((quantity * unitPrice).toFixed(2));
+    // Calculate subtotal = unitPrice * quantity
+    const subtotal = Number((quantity * unitPrice).toFixed(2));
     
-    // Calculate taxAmount = (price * taxPercentage) / 100
-    const taxAmount = Number((price * taxPercentage / 100).toFixed(2));
+    // Calculate item-level discount
+    let calculatedItemDiscountAmount = 0;
+    if (discountType === 'percentage' && discountPercentage > 0) {
+      const cappedPercentage = Math.min(discountPercentage, 100);
+      calculatedItemDiscountAmount = Number((subtotal * (cappedPercentage / 100)).toFixed(2));
+      if (discountPercentage > 100) {
+        group.patchValue({ discountPercentage: 100 }, { emitEvent: false });
+      }
+    } else if (discountType === 'amount' && discountAmount > 0) {
+      calculatedItemDiscountAmount = Math.min(discountAmount, subtotal);
+      if (discountAmount > subtotal) {
+        group.patchValue({ discountAmount: subtotal }, { emitEvent: false });
+      }
+    }
+    
+    // Price after item-level discount
+    const discountPriceAfterItemDisc = Number((subtotal - calculatedItemDiscountAmount).toFixed(2));
+    
+    // Calculate sale return bill-level discount per item
+    let saleReturnDiscountAmount = 0;
+    let saleReturnDiscountPercentage = 0;
+    if (totalSaleReturnDiscountPercentage > 0 && discountPriceAfterItemDisc > 0) {
+      saleReturnDiscountPercentage = totalSaleReturnDiscountPercentage;
+      saleReturnDiscountAmount = Number((discountPriceAfterItemDisc * totalSaleReturnDiscountPercentage / 100).toFixed(2));
+    }
+    
+    // Combined discount
+    const totalDiscount = calculatedItemDiscountAmount + saleReturnDiscountAmount;
+    
+    // Tax on value after all discounts
+    const taxableValue = Number((discountPriceAfterItemDisc - saleReturnDiscountAmount).toFixed(2));
+    const taxAmount = Number((taxableValue * taxPercentage / 100).toFixed(2));
 
     group.patchValue({
-      price: price,
+      price: subtotal,
+      discountAmount: calculatedItemDiscountAmount,
+      saleReturnDiscountPercentage: saleReturnDiscountPercentage,
+      saleReturnDiscountAmount: saleReturnDiscountAmount,
+      totalDiscount: totalDiscount,
+      discountPrice: discountPriceAfterItemDisc,
       taxAmount: taxAmount
     }, { emitEvent: false });
 
@@ -262,18 +324,24 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
       .reduce((total, group: any) => total + (group.get('price').value || 0), 0);
   }
 
+  getTotalDiscountAmount(): number {
+    return this.productsFormArray.controls
+      .reduce((total, group: any) => total + (Number(group.get('discountAmount')?.value || 0)), 0);
+  }
+
   getTotalTaxAmount(): number {
     return this.productsFormArray.controls
       .reduce((total, group: any) => total + (group.get('taxAmount').value || 0), 0);
   }
 
   getTotalFinalPrice(): number {
-    // Sum of all items' finalPrice (price + taxAmount for each item)
     return this.productsFormArray.controls
       .reduce((total, group: any) => {
-        const price = Number(group.get('price')?.value || 0);
+        const discountPrice = Number(group.get('discountPrice')?.value || 0);
+        const saleReturnDiscountAmount = Number(group.get('saleReturnDiscountAmount')?.value || 0);
+        const taxableValue = discountPrice - saleReturnDiscountAmount;
         const taxAmount = Number(group.get('taxAmount')?.value || 0);
-        return total + (price + taxAmount);
+        return total + (taxableValue + taxAmount);
       }, 0);
   }
 
@@ -367,6 +435,17 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
     });
   }
 
+  onDiscountTypeChange(index: number): void {
+    const group = this.productsFormArray.at(index) as FormGroup;
+    const discountType = group.get('discountType')?.value;
+    if (discountType === 'percentage') {
+      group.patchValue({ discountAmount: 0 }, { emitEvent: false });
+    } else {
+      group.patchValue({ discountPercentage: 0 }, { emitEvent: false });
+    }
+    this.calculateProductPrice(group);
+  }
+
   isFieldInvalid(fieldName: string): boolean {
     const field = this.returnForm.get(fieldName);
     return field ? field.invalid && field.touched : false;
@@ -441,12 +520,20 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
       customerId: formValue.customerId,
       invoiceNumber: formValue.invoiceNumber,
       price: this.getTotalAmount(),
+      discountAmount: this.getTotalDiscountAmount(),
       taxAmount: this.getTotalTaxAmount(),
       packagingAndForwadingCharges: Number(formValue.packagingAndForwadingCharges || 0),
+      totalSaleReturnDiscountPercentage: Number(formValue.totalSaleReturnDiscountPercentage || 0),
       totalAmount: this.getGrandTotal(),
       products: formValue.products.map((product: ProductForm, index: number) => {
         const itemId = this.productsFormArray.at(index).get('id')?.value;
         const price = this.productsFormArray.at(index).get('price')?.value || 0;
+        const discountPercentage = Number(this.productsFormArray.at(index).get('discountPercentage')?.value || 0);
+        const discountAmount = Number(this.productsFormArray.at(index).get('discountAmount')?.value || 0);
+        const saleReturnDiscountPercentage = Number(this.productsFormArray.at(index).get('saleReturnDiscountPercentage')?.value || 0);
+        const saleReturnDiscountAmount = Number(this.productsFormArray.at(index).get('saleReturnDiscountAmount')?.value || 0);
+        const totalDiscount = Number(this.productsFormArray.at(index).get('totalDiscount')?.value || 0);
+        const discountPrice = Number(this.productsFormArray.at(index).get('discountPrice')?.value || price);
         const taxAmount = this.productsFormArray.at(index).get('taxAmount')?.value || 0;
         const item: any = {
           productId: product.productId,
@@ -454,9 +541,14 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
           batchNumber: product.batchNumber,
           unitPrice: product.unitPrice,
           price: price,
+          discountPercentage: discountPercentage,
+          discountAmount: discountAmount,
+          saleReturnDiscountPercentage: saleReturnDiscountPercentage,
+          saleReturnDiscountAmount: saleReturnDiscountAmount,
+          totalDiscount: totalDiscount,
           taxPercentage: this.productsFormArray.at(index).get('taxPercentage')?.value,
           taxAmount: taxAmount,
-          finalPrice: price + taxAmount,
+          finalPrice: discountPrice + taxAmount,
           remarks: product.remarks
         };
         // Include item id when updating
@@ -487,15 +579,20 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
   }
 
   private calculateTotalAmount(): void {
-    // Memory optimization: calculate once and cache in properties
     this.totalAmount = this.productsFormArray.controls
       .reduce((sum, group: any) => sum + (group.get('price').value || 0), 0);
+    
+    this.totalDiscountAmount = this.productsFormArray.controls
+      .reduce((sum, group: any) => sum + (Number(group.get('discountAmount')?.value || 0)), 0);
+    
+    this.totalBillDiscountAmount = this.productsFormArray.controls
+      .reduce((sum, group: any) => sum + (Number(group.get('saleReturnDiscountAmount')?.value || 0)), 0);
     
     this.totalTaxAmount = this.productsFormArray.controls
       .reduce((sum, group: any) => sum + (group.get('taxAmount').value || 0), 0);
       
     const packagingCharges = Number(this.returnForm.get('packagingAndForwadingCharges')?.value || 0);
-    this.grandTotal = this.totalAmount + this.totalTaxAmount + packagingCharges;
+    this.grandTotal = this.getTotalFinalPrice() + packagingCharges;
 
     this.returnForm.patchValue({ 
       price: this.totalAmount,
@@ -554,6 +651,7 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
       customerId: data.customerId,
       saleReturnDate: formatDate(new Date(data.saleReturnDate), 'yyyy-MM-dd', 'en'),
       invoiceNumber: data.invoiceNumber,
+      totalSaleReturnDiscountPercentage: data.totalSaleReturnDiscountPercentage != null ? data.totalSaleReturnDiscountPercentage : (data.total_sale_return_discount_percentage ?? 0),
       packagingAndForwadingCharges: data.packagingAndForwadingCharges || 0
     });
 
@@ -564,12 +662,19 @@ export class AddSaleReturnComponent implements OnInit, OnDestroy {
         const subscription = this.setupProductCalculations(productGroup);
         this.productSubscriptions.push(subscription);
         
+        const saleReturnDiscountPercentage = item.saleReturnDiscountPercentage != null ? item.saleReturnDiscountPercentage : (item.sale_return_discount_percentage ?? 0);
+        const saleReturnDiscountAmount = item.saleReturnDiscountAmount != null ? item.saleReturnDiscountAmount : (item.sale_return_discount_amount ?? 0);
+        const totalDiscount = item.totalDiscount != null ? item.totalDiscount : (item.total_discount ?? 0);
+        
         productGroup.patchValue({
-          id: item.id, // Store item ID for updates
+          id: item.id,
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           price: item.price || 0,
+          saleReturnDiscountPercentage: saleReturnDiscountPercentage,
+          saleReturnDiscountAmount: saleReturnDiscountAmount,
+          totalDiscount: totalDiscount,
           taxPercentage: item.taxPercentage || 0,
           taxAmount: item.taxAmount || 0,
           batchNumber: item.batchNumber || '',

@@ -22,6 +22,7 @@ import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrollin
 import { SerialNumberPipe } from '../../../shared/pipes/serial-number.pipe';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
+import { calculateGstTaxes, getCustomerGst } from '../../../utils/gst.utils';
 
 @Component({
   standalone: true,
@@ -51,7 +52,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
   isEdit = false;
   quotationId?: number;
   selectedProduct!: string
-  totals: { price: number; tax: number; finalPrice: number; taxPercentage: number; afterQuotationDiscount: number; quotationDiscountAmount: number; lineDiscountAmount: number; afterDiscountPrice: number } = {
+  totals: { price: number; tax: number; finalPrice: number; taxPercentage: number; afterQuotationDiscount: number; quotationDiscountAmount: number; lineDiscountAmount: number; afterDiscountPrice: number; totalDiscount: number } = {
     price: 0,
     tax: 0,
     finalPrice: 0,
@@ -59,7 +60,8 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
     afterQuotationDiscount: 0,
     quotationDiscountAmount: 0,
     lineDiscountAmount: 0,
-    afterDiscountPrice: 0
+    afterDiscountPrice: 0,
+    totalDiscount: 0
   };
   private itemSubscriptions: Subscription[] = [];
   private productPriceCache: Map<string, number> = new Map();
@@ -241,6 +243,8 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       discountPercentage: [initialData?.discountPercentage ?? 0, [Validators.min(0), Validators.max(100)]],
       discountAmount: [initialData?.discountAmount ?? 0, [Validators.min(0)]],
       discountPrice: [initialData?.discountPrice ?? 0],
+      quotationDiscountPercentage: [{ value: initialData?.quotationDiscountPercentage ?? 0, disabled: true }],
+      totalDiscount: [{ value: initialData?.totalDiscount ?? 0, disabled: true }],
       taxPercentage: [{ value: initialData?.taxPercentage ?? 18 }],
       taxAmount: [{ value: initialData?.taxAmount || 0, disabled: true }],
       finalPrice: [{ value: initialData?.finalPrice || 0, disabled: true }],
@@ -338,6 +342,8 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       discountAmount: [0, [Validators.min(0)]],
       discountPrice: [0],
+      quotationDiscountPercentage: [0],
+      totalDiscount: [0],
       taxPercentage: [18],
       taxAmount: [0],
       finalPrice: [0],
@@ -478,19 +484,39 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
 
     const discountPrice = Number((basePrice - calculatedDiscountAmount).toFixed(2));
 
-    // Tax on discounted price (existing quotation discount on tax)
-    const grossTaxAmount = Number(((discountPrice * values.taxPercentage) / 100).toFixed(2));
-    const quotationDiscountAmount = Number(((grossTaxAmount * quotationDiscountPercentage) / 100).toFixed(2));
-    const netTaxAmount = Number((grossTaxAmount - quotationDiscountAmount).toFixed(2));
-    const finalTaxAmount = Math.max(0, netTaxAmount);
-    const finalPrice = Number((discountPrice + finalTaxAmount).toFixed(2));
+    // Quotation bill-level discount on discountPrice (after line discount, before tax)
+    let quotationDiscAmt = 0;
+    let quotationDiscPct = 0;
+    if (quotationDiscountPercentage > 0 && discountPrice > 0) {
+      quotationDiscPct = quotationDiscountPercentage;
+      quotationDiscAmt = Number((discountPrice * quotationDiscountPercentage / 100).toFixed(2));
+    }
+
+    // Total discount (line-level + quotation-level)
+    const totalDiscountValue = Number((calculatedDiscountAmount + quotationDiscAmt).toFixed(2));
+
+    // Taxable value = discountPrice - quotationDiscountAmount
+    const taxableValue = Number((discountPrice - quotationDiscAmt).toFixed(2));
+
+    // Calculate tax on taxableValue
+    const grossTaxAmount = Number(((taxableValue * values.taxPercentage) / 100).toFixed(2));
+
+    // Apply GST split
+    const customerGst = getCustomerGst(this.customers, this.quotationForm.get('customerId')?.value);
+    const gstSplit = calculateGstTaxes(grossTaxAmount, customerGst);
+    const adjustedTaxAmount = gstSplit.adjustedTaxAmount;
+
+    // Final price = taxableValue + tax
+    const finalPrice = Number((taxableValue + adjustedTaxAmount).toFixed(2));
 
     groupControl.patchValue({
       price: basePrice,
       discountAmount: calculatedDiscountAmount,
       discountPrice: discountPrice,
-      quotationDiscountAmount: quotationDiscountAmount,
-      taxAmount: finalTaxAmount,
+      quotationDiscountPercentage: quotationDiscPct,
+      quotationDiscountAmount: quotationDiscAmt,
+      totalDiscount: totalDiscountValue,
+      taxAmount: adjustedTaxAmount,
       finalPrice: finalPrice
     }, { emitEvent: false });
 
@@ -735,6 +761,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
         const finalPrice = Number(Number(group.get('finalPrice')?.value || 0).toFixed(2));
         const taxAmount = Number(Number(group.get('taxAmount')?.value || 0).toFixed(2));
         const quotationDiscountAmount = Number(Number(group.get('quotationDiscountAmount')?.value || 0).toFixed(2));
+        const totalDiscount = Number(Number(group.get('totalDiscount')?.value || 0).toFixed(2));
         return {
           price: Number((acc.price + price).toFixed(2)),
           lineDiscountAmount: Number((acc.lineDiscountAmount + discountAmount).toFixed(2)),
@@ -742,22 +769,24 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
           finalPrice: Number((acc.finalPrice + finalPrice).toFixed(2)),
           tax: Number((acc.tax + taxAmount).toFixed(2)),
           quotationDiscountAmount: Number((acc.quotationDiscountAmount + quotationDiscountAmount).toFixed(2)),
+          totalDiscount: Number((acc.totalDiscount + totalDiscount).toFixed(2)),
           taxPercentage: Number(group.get('taxPercentage')?.value ?? 18)
         };
       },
-      { price: 0, lineDiscountAmount: 0, afterDiscountPrice: 0, finalPrice: 0, tax: 0, quotationDiscountAmount: 0, taxPercentage: 0 }
+      { price: 0, lineDiscountAmount: 0, afterDiscountPrice: 0, finalPrice: 0, tax: 0, quotationDiscountAmount: 0, totalDiscount: 0, taxPercentage: 0 }
     );
 
     const afterQuotationDiscount = Number((sums.afterDiscountPrice - sums.quotationDiscountAmount).toFixed(2));
     this.totals = {
       price: Number((sums.price + packagingCharges).toFixed(2)),
       tax: sums.tax,
-      finalPrice: Number((sums.finalPrice + packagingCharges).toFixed(2)),
+      finalPrice: Math.round(sums.finalPrice + packagingCharges),
       taxPercentage: sums.taxPercentage,
       afterQuotationDiscount,
       quotationDiscountAmount: sums.quotationDiscountAmount,
       lineDiscountAmount: sums.lineDiscountAmount,
-      afterDiscountPrice: sums.afterDiscountPrice
+      afterDiscountPrice: sums.afterDiscountPrice,
+      totalDiscount: sums.totalDiscount
     };
     this.cdr.markForCheck();
   }
@@ -1076,7 +1105,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
         const discountPercentage = item.discountPercentage != null ? item.discountPercentage : 0;
         const discountAmount = item.discountAmount != null ? item.discountAmount : 0;
         const discountPrice = item.discountPrice != null ? item.discountPrice : (Number(item.price || 0) - discountAmount);
-        const discountType = discountPercentage > 0 ? 'percentage' : 'amount';
+        const discountType = discountPercentage > 0 ? 'percentage' : (discountAmount > 0 ? 'amount' : 'percentage');
 
         const itemGroup = this.fb.group({
           id: [item.id || null],
@@ -1090,6 +1119,8 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
           discountPercentage: [discountPercentage, [Validators.min(0), Validators.max(100)]],
           discountAmount: [discountAmount, [Validators.min(0)]],
           discountPrice: [discountPrice],
+          quotationDiscountPercentage: [item.quotationDiscountPercentage ?? item.quotation_discount_percentage ?? 0],
+          totalDiscount: [item.totalDiscount ?? item.total_discount ?? 0],
           taxPercentage: [taxPercentage],
           taxAmount: [item.taxAmount || 0],
           finalPrice: [item.finalPrice || 0],
@@ -1167,10 +1198,12 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       price: control.get('price')?.value,
       discountPercentage: Number(control.get('discountPercentage')?.value ?? 0),
       discountAmount: Number(control.get('discountAmount')?.value ?? 0),
+      quotationDiscountPercentage: Number(control.get('quotationDiscountPercentage')?.value ?? 0),
+      quotationDiscountAmount: control.get('quotationDiscountAmount')?.value,
+      totalDiscount: Number(control.get('totalDiscount')?.value ?? 0),
       taxPercentage: control.get('taxPercentage')?.value,
       taxAmount: control.get('taxAmount')?.value,
       finalPrice: control.get('finalPrice')?.value,
-      quotationDiscountAmount: control.get('quotationDiscountAmount')?.value,
       calculations: control.get('calculations')?.value || [],
       quotationItemStatus: control.get('quotationItemStatus')?.value
     }));
@@ -1201,22 +1234,6 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.productPriceCache.clear();
       });
-  }
-
-  onQuotationDiscountPercentageChange(event: any): void {
-    // console.log('Quotation discount percentage changed to:', event.target.value);
-    
-    const newValue = Number(event.target.value || 0);
-    
-    this.quotationForm.get('quotationDiscountPercentage')?.setValue(newValue, { emitEvent: false });
-    
-    this.itemsFormArray.controls.forEach((group: AbstractControl) => {
-      this.calculateItemPrice(group as FormGroup);
-    });
-    
-    this.calculateTotalAmount();
-    
-    this.cdr.markForCheck();
   }
 
   // Map item status code to human-readable label using QuotationItemStatus enum

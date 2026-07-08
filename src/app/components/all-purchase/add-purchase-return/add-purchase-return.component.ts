@@ -12,6 +12,7 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { buildProductDisplayName, toProductOptionsList } from '../../../shared/utils/product-display.util';
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { ProductBatchStockService } from '../../../services/product-batch-stock.service';
+import { calculateGstTaxes } from '../../../utils/gst.utils';
 
 @Component({
   selector: 'app-add-purchase-return',
@@ -26,6 +27,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
   isSaving = false;
   purchaseDetails: any;
   products: any[] = [];
+  totalBillDiscountAmount: number = 0;
   private destroy$ = new Subject<void>();
   private productMap: Map<any, any> = new Map();
   private productMapReady = false;
@@ -72,6 +74,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
       purchaseReturnDate: [formatDate(new Date(), 'yyyy-MM-dd', 'en'), Validators.required],
       invoiceNumber: [''],
       packagingAndForwadingCharges: [0, [Validators.required, Validators.min(0)]],
+      totalPurchaseReturnDiscountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       items: this.fb.array([])
     });
   }
@@ -98,6 +101,12 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
     this.itemsFormArray.valueChanges
       .pipe(takeUntil(this.destroy$), debounceTime(150))
       .subscribe(() => this.recalculateAllItemPrices());
+
+    this.returnForm.get('totalPurchaseReturnDiscountPercentage')?.valueChanges
+      .pipe(takeUntil(this.destroy$), debounceTime(150))
+      .subscribe(() => {
+        this.recalculateAllItemPrices();
+      });
 
     this.loadProducts();
     this.loadPurchaseDetails(id);
@@ -281,6 +290,9 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
         discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
         discountAmount: [0, [Validators.min(0)]],
         discountPrice: [{ value: 0, disabled: true }],
+        purchaseReturnDiscountPercentage: [{ value: 0, disabled: true }],
+        purchaseReturnDiscountAmount: [{ value: 0, disabled: true }],
+        totalDiscount: [{ value: 0, disabled: true }],
         taxPercentage: [{ value: 0, disabled: true }],
         taxAmount: [{ value: 0, disabled: true }],
         price: [{ value: 0, disabled: true }]
@@ -329,6 +341,10 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
       this.returnForm.get('packagingAndForwadingCharges')?.setValue(purchaseReturns.packagingAndForwadingCharges);
     }
 
+    if (purchaseReturns.totalPurchaseReturnDiscountPercentage != null) {
+      this.returnForm.get('totalPurchaseReturnDiscountPercentage')?.setValue(purchaseReturns.totalPurchaseReturnDiscountPercentage);
+    }
+
     const itemsByPurchaseItemId = new Map<number, any>();
     (purchaseReturns.items || []).forEach((item: any) => {
       if (item && item.purchaseItemId != null) {
@@ -367,6 +383,9 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
         discountPercentage: discountPct,
         discountAmount: discountAmt,
         discountPrice: existing.discountPrice ?? 0,
+        purchaseReturnDiscountPercentage: existing.purchaseReturnDiscountPercentage ?? existing.purchase_return_discount_percentage ?? 0,
+        purchaseReturnDiscountAmount: existing.purchaseReturnDiscountAmount ?? existing.purchase_return_discount_amount ?? 0,
+        totalDiscount: existing.totalDiscount ?? existing.total_discount ?? 0,
         taxPercentage: existing.taxPercentage ?? group.get('taxPercentage')?.value ?? 0,
         taxAmount: existing.taxAmount ?? 0
       }, { emitEvent: false });
@@ -425,19 +444,45 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
       }
     }
 
-    const discountPrice = Number((subtotal - calculatedDiscountAmount).toFixed(2));
-    const taxAmount = Number((discountPrice * taxPercentage / 100).toFixed(2));
+    const discountPriceAfterItemDisc = Number((subtotal - calculatedDiscountAmount).toFixed(2));
+
+    // Apply bill-level purchase return discount % on after-item-discount price (same as sale)
+    const totalPurchaseReturnDiscountPercentage = Number(this.returnForm.get('totalPurchaseReturnDiscountPercentage')?.value || 0);
+    let purchaseReturnDiscountAmount = 0;
+    let purchaseReturnDiscountPct = 0;
+    if (totalPurchaseReturnDiscountPercentage > 0 && discountPriceAfterItemDisc > 0) {
+      purchaseReturnDiscountPct = totalPurchaseReturnDiscountPercentage;
+      purchaseReturnDiscountAmount = Number((discountPriceAfterItemDisc * totalPurchaseReturnDiscountPercentage / 100).toFixed(2));
+    }
+
+    // Total discount = item discount + purchase return discount
+    const totalDiscount = Number((calculatedDiscountAmount + purchaseReturnDiscountAmount).toFixed(2));
+
+    // Tax on taxable value = after-item-discount minus bill discount
+    const taxableValue = Number((discountPriceAfterItemDisc - purchaseReturnDiscountAmount).toFixed(2));
+    const taxAmount = Number((taxableValue * taxPercentage / 100).toFixed(2));
+
+    // Apply GST split matching backend TaxCalculationUtil
+    const gstSplit = calculateGstTaxes(taxAmount, null);
+    const adjustedTaxAmount = gstSplit.adjustedTaxAmount;
 
     group.patchValue({
       price: subtotal,
       discountAmount: calculatedDiscountAmount,
-      discountPrice,
-      taxAmount
+      purchaseReturnDiscountPercentage: purchaseReturnDiscountPct,
+      purchaseReturnDiscountAmount: purchaseReturnDiscountAmount,
+      totalDiscount: totalDiscount,
+      discountPrice: discountPriceAfterItemDisc,
+      taxAmount: adjustedTaxAmount
     }, { emitEvent: false });
   }
 
   private recalculateAllItemPrices(): void {
     this.itemsFormArray.controls.forEach(c => this.calculateItemPrice(c as FormGroup));
+    this.totalBillDiscountAmount = this.itemsFormArray.controls.reduce(
+      (sum, group) => sum + (Number((group as FormGroup).get('purchaseReturnDiscountAmount')?.value) || 0),
+      0
+    );
   }
 
   isReturnQuantityInvalid(index: number): boolean {
@@ -495,7 +540,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
 
   getGrandTotal(): number {
     const packaging = Number(this.returnForm.get('packagingAndForwadingCharges')?.value || 0);
-    return this.getTotalFinalPrice() + packaging;
+    return Math.round(this.getTotalFinalPrice() + packaging);
   }
 
   // --- Batch Number Autocomplete Methods ---
@@ -609,6 +654,9 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
         const discountPercentage = discountType === 'percentage'
           ? Number(item.discountPercentage || 0)
           : 0;
+        const purchaseReturnDiscountPercentage = Number(item.purchaseReturnDiscountPercentage || 0);
+        const purchaseReturnDiscountAmount = Number(item.purchaseReturnDiscountAmount || 0);
+        const totalDiscount = Number(item.totalDiscount || 0);
         const discountPrice = Number(item.discountPrice) || (subTotal - discountAmount);
         const taxAmount = Number(item.taxAmount || 0);
         const finalPrice = discountPrice + taxAmount;
@@ -620,6 +668,9 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
           price: subTotal,
           discountPercentage,
           discountAmount,
+          purchaseReturnDiscountPercentage,
+          purchaseReturnDiscountAmount,
+          totalDiscount,
           taxPercentage: Number(item.taxPercentage || 0),
           taxAmount,
           sgst: 0,
@@ -645,6 +696,7 @@ export class AddPurchaseReturnComponent implements OnInit, OnDestroy {
       purchaseReturnDate: formatDate(rawValue.purchaseReturnDate, 'dd-MM-yyyy', 'en'),
       invoiceNumber: rawValue.invoiceNumber,
       packagingAndForwadingCharges: Number(rawValue.packagingAndForwadingCharges || 0),
+      totalPurchaseReturnDiscountPercentage: Number(rawValue.totalPurchaseReturnDiscountPercentage || 0),
       price: this.getTotalAmount(),
       discountAmount: this.getTotalDiscountAmount(),
       taxAmount: this.getTotalTaxAmount(),

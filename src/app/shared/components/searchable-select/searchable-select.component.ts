@@ -69,6 +69,9 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
   searchText: string = '';
   isOpen: boolean = false;
 
+  /** Tracks whether a mouse-down event occurred on this component (user-initiated focus). */
+  private focusFromUserInteraction = false;
+
   /** Host class so parent tables can raise z-index while dropdown is open. */
   @HostBinding('class.dropdown-host-open')
   get dropdownHostOpen(): boolean {
@@ -786,6 +789,11 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     return this.elementRef.nativeElement;
   }
 
+  @HostListener('mousedown')
+  private onHostMouseDown(): void {
+    this.focusFromUserInteraction = true;
+  }
+
   private shouldActivateOnFocus(): boolean {
     if (this.bypassTouchGuard) {
       this.bypassTouchGuard = false;
@@ -794,7 +802,11 @@ export class SearchableSelectComponent implements ControlValueAccessor, OnInit, 
     if (this.inputTouchActive) {
       return false;
     }
-    return true;
+    if (this.focusFromUserInteraction) {
+      this.focusFromUserInteraction = false;
+      return true;
+    }
+    return false;
   }
 
   private resetInputTouchState(): void {

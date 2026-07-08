@@ -68,6 +68,18 @@
               Packaging and forwarding charges is required and must be 0 or greater
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="totalPurchaseDiscountPercentage">
+              <i class="fas fa-percent"></i> Purchase Discount %
+            </label>
+            <div class="input-group">
+              <input type="number" id="totalPurchaseDiscountPercentage" formControlName="totalPurchaseDiscountPercentage"
+                class="form-control" min="0" max="100" step="0.01" placeholder="Enter discount percentage"
+                [class.is-invalid]="isFieldInvalid('totalPurchaseDiscountPercentage')">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -284,8 +296,12 @@
           <strong>₹{{ totalAmount | number:'1.2-2' }}</strong>
         </div>
         <div class="summary-item" *ngIf="totalDiscountAmount > 0">
-          <span>Total Discount:</span>
+          <span>Total Item Discount:</span>
           <strong class="discount-amount">-₹{{ totalDiscountAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item" *ngIf="totalBillDiscountAmount > 0">
+          <span>Purchase Discount:</span>
+          <strong class="discount-amount">-₹{{ totalBillDiscountAmount | number:'1.2-2' }}</strong>
         </div>
         <div class="summary-item">
           <span>Tax Amount:</span>
@@ -301,7 +317,7 @@
         </div>
         <div class="summary-item total">
           <span>Grand Total:</span>
-          <strong>₹{{ grandTotal | number:'1.2-2' }}</strong>
+          <strong>₹{{ grandTotal | number:'1.0-0' }}</strong>
         </div>
       </div>
 

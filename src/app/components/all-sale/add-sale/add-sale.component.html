@@ -110,6 +110,25 @@
                 Packaging and forwarding charges is required and must be 0 or greater
               </div>
             </div>
+
+            <div class="form-group">
+              <label for="totalSaleDiscountPercentage">
+                <i class="fas fa-percent"></i> Bill Discount %
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">%</span>
+                <input 
+                  type="number" 
+                  id="totalSaleDiscountPercentage" 
+                  formControlName="totalSaleDiscountPercentage" 
+                  class="form-control"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="Enter bill-level discount %"
+                >
+              </div>
+            </div>
           </div>
         </div>
   
@@ -459,8 +478,12 @@
             <strong>₹{{ saleSummary.totalAmount | number:'1.2-2' }}</strong>
           </div>
           <div class="summary-item" *ngIf="saleSummary.totalDiscountAmount > 0">
-            <span>Total Discount:</span>
+            <span>Item Discount:</span>
             <strong class="discount-amount">-₹{{ saleSummary.totalDiscountAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="summary-item" *ngIf="saleSummary.totalBillDiscountAmount > 0">
+            <span>Bill Discount:</span>
+            <strong class="discount-amount">-₹{{ saleSummary.totalBillDiscountAmount | number:'1.2-2' }}</strong>
           </div>
           <div class="summary-item">
             <span>Tax Amount:</span>
@@ -476,7 +499,7 @@
           </div>
           <div class="summary-item total">
             <span>Grand Total:</span>
-            <strong>₹{{ saleSummary.grandTotal | number:'1.2-2' }}</strong>
+            <strong>₹{{ saleSummary.grandTotal | number:'1.0-0' }}</strong>
           </div>
         </div>
   

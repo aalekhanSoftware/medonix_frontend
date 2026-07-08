@@ -128,33 +128,6 @@
         <div class="products-section" formArrayName="items">
           <div class="products-header">
             <h3><i class="fas fa-boxes"></i> Products</h3>
-            
-            <div class="quotation-discount-wrapper">
-              <!-- <div class="form-group quotation-discount-field">
-                <label for="quotationDiscountPercentage">Quotation Discount {{quotationForm.get('quotationDiscountPercentage')?.value}} %</label>
-                <div class="input-group">
-                  <input 
-                    type="number" 
-                    id="quotationDiscountPercentage"
-                    formControlName="quotationDiscountPercentage" 
-                    class="form-control" 
-                    min="0" 
-                    max="100" 
-                    step="0.01"
-                    [class.is-invalid]="isFieldInvalid('quotationDiscountPercentage')"
-                    (input)="onQuotationDiscountPercentageChange($event)"
-                  >
-                  <span class="input-group-text">%</span>
-                </div>
-                <div class="invalid-feedback" *ngIf="isFieldInvalid('quotationDiscountPercentage')">
-                  Discount must be between 0 and 100
-                </div>
-              </div> -->
-              
-              <button type="button" class="btn btn-sm btn-primary" (click)="addItem()" (touchstart)="$event.stopPropagation()">
-                <i class="fas fa-plus"></i> Add Product
-              </button>
-            </div>
           </div>
   
           <div class="table-responsive">
@@ -172,6 +145,9 @@
                       <th>Disc. %</th>
                       <th>Disc. Amt</th>
                       <th>After Discount</th>
+                      <th>Qtn Disc %</th>
+                      <th>Qtn Disc Amt</th>
+                      <th>Total Disc</th>
                       <th>Remarks</th>
                       <th>Tax</th>
                       <th>Final Price</th>
@@ -352,6 +328,42 @@
                           >
                         </div>
                       </td>
+                      <!-- Quotation Discount % -->
+                      <td>
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            formControlName="quotationDiscountPercentage"
+                            class="form-control discount-price-display"
+                            readonly
+                            title="Quotation discount % from header"
+                          >
+                        </div>
+                      </td>
+                      <!-- Quotation Discount Amount -->
+                      <td>
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            formControlName="quotationDiscountAmount"
+                            class="form-control discount-price-display"
+                            readonly
+                            title="Quotation discount on tax amount"
+                          >
+                        </div>
+                      </td>
+                      <!-- Total Discount -->
+                      <td>
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            formControlName="totalDiscount"
+                            class="form-control discount-price-display"
+                            readonly
+                            title="Total item discount"
+                          >
+                        </div>
+                      </td>
                       <!-- Remarks -->
                       <td>
                         <input type="text" formControlName="remarks" class="form-control" placeholder="Remarks"
@@ -400,6 +412,18 @@
                   <td></td>
                   <td>
                     <div class="input-group">
+                      <input type="number" [value]="totals.quotationDiscountAmount" class="form-control" readonly title="Total quotation discount on tax">
+                    </div>
+                  </td>
+                  <td>
+                    <div class="input-group">
+                      <input type="number" [value]="totals.totalDiscount" class="form-control" readonly title="Total item discount">
+                    </div>
+                  </td>
+                  <td></td>
+                  <td></td>
+                  <td>
+                    <div class="input-group">
                       <input type="number" [value]="totals.tax" class="form-control" readonly title="Total tax">
                     </div>
                   </td>
@@ -444,6 +468,25 @@
             </label>
             <input type="number" formControlName="packagingAndForwadingCharges" class="form-control" min="0" step="0.01">
           </div>
+
+          <div class="form-group w-50">
+            <label for="quotationDiscountPercentage">
+              <i class="fas fa-percent"></i> Quotation Discount %
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">%</span>
+              <input
+                type="number"
+                id="quotationDiscountPercentage"
+                formControlName="quotationDiscountPercentage"
+                class="form-control"
+                min="0"
+                max="100"
+                step="0.01"
+                [class.is-invalid]="isFieldInvalid('quotationDiscountPercentage')"
+              >
+            </div>
+          </div>
         </div>
   
         <!-- Summary Section -->
@@ -452,9 +495,21 @@
             <span>Total Products:</span>
             <strong>{{ itemsFormArray.length }}</strong>
           </div>
+          <div class="summary-item" *ngIf="totals.lineDiscountAmount > 0">
+            <span>Item Discount:</span>
+            <strong class="discount-amount">-₹{{ totals.lineDiscountAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="summary-item" *ngIf="totals.quotationDiscountAmount > 0">
+            <span>Quotation Discount:</span>
+            <strong class="discount-amount">-₹{{ totals.quotationDiscountAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="summary-item">
+            <span>Total Tax:</span>
+            <strong>₹{{ totals.tax | number:'1.2-2' }}</strong>
+          </div>
           <div class="summary-item">
             <span>Total Amount:</span>
-            <strong>{{ totals.finalPrice | number:'1.2-2' }}</strong>
+            <strong>₹{{ totals.finalPrice | number:'1.0-0' }}</strong>
           </div>
         </div>
   

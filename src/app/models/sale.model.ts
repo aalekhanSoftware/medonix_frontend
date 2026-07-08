@@ -21,6 +21,9 @@ export interface Sale {
   taxAmount?: number;
   customerId?: number;
   discountAmount?: number;
+  totalDiscountAmount?: number;
+  totalSaleDiscountAmount?: number;
+  totalSaleDiscountPercentage?: number;
   hasCreditNote?: boolean;
   paymentDoneAmount?: number;
   isFullPaymentDone?: boolean;
@@ -73,6 +76,9 @@ export interface SaleProduct {
   discountPercentage?: number;
   discountAmount?: number;
   discountPrice?: number;
+  saleDiscountPercentage?: number;
+  saleDiscountAmount?: number;
+  totalDiscount?: number;
   taxPercentage: number;
   taxAmount: number;
   batchNumber?: string;

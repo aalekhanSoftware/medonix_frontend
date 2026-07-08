@@ -20,6 +20,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
 import { EncryptionService } from '../../../shared/services/encryption.service';
 import { transformProductsWithDisplayName } from '../../../shared/utils/product-display.util';
 import { focusProductNameSelect, openProductSelectAtRowIndex, runAddRowWithProductSelectFocus } from '../../../shared/utils/product-line-focus.util';
+import { calculateGstTaxes, getCustomerGst } from '../../../utils/gst.utils';
 
 interface ProductForm {
   id?: number | null;
@@ -32,6 +33,9 @@ interface ProductForm {
   discountPercentage: number;
   discountAmount: number;
   discountPrice: number;
+  purchaseDiscountPercentage: number;
+  purchaseDiscountAmount: number;
+  totalDiscount: number;
   taxPercentage: number;
   taxAmount: number;
   remarks: string
@@ -69,6 +73,7 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
   totalAmount: number = 0;
   totalDiscountAmount: number = 0;
   totalTaxAmount: number = 0;
+  totalBillDiscountAmount: number = 0;
   totalAfterDiscountAndTax: number = 0;
   grandTotal: number = 0;
 
@@ -181,6 +186,7 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       purchaseDate: [formatDate(new Date(), 'yyyy-MM-dd', 'en'), Validators.required],
       invoiceNumber: ['', Validators.required],
       packagingAndForwadingCharges: [0, [Validators.required, Validators.min(0)]],
+      totalPurchaseDiscountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       products: this.fb.array([])
     });
 
@@ -193,6 +199,20 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         const packagingCharges = Number(this.purchaseForm.get('packagingAndForwadingCharges')?.value || 0);
         // this.grandTotal = this.totalAmount + this.totalTaxAmount + packagingCharges;
+        this.cdr.markForCheck();
+      });
+
+    // Listen to bill-level discount percentage changes
+    this.purchaseForm.get('totalPurchaseDiscountPercentage')?.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(150)
+      )
+      .subscribe(() => {
+        this.productsFormArray.controls.forEach((group: any) => {
+          this.calculateProductPrice(group);
+        });
+        this.calculateTotalAmount();
         this.cdr.markForCheck();
       });
 
@@ -218,6 +238,9 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       discountAmount: [0, [Validators.min(0)]],
       discountPrice: [{ value: 0, disabled: true }],
+      purchaseDiscountPercentage: [{ value: 0, disabled: true }],
+      purchaseDiscountAmount: [{ value: 0, disabled: true }],
+      totalDiscount: [{ value: 0, disabled: true }],
       taxPercentage: [{ value: 0, disabled: true }],
       taxAmount: [{ value: 0, disabled: true }],
       remarks: [null, []]
@@ -254,6 +277,9 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       discountPercentage: 0,
       discountAmount: 0,
       discountPrice: 0,
+      purchaseDiscountPercentage: 0,
+      purchaseDiscountAmount: 0,
+      totalDiscount: 0,
       taxPercentage: 0,
       taxAmount: 0,
       remarks: null
@@ -421,19 +447,37 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     }
 
     // Calculate discount price (price after discount)
-    const calculatedDiscountPrice = Number((subtotal - calculatedDiscountAmount).toFixed(2));
+    const discountPriceAfterItemDisc = Number((subtotal - calculatedDiscountAmount).toFixed(2));
 
-    // Calculate tax on discounted price (not on original subtotal)
-    const taxAmount = Number((calculatedDiscountPrice * taxPercentage / 100).toFixed(2));
+    // Apply bill-level purchase discount % on after-item-discount price (same as sale)
+    const totalPurchaseDiscountPercentage = Number(this.purchaseForm.get('totalPurchaseDiscountPercentage')?.value || 0);
+    let purchaseDiscountAmount = 0;
+    let purchaseDiscountPercentageVal = 0;
+    if (totalPurchaseDiscountPercentage > 0 && discountPriceAfterItemDisc > 0) {
+      purchaseDiscountPercentageVal = totalPurchaseDiscountPercentage;
+      purchaseDiscountAmount = Number((discountPriceAfterItemDisc * totalPurchaseDiscountPercentage / 100).toFixed(2));
+    }
 
-    // Calculate final price = discountPrice + taxAmount
-    const finalPrice = Number((calculatedDiscountPrice + taxAmount).toFixed(2));
+    // Total discount = item discount + purchase discount
+    const totalDiscount = Number((calculatedDiscountAmount + purchaseDiscountAmount).toFixed(2));
+
+    // Tax on taxable value = after-item-discount minus bill discount
+    const taxableValue = Number((discountPriceAfterItemDisc - purchaseDiscountAmount).toFixed(2));
+    const taxAmount = Number((taxableValue * taxPercentage / 100).toFixed(2));
+
+    // Apply GST split matching backend TaxCalculationUtil
+    const customerGst = getCustomerGst(this.customers, this.purchaseForm.get('customerId')?.value);
+    const gstSplit = calculateGstTaxes(taxAmount, customerGst);
+    const adjustedTaxAmount = gstSplit.adjustedTaxAmount;
 
     group.patchValue({
-      price: subtotal, // Original subtotal before discount
+      price: subtotal,
       discountAmount: calculatedDiscountAmount,
-      discountPrice: calculatedDiscountPrice,
-      taxAmount: taxAmount
+      purchaseDiscountPercentage: purchaseDiscountPercentageVal,
+      purchaseDiscountAmount: purchaseDiscountAmount,
+      totalDiscount: totalDiscount,
+      discountPrice: discountPriceAfterItemDisc,
+      taxAmount: adjustedTaxAmount
     }, { emitEvent: false });
 
     // Total recalculated via productsFormArray.valueChanges debounce (avoids hang with 2000+ rows)
@@ -517,11 +561,11 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
 
   getGrandTotal(): number {
     const packagingCharges = Number(this.purchaseForm.get('packagingAndForwadingCharges')?.value || 0);
-    return this.getTotalFinalPrice() + packagingCharges;
+    return Math.round(this.getTotalFinalPrice() + packagingCharges);
   }
 
   getTotalFinalPrice(): number {
-    // Sum of all items' finalPrice (discountPrice + taxAmount for each item)
+    // Sum of all items' discountPrice + taxAmount for each item
     return this.productsFormArray.controls
       .reduce((total, group: any) => {
         const discountPrice = Number(group.get('discountPrice')?.value || group.get('price')?.value || 0);
@@ -832,11 +876,15 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       discountAmount: this.getTotalDiscountAmount(),
       taxAmount: this.getTotalTaxAmount(),
       packagingAndForwadingCharges: Number(formValue.packagingAndForwadingCharges || 0),
+      totalPurchaseDiscountPercentage: Number(formValue.totalPurchaseDiscountPercentage || 0),
       products: formValue.products.map((product: ProductForm, index: number) => {
         const itemId = this.productsFormArray.at(index).get('id')?.value;
         const price = this.productsFormArray.at(index).get('price')?.value || 0; // Original subtotal
         const discountPercentage = Number(this.productsFormArray.at(index).get('discountPercentage')?.value || 0);
         const discountAmount = Number(this.productsFormArray.at(index).get('discountAmount')?.value || 0);
+        const purchaseDiscountPercentage = Number(this.productsFormArray.at(index).get('purchaseDiscountPercentage')?.value || 0);
+        const purchaseDiscountAmount = Number(this.productsFormArray.at(index).get('purchaseDiscountAmount')?.value || 0);
+        const totalDiscount = Number(this.productsFormArray.at(index).get('totalDiscount')?.value || 0);
         const discountPrice = Number(this.productsFormArray.at(index).get('discountPrice')?.value || price);
         const taxAmount = this.productsFormArray.at(index).get('taxAmount')?.value || 0;
         const item: any = {
@@ -847,6 +895,9 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
           price: price, // Original subtotal before discount
           discountPercentage: discountPercentage,
           discountAmount: discountAmount,
+          purchaseDiscountPercentage: purchaseDiscountPercentage,
+          purchaseDiscountAmount: purchaseDiscountAmount,
+          totalDiscount: totalDiscount,
           taxPercentage: this.productsFormArray.at(index).get('taxPercentage')?.value,
           taxAmount: taxAmount,
           finalPrice: discountPrice + taxAmount, // Final price = discountPrice + tax
@@ -885,25 +936,31 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     this.totalAmount = this.productsFormArray.controls
       .reduce((sum, group: any) => sum + (group.get('price').value || 0), 0);
 
-    // Total discount amount
+    // Total item discount amount
     this.totalDiscountAmount = this.productsFormArray.controls
       .reduce((sum, group: any) => sum + (Number(group.get('discountAmount')?.value || 0)), 0);
+
+    // Total bill-level purchase discount amount
+    this.totalBillDiscountAmount = this.productsFormArray.controls
+      .reduce((sum, group: any) => sum + (Number(group.get('purchaseDiscountAmount')?.value || 0)), 0);
 
     // Total tax amount (calculated on discounted prices)
     this.totalTaxAmount = this.productsFormArray.controls
       .reduce((sum, group: any) => sum + (group.get('taxAmount').value || 0), 0);
 
     const packagingCharges = Number(this.purchaseForm.get('packagingAndForwadingCharges')?.value || 0);
-    // Total after discount & tax = sum of (discountPrice + taxAmount) for all items
+    // Total after discount & tax = sum of (taxableValue + taxAmount) matching sale's getTotalFinalPrice
     this.totalAfterDiscountAndTax = this.productsFormArray.controls
       .reduce((total, group: any) => {
-        const discountPrice = Number(group.get('discountPrice')?.value || group.get('price')?.value || 0);
+        const discountPrice = Number(group.get('discountPrice')?.value || 0);
+        const purchaseDiscountAmount = Number(group.get('purchaseDiscountAmount')?.value || 0);
+        const taxableValue = discountPrice - purchaseDiscountAmount;
         const taxAmount = Number(group.get('taxAmount')?.value || 0);
-        return total + (discountPrice + taxAmount);
+        return total + (taxableValue + taxAmount);
       }, 0);
 
     // Grand total = total after discount & tax + packaging charges
-    this.grandTotal = this.totalAfterDiscountAndTax + packagingCharges;
+    this.grandTotal = Math.round(this.totalAfterDiscountAndTax + packagingCharges);
 
     this.purchaseForm.patchValue({
       price: this.totalAmount,
@@ -973,6 +1030,7 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
       purchaseDate: formatDate(new Date(data.purchaseDate), 'yyyy-MM-dd', 'en'),
       invoiceNumber: data.invoiceNumber,
       packagingAndForwadingCharges: data.packagingAndForwadingCharges || 0,
+      totalPurchaseDiscountPercentage: data.totalPurchaseDiscountPercentage ?? data.total_purchase_discount_percentage ?? 0,
     });
 
     // Clear existing products
@@ -999,6 +1057,9 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
         discountPercentage: discountPercentage,
         discountAmount: discountAmount,
         discountPrice: item.discountPrice || (item.price || 0) - (discountAmount || 0),
+        purchaseDiscountPercentage: item.purchaseDiscountPercentage ?? item.purchase_discount_percentage ?? 0,
+        purchaseDiscountAmount: item.purchaseDiscountAmount ?? item.purchase_discount_amount ?? 0,
+        totalDiscount: item.totalDiscount ?? item.total_discount ?? 0,
         taxPercentage: item.taxPercentage || 0,
         taxAmount: item.taxAmount || 0,
         batchNumber: item.batchNumber || '',

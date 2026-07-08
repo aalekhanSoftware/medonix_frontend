@@ -93,6 +93,26 @@
               Packaging and forwarding charges is required and must be 0 or greater
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="totalSaleReturnDiscountPercentage">
+              <i class="fas fa-percent"></i> Sale Return Discount %
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                id="totalSaleReturnDiscountPercentage" 
+                formControlName="totalSaleReturnDiscountPercentage" 
+                class="form-control"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="Enter discount percentage"
+                [class.is-invalid]="isFieldInvalid('totalSaleReturnDiscountPercentage')"
+              >
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -114,6 +134,12 @@
                 <th>Batch Number</th>
                 <th>Sale Rate</th>
                 <th>Price</th>
+                <th>Discount %</th>
+                <th>Discount Amt</th>
+                <th>Sale Ret Disc %</th>
+                <th>Sale Ret Disc Amt</th>
+                <th>Total Disc</th>
+                <th>After Disc</th>
                 <th>Tax Amount</th>
                 <th>Remarks</th>
                 <th>Actions</th>
@@ -216,6 +242,75 @@
                   <div class="input-group">
                     <input 
                       type="number" 
+                      formControlName="discountPercentage" 
+                      class="form-control"
+                      placeholder="%"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="discountAmount" 
+                      class="form-control"
+                      placeholder="₹"
+                      min="0"
+                      step="0.01"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="saleReturnDiscountPercentage" 
+                      class="form-control"
+                      readonly
+                      title="Sale return discount %"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="saleReturnDiscountAmount" 
+                      class="form-control"
+                      readonly
+                      title="Sale return discount amount"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="totalDiscount" 
+                      class="form-control"
+                      readonly
+                      title="Total discount"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="discountPrice" 
+                      class="form-control"
+                      readonly
+                      title="After discount"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
                       formControlName="taxAmount" 
                       class="form-control"
                       readonly
@@ -261,8 +356,24 @@
           <strong>{{ productsFormArray.length }}</strong>
         </div>
         <div class="summary-item">
-          <span>Total Final Price (Items):</span>
-          <strong>₹{{ (totalAmount + totalTaxAmount) | number:'1.2-2' }}</strong>
+          <span>Subtotal:</span>
+          <strong>₹{{ totalAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item" *ngIf="totalDiscountAmount > 0">
+          <span>Total Item Discount:</span>
+          <strong class="discount-amount">-₹{{ totalDiscountAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item" *ngIf="totalBillDiscountAmount > 0">
+          <span>Sale Return Discount:</span>
+          <strong class="discount-amount">-₹{{ totalBillDiscountAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Tax Amount:</span>
+          <strong>₹{{ totalTaxAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Total After Discount & Tax:</span>
+          <strong>₹{{ getTotalFinalPrice() | number:'1.2-2' }}</strong>
         </div>
         <div class="summary-item">
           <span>Packaging & Forwarding Charges:</span>

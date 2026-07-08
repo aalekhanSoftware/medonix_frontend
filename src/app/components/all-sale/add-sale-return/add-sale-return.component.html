@@ -109,6 +109,26 @@
               Packaging and forwarding charges is required and must be 0 or greater
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="totalSaleReturnDiscountPercentage">
+              <i class="fas fa-percent"></i> {{ 'Sale Return' | txLabel }} Discount %
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                id="totalSaleReturnDiscountPercentage" 
+                formControlName="totalSaleReturnDiscountPercentage" 
+                class="form-control"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="Enter discount percentage"
+                [class.is-invalid]="isFieldInvalid('totalSaleReturnDiscountPercentage')"
+              >
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -133,11 +153,14 @@
                     <th>Batch Number</th>
                     <th>{{ 'Sale Rate' | txLabel }} (₹)</th>
                     <th>Subtotal (₹)</th>
-                    <th>Discount Type</th>
-                    <th>Discount %</th>
-                    <th>Discount Amount</th>
-                    <th>After Discount</th>
-                    <th>Tax Amount</th>
+                      <th>Discount Type</th>
+                      <th>Discount %</th>
+                      <th>Discount Amount</th>
+                      <th>Sale Return Disc %</th>
+                      <th>Sale Return Disc Amt</th>
+                      <th>Total Discount</th>
+                      <th>After Discount</th>
+                      <th>Tax Amount</th>
                     <th>Remarks</th>
                     <th>Actions</th>
                   </tr>
@@ -384,6 +407,39 @@
                   <div class="input-group">
                     <input 
                       type="number" 
+                      formControlName="saleReturnDiscountPercentage" 
+                      class="form-control"
+                      readonly
+                      title="Sale return discount %"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="saleReturnDiscountAmount" 
+                      class="form-control"
+                      readonly
+                      title="Sale return discount amount"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      formControlName="totalDiscount" 
+                      class="form-control"
+                      readonly
+                      title="Total discount (item + sale return)"
+                    >
+                  </div>
+                </td>
+                <td>
+                  <div class="input-group">
+                    <input 
+                      type="number" 
                       formControlName="discountPrice" 
                       class="form-control discount-price-display"
                       readonly
@@ -454,8 +510,12 @@
           <strong>₹{{ totalAmount | number:'1.2-2' }}</strong>
         </div>
         <div class="summary-item" *ngIf="totalDiscountAmount > 0">
-          <span>Total Discount:</span>
+          <span>Total Item Discount:</span>
           <strong class="discount-amount">-₹{{ totalDiscountAmount | number:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-item" *ngIf="totalBillDiscountAmount > 0">
+          <span>{{ 'Sale Return' | txLabel }} Discount:</span>
+          <strong class="discount-amount">-₹{{ totalBillDiscountAmount | number:'1.2-2' }}</strong>
         </div>
         <div class="summary-item">
           <span>Tax Amount:</span>
@@ -471,7 +531,7 @@
         </div>
         <div class="summary-item total">
           <span>Grand Total:</span>
-          <strong>₹{{ grandTotal | number:'1.2-2' }}</strong>
+          <strong>₹{{ grandTotal | number:'1.0-0' }}</strong>
         </div>
       </div>
 

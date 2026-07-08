@@ -7,6 +7,9 @@ export interface PurchaseReturnItemDto {
   discountPercentage?: number;
   discountAmount?: number;
   discountPrice?: number;
+  purchaseReturnDiscountPercentage?: number;
+  purchaseReturnDiscountAmount?: number;
+  totalDiscount?: number;
   taxPercentage: number;
   taxAmount: number;
   sgst?: number;
@@ -26,6 +29,9 @@ export interface StandalonePurchaseReturnProductDto {
   discountPercentage?: number;
   /** When discount type is amount */
   discountAmount?: number;
+  purchaseReturnDiscountPercentage?: number;
+  purchaseReturnDiscountAmount?: number;
+  totalDiscount?: number;
   taxPercentage?: number;
   remarks?: string | null;
   batchNumber?: string | null;
@@ -37,6 +43,7 @@ export interface StandalonePurchaseReturnRequest {
   customerId: number;
   isDiscount: boolean;
   packagingAndForwadingCharges: number;
+  totalPurchaseReturnDiscountPercentage?: number;
   products: StandalonePurchaseReturnProductDto[];
 }
 
@@ -52,6 +59,7 @@ export interface PurchaseReturnCreateDto {
   purchaseReturnDate: string;
   invoiceNumber: string;
   packagingAndForwadingCharges: number;
+  totalPurchaseReturnDiscountPercentage?: number;
   price?: number;
   discountAmount?: number;
   taxAmount?: number;
