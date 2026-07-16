@@ -401,12 +401,11 @@ export class QuotationComponent implements OnInit, OnDestroy {
 
   editQuotation(id: number): void {
     if (!id) return;
-    localStorage.setItem('editQuotationId', this.encryptionService.encrypt(id.toString()));
-    this.router.navigate(['/quotation/create']);
+    const encryptedId = this.encryptionService.encrypt(id.toString());
+    this.router.navigate(['/quotation/edit', encryptedId]);
   }
 
   addQuotation(): void {
-    localStorage.removeItem('editQuotationId');
     this.router.navigate(['/quotation/create']);
   }
 

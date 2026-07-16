@@ -3,7 +3,7 @@ import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pi
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { formatDate } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -112,9 +112,11 @@ export class AddPurchaseChallanComponent implements OnInit, OnDestroy {
     private snackbar: SnackbarService,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private encryptionService: EncryptionService,
     private productBatchStockService: ProductBatchStockService,
-    private cdr: ChangeDetectorRef,
+    private cdr: ChangeDetectorRef
+,
     private txLabel: TransactionLabelService) {
     this.initForm();
   }
@@ -122,12 +124,16 @@ export class AddPurchaseChallanComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadProducts();
     this.loadCustomers();
-    
-    const encryptedId = localStorage.getItem('purchaseChallanId');
+
+    const encryptedId = this.route.snapshot.paramMap.get('id');
     if (encryptedId) {
-      const purchaseChallanId = this.encryptionService.decrypt(encryptedId);
-      if (purchaseChallanId) {
-        this.fetchPurchaseChallanDetails(Number(purchaseChallanId));
+      const decryptedId = this.encryptionService.decrypt(encryptedId);
+      if (decryptedId) {
+        const id = Number(decryptedId);
+        if (!isNaN(id)) {
+          this.isEdit = true;
+          this.fetchPurchaseChallanDetails(id);
+        }
       }
     }
   }
@@ -589,7 +595,6 @@ export class AddPurchaseChallanComponent implements OnInit, OnDestroy {
           next: (response: any) => {
             if (response?.success) {
               this.snackbar.success(this.txLabel.swap(`Purchase Challan ${this.isEdit ? 'updated' : 'created'} successfully`));
-              localStorage.removeItem('purchaseChallanId');
               this.router.navigate(['/purchase-challan']);
             }
             this.loading = false;

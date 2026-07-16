@@ -3,7 +3,7 @@ import { TransactionLabelPipe } from '../../../shared/pipes/transaction-label.pi
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { formatDate } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -155,6 +155,7 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     private snackbar: SnackbarService,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private encryptionService: EncryptionService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
@@ -167,12 +168,16 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
     this.canUnlinkQuotation = this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STAFF_ADMIN]);
     this.loadProducts();
     this.loadCustomers();
-    
-    const encryptedId = localStorage.getItem('purchaseOrderId');
+
+    const encryptedId = this.route.snapshot.paramMap.get('id');
     if (encryptedId) {
-      const purchaseOrderId = this.encryptionService.decrypt(encryptedId);
-      if (purchaseOrderId) {
-        this.fetchPurchaseOrderDetails(Number(purchaseOrderId));
+      const decryptedId = this.encryptionService.decrypt(encryptedId);
+      if (decryptedId) {
+        const id = Number(decryptedId);
+        if (!isNaN(id)) {
+          this.isEdit = true;
+          this.fetchPurchaseOrderDetails(id);
+        }
       }
     }
   }
@@ -641,7 +646,6 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
           next: (response: any) => {
             if (response?.success) {
               this.snackbar.success(this.txLabel.swap(`Purchase Order ${this.isEdit ? 'updated' : 'created'} successfully`));
-              localStorage.removeItem('purchaseOrderId');
               this.router.navigate(['/purchase-order']);
             } else {
               // Backend may return a 200 with success=false (e.g., invalid purchaseId)

@@ -200,8 +200,8 @@ export class SaleComponent implements OnInit, OnDestroy {
   }
 
   editSales(id: number): void {
-    localStorage.setItem('saleId', this.encryptionService.encrypt(id.toString())); // Save the ID to local storage
-    this.router.navigate(['/sale/create']);
+    const encryptedId = this.encryptionService.encrypt(id.toString());
+    this.router.navigate(['/sale/edit', encryptedId]);
   }
 
   addSaleReturn(id: number): void {
@@ -323,7 +323,6 @@ export class SaleComponent implements OnInit, OnDestroy {
   }
 
   clearLocalStorage(): void {
-    localStorage.removeItem('saleId');
     this.router.navigate(['/sale/create']);
   }
 

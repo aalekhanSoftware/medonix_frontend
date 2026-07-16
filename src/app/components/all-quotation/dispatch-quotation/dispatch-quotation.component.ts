@@ -1242,8 +1242,8 @@ export class DispatchQuotationComponent implements OnInit, OnDestroy {
   }
 
   navigateToPurchaseOrder(poId: number): void {
-    localStorage.setItem('purchaseOrderId', this.encryptionService.encrypt(String(poId)));
-    this.router.navigate(['/purchase-order/create']);
+    const encryptedId = this.encryptionService.encrypt(String(poId));
+    this.router.navigate(['/purchase-order/edit', encryptedId]);
   }
 
   viewLinkedPurchaseOrders(): void {

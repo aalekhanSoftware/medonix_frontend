@@ -246,12 +246,11 @@ export class PurchaseComponent implements OnInit, OnDestroy {
 
 
   editPurchase(id: number): void {
-    localStorage.setItem('purchaseId', this.encryptionService.encrypt(id.toString())); // Save the ID to local storage
-    this.router.navigate(['/purchase/create']);
+    const encryptedId = this.encryptionService.encrypt(id.toString());
+    this.router.navigate(['/purchase/edit', encryptedId]);
   }
 
   clearLocalStorage(): void {
-    localStorage.removeItem('purchaseId');
     this.router.navigate(['/purchase/create']);
   }
 

@@ -2,7 +2,7 @@ import { TransactionLabelService } from '../../../shared/services/transaction-la
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, Subscription, debounceTime, distinctUntilChanged, finalize } from 'rxjs';
 import { formatDate } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -665,9 +665,11 @@ export class AddSaleComponent implements OnInit, OnDestroy {
     private snackbar: SnackbarService,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private encryptionService: EncryptionService,
     private productBatchStockService: ProductBatchStockService,
-    private cdr: ChangeDetectorRef,
+    private cdr: ChangeDetectorRef
+,
     private txLabel: TransactionLabelService) {
     this.initForm();
   }
@@ -707,13 +709,17 @@ export class AddSaleComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
     
-    const encryptedId = localStorage.getItem('saleId');
+    const encryptedId = this.route.snapshot.paramMap.get('id');
     if (encryptedId) {
-      const saleId = this.encryptionService.decrypt(encryptedId);
-      if (saleId) {
-        this.isLoadingSaleDetails = true;
-        this.cdr.markForCheck();
-        this.fetchSaleDetails(Number(saleId));
+      const decryptedId = this.encryptionService.decrypt(encryptedId);
+      if (decryptedId) {
+        const id = Number(decryptedId);
+        if (!isNaN(id)) {
+          this.isEdit = true;
+          this.isLoadingSaleDetails = true;
+          this.cdr.markForCheck();
+          this.fetchSaleDetails(id);
+        }
       }
     }
   }
@@ -1443,7 +1449,6 @@ export class AddSaleComponent implements OnInit, OnDestroy {
           next: (response: any) => {
             if (response?.success) {
               this.snackbar.success(this.txLabel.swap(`Sale ${this.isEdit ? 'updated' : 'created'} successfully`));
-              localStorage.removeItem('saleId');
               this.router.navigate(['/sale']);
             }
             this.loading = false;

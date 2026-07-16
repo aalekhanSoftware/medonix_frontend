@@ -233,12 +233,11 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
   }
 
   editPurchaseOrder(id: number): void {
-    localStorage.setItem('purchaseOrderId', this.encryptionService.encrypt(id.toString()));
-    this.router.navigate(['/purchase-order/create']);
+    const encryptedId = this.encryptionService.encrypt(id.toString());
+    this.router.navigate(['/purchase-order/edit', encryptedId]);
   }
 
   clearLocalStorage(): void {
-    localStorage.removeItem('purchaseOrderId');
     this.router.navigate(['/purchase-order/create']);
   }
 
@@ -288,8 +287,8 @@ export class PurchaseOrderComponent implements OnInit, OnDestroy {
               this.loadPurchaseOrders();
               // Optionally navigate to the created purchase
               if (response?.data?.purchaseId) {
-                localStorage.setItem('purchaseId', this.encryptionService.encrypt(response.data.purchaseId.toString()));
-                this.router.navigate(['/purchase/create']);
+                const encryptedId = this.encryptionService.encrypt(response.data.purchaseId.toString());
+                this.router.navigate(['/purchase/edit', encryptedId]);
               }
             } else {
               this.snackbar.error(response?.message || 'Failed to convert purchase order');

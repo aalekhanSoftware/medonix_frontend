@@ -220,12 +220,11 @@ export class PurchaseChallanComponent implements OnInit, OnDestroy {
   }
 
   editPurchaseChallan(id: number): void {
-    localStorage.setItem('purchaseChallanId', this.encryptionService.encrypt(id.toString()));
-    this.router.navigate(['/purchase-challan/create']);
+    const encryptedId = this.encryptionService.encrypt(id.toString());
+    this.router.navigate(['/purchase-challan/edit', encryptedId]);
   }
 
   clearLocalStorage(): void {
-    localStorage.removeItem('purchaseChallanId');
     this.router.navigate(['/purchase-challan/create']);
   }
 
@@ -280,8 +279,8 @@ export class PurchaseChallanComponent implements OnInit, OnDestroy {
               this.loadPurchaseChallans();
               // Optionally navigate to the created purchase
               if (response?.data?.purchaseId) {
-                localStorage.setItem('purchaseId', this.encryptionService.encrypt(response.data.purchaseId.toString()));
-                this.router.navigate(['/purchase/create']);
+                const encryptedId = this.encryptionService.encrypt(response.data.purchaseId.toString());
+                this.router.navigate(['/purchase/edit', encryptedId]);
               }
             } else {
               this.snackbar.error(response?.message || 'Failed to convert purchase challan');

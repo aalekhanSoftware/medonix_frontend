@@ -267,8 +267,8 @@ export class PurchaseOrderItemPendingComponent implements OnInit, OnDestroy {
 
   editPurchaseOrder(orderId: number): void {
     if (!orderId) return;
-    localStorage.setItem('purchaseOrderId', this.encryptionService.encrypt(orderId.toString()));
-    this.router.navigate(['/purchase-order/create']);
+    const encryptedId = this.encryptionService.encrypt(orderId.toString());
+    this.router.navigate(['/purchase-order/edit', encryptedId]);
   }
 
   sanitizeHtml(html: string): SafeHtml {

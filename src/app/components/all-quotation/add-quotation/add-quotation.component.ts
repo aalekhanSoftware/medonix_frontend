@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormControl, AbstractControl, ValidatorFn, ValidationErrors, FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, Subscription, finalize, debounceTime, filter, distinctUntilChanged } from 'rxjs';
 import { formatDate } from '@angular/common';
 import { Dialog, DialogRef } from '@angular/cdk/dialog';
@@ -147,6 +147,7 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
     private snackbar: SnackbarService,
     private encryptionService: EncryptionService,
     private router: Router,
+    private route: ActivatedRoute,
     private dialog: Dialog,
     private cdr: ChangeDetectorRef
   ) {
@@ -1026,30 +1027,31 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
   }
 
   private checkForEdit(): void {
-    const encryptedId = localStorage.getItem('editQuotationId');
-
+    const encryptedId = this.route.snapshot.paramMap.get('id');
     if (!encryptedId) {
       return;
     }
 
     try {
-      const quotationId = this.encryptionService.decrypt(encryptedId);
+      const decryptedId = this.encryptionService.decrypt(encryptedId);
+      if (!decryptedId) {
+        return;
+      }
 
-      if (!quotationId) {
-        localStorage.removeItem('editQuotationId');
+      const quotationId = parseInt(decryptedId);
+      if (isNaN(quotationId)) {
         return;
       }
 
       this.isLoading = true;
       this.loading = true;
-      this.quotationService.getQuotationDetail(parseInt(quotationId))
+      this.quotationService.getQuotationDetail(quotationId)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
         next: (response) => {
           if (response) {
-            this.quotationId = parseInt(quotationId);
+            this.quotationId = quotationId;
             this.isEdit = true;
-            // console.log('edit response >>',response.data)
             this.populateForm(response.data);
           }
           this.isLoading = false;
@@ -1061,13 +1063,11 @@ export class AddQuotationComponent implements OnInit, OnDestroy {
           this.snackbar.error('Failed to load quotation details');
           this.isLoading = false;
           this.loading = false;
-          localStorage.removeItem('editQuotationId');
           this.cdr.markForCheck();
         }
       });
     } catch (error) {
       console.error('Decryption error:', error);
-      localStorage.removeItem('editQuotationId');
     }
   }
 

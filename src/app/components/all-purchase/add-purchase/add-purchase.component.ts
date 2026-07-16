@@ -4,7 +4,7 @@ import { SerialNumberPipe } from '../../../shared/pipes/serial-number.pipe';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ViewChildren, QueryList, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { formatDate } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -135,8 +135,10 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     private snackbar: SnackbarService,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private encryptionService: EncryptionService,
-    private cdr: ChangeDetectorRef,
+    private cdr: ChangeDetectorRef
+,
     private txLabel: TransactionLabelService) {
     this.initForm();
   }
@@ -145,11 +147,15 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
     this.loadProducts();
     this.loadCustomers();
 
-    const encryptedId = localStorage.getItem('purchaseId');
+    const encryptedId = this.route.snapshot.paramMap.get('id');
     if (encryptedId) {
-      const purchaseId = this.encryptionService.decrypt(encryptedId);
-      if (purchaseId) {
-        this.fetchPurchaseDetails(Number(purchaseId));
+      const decryptedId = this.encryptionService.decrypt(encryptedId);
+      if (decryptedId) {
+        const id = Number(decryptedId);
+        if (!isNaN(id)) {
+          this.isEdit = true;
+          this.fetchPurchaseDetails(id);
+        }
       }
     }
   }
@@ -847,7 +853,6 @@ export class AddPurchaseComponent implements OnInit, OnDestroy {
           next: (response: any) => {
             if (response?.success) {
               this.snackbar.success(this.txLabel.swap(`Purchase ${this.isEdit ? 'updated' : 'created'} successfully`));
-              localStorage.removeItem('purchaseId');
               this.router.navigate(['/purchase']);
             }
             this.loading = false;
