@@ -675,8 +675,13 @@ export class AddPurchaseOrderComponent implements OnInit, OnDestroy {
       formValue.purchaseId === null || formValue.purchaseId === undefined || formValue.purchaseId === ''
         ? null
         : Number(formValue.purchaseId);
+
+    // Add 1 day to orderDate before sending to API
+    const orderDate = formValue.orderDate ? new Date(formValue.orderDate) : new Date();
+    orderDate.setDate(orderDate.getDate() + 1);
+
     const data: any = {
-      orderDate: formatDate(formValue.orderDate, 'dd-MM-yyyy', 'en'),
+      orderDate: formatDate(orderDate, 'dd-MM-yyyy', 'en'),
       customerId: formValue.customerId,
       purchaseId: purchaseId,
       invoiceNumber: formValue.invoiceNumber,
