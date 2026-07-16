@@ -261,6 +261,13 @@ export class PurchaseReturnListComponent implements OnInit, OnDestroy {
       });
   }
 
+  getRoute(item: any): string[] {
+    if (item.purchaseId != null) {
+      return ['/purchase/return', this.encryptionService.encrypt(item.purchaseId.toString())];
+    }
+    return ['/purchase/standalone-purchase-return', this.encryptionService.encrypt(item.id.toString())];
+  }
+
   viewDetails(id: number): void {
     const encryptedId = this.encryptionService.encrypt(id.toString());
     this.router.navigate(['/purchase/return', encryptedId]);

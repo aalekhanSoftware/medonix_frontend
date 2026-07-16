@@ -275,6 +275,10 @@ export class SaleReturnListComponent implements OnInit, OnDestroy {
   }
 
 
+  getEditRoute(id: number): string[] {
+    return ['/sale/return', this.encryptionService.encrypt(id.toString())];
+  }
+
   viewDetails(id: number | undefined): void {
     if (!id) {
       this.snackbar.error(this.txLabel.swap('Sale return ID is not available'));

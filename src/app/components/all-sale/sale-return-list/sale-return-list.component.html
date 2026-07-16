@@ -135,15 +135,13 @@
                 aria-label="Export sale return as PDF">
                 <i class="fas fa-file-pdf" aria-hidden="true"></i>
               </button>
-              <button 
+              <a 
                 *ngIf="canManagePurchases"
-                class="btn-icon edit" 
-                (click)="viewDetails(saleReturn?.id)"
-                [disabled]="!saleReturn?.id"
-                (touchstart)="$event.stopPropagation()"
-                aria-label="View sale return details">
+                class="btn-icon edit"
+                aria-label="View sale return details"
+                [routerLink]="saleReturn?.id ? getEditRoute(saleReturn.id) : null">
                 <i class="fas fa-eye" aria-hidden="true"></i>
-              </button>
+              </a>
               <button 
                 *ngIf="canManagePurchases"
                 class="btn-icon delete" 

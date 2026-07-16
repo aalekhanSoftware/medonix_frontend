@@ -69,11 +69,11 @@
               </span>
             </td>
             <td class="actions">
-              <button *ngIf="canManagePurchaseChallans" class="btn-icon edit"
-                (click)="editPurchaseChallan(purchaseChallan.id!)" title="Edit {{ 'Purchase Challan' | txLabel }}"
-  >
+              <a *ngIf="canManagePurchaseChallans" class="btn-icon edit"
+                [routerLink]="getEditRoute(purchaseChallan.id!)"
+                title="Edit {{ 'Purchase Challan' | txLabel }}">
                 <i class="fas fa-eye"></i>
-              </button>
+              </a>
               <button *ngIf="canManagePurchaseChallans" class="btn-icon pdf"
                 (click)="generatePdf(purchaseChallan.id!, purchaseChallan.invoiceNumber)" title="Export PDF"
   >

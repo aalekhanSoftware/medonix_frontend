@@ -147,13 +147,13 @@
                 >
                   <i class="fas" [ngClass]="quotation.isPrinting ? 'fa-spinner fa-spin' : ' fa-file-pdf'"></i>
                 </button> -->
-                <button *ngIf="canEditQuotation()"
-                  class="btn-icon edit" 
-                  (click)="editQuotation(quotation.id!)"
+                <a *ngIf="canEditQuotation()"
+                  class="btn-icon edit"
+                  [routerLink]="getEditRoute(quotation.id!)"
                   title="Edit quotation"
                 >
                   <i class="fas fa-edit"></i>
-                </button>
+                </a>
                 <button *ngIf="canDispatchQuotation()"
                   class="btn-icon edit" 
                   (click)="dispatchQuotation(quotation.id!)"

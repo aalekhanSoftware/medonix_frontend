@@ -245,6 +245,10 @@ export class PurchaseComponent implements OnInit, OnDestroy {
   }
 
 
+  getEditRoute(id: number): string[] {
+    return ['/purchase/edit', this.encryptionService.encrypt(id.toString())];
+  }
+
   editPurchase(id: number): void {
     const encryptedId = this.encryptionService.encrypt(id.toString());
     this.router.navigate(['/purchase/edit', encryptedId]);

@@ -399,6 +399,10 @@ export class QuotationComponent implements OnInit, OnDestroy {
     }
   }
 
+  getEditRoute(id: number): string[] {
+    return ['/quotation/edit', this.encryptionService.encrypt(id.toString())];
+  }
+
   editQuotation(id: number): void {
     if (!id) return;
     const encryptedId = this.encryptionService.encrypt(id.toString());

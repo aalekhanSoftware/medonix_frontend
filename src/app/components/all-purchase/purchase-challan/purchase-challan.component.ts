@@ -219,6 +219,10 @@ export class PurchaseChallanComponent implements OnInit, OnDestroy {
     this.loadPurchaseChallans();
   }
 
+  getEditRoute(id: number): string[] {
+    return ['/purchase-challan/edit', this.encryptionService.encrypt(id.toString())];
+  }
+
   editPurchaseChallan(id: number): void {
     const encryptedId = this.encryptionService.encrypt(id.toString());
     this.router.navigate(['/purchase-challan/edit', encryptedId]);

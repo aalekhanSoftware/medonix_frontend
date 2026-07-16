@@ -80,10 +80,10 @@
             </td>
             <td>{{ purchaseOrder.totalOrderAmount ?? 0 }}</td>
             <td class="actions">
-              <button *ngIf="canManagePurchaseOrders" class="btn-icon edit"
-                (click)="editPurchaseOrder(purchaseOrder.id!)" title="Edit {{ 'Purchase Order' | txLabel }}">
+              <a *ngIf="canManagePurchaseOrders" class="btn-icon edit"
+                [routerLink]="getEditRoute(purchaseOrder.id!)" title="Edit {{ 'Purchase Order' | txLabel }}">
                 <i class="fas fa-eye"></i>
-              </button>
+              </a>
               <button *ngIf="canManagePurchaseOrders" class="btn-icon pdf"
                 (click)="generatePdf(purchaseOrder.id!, purchaseOrder.invoiceNumber)" title="Export PDF">
                 <i class="fas fa-file-pdf"></i>

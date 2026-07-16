@@ -116,14 +116,13 @@
               </span>
             </td>
             <td class="actions" data-label="Actions" *ngIf="canManagePurchases || isDealerUser">
-              <button 
+              <a 
                 *ngIf="canManagePurchases"
-                class="btn-icon edit" 
-                (click)="editPurchase(purchase.id!)"
-                (touchstart)="$event.stopPropagation()"
-                [attr.aria-label]="'View purchase details' | txLabel">
+                class="btn-icon edit"
+                aria-label="View purchase details"
+                [routerLink]="getEditRoute(purchase.id!)">
                 <i class="fas fa-eye" aria-hidden="true"></i>
-              </button>
+              </a>
               <button 
                 *ngIf="canManagePurchases"
                 class="btn-icon pdf"

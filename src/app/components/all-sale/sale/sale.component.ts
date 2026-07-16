@@ -199,6 +199,10 @@ export class SaleComponent implements OnInit, OnDestroy {
       });
   }
 
+  getEditRoute(id: number): string[] {
+    return ['/sale/edit', this.encryptionService.encrypt(id.toString())];
+  }
+
   editSales(id: number): void {
     const encryptedId = this.encryptionService.encrypt(id.toString());
     this.router.navigate(['/sale/edit', encryptedId]);
