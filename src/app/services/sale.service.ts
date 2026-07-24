@@ -16,6 +16,10 @@ export class SaleService {
     return this.http.post<SaleResponse>(`${this.apiUrl}/searchSale`, params);
   }
 
+  searchSaleBillsByProduct(params: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/searchSaleByProduct`, params);
+  }
+
   createSale(sale: Sale): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, sale);
   }

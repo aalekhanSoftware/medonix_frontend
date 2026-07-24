@@ -10,6 +10,7 @@ import { SaleComponent } from './sale/sale.component';
 import { AddSaleComponent } from './add-sale/add-sale.component';
 import { AddSaleReturnComponent } from './add-sale-return/add-sale-return.component';
 import { SaleReturnListComponent } from './sale-return-list/sale-return-list.component';
+import { SaleBillByProductComponent } from './sale-bill-by-product/sale-bill-by-product.component';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { SaleProductSelectComponent } from './shared/sale-product-select/sale-product-select.component';
@@ -18,13 +19,15 @@ import { RoundPipe } from '../../round.pipe';
 import { SaleModalComponent } from '../sale-modal/sale-modal.component';
 import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 import { SerialNumberPipe } from '../../shared/pipes/serial-number.pipe';
+import { IndianNumberPipe } from '../../shared/pipes/indian-number.pipe';
 
 @NgModule({
   declarations: [
     SaleComponent,
     AddSaleComponent,
     AddSaleReturnComponent,
-    SaleReturnListComponent
+    SaleReturnListComponent,
+    SaleBillByProductComponent
   ],
   imports: [
     CommonModule,
@@ -41,7 +44,8 @@ import { SerialNumberPipe } from '../../shared/pipes/serial-number.pipe';
     RoundPipe,
     SaleModalComponent,
     TransactionLabelPipe,
-    SerialNumberPipe
+    SerialNumberPipe,
+    IndianNumberPipe
   ]
 })
 export class SaleModule { }

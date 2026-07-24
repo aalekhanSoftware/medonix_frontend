@@ -279,7 +279,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   isTransactionActive(): boolean {
     const currentUrl = this.router.url;
-    return ['/purchase', '/purchase-challan', '/sale', '/profit', '/daily-profit', '/transaction/reports', '/transaction/chart', '/transaction/unpaid-sales'].some(path => 
+    return ['/purchase', '/purchase-challan', '/sale', '/profit', '/daily-profit', '/transaction/reports', '/transaction/chart', '/transaction/unpaid-sales', '/sale/by-product'].some(path => 
       currentUrl.includes(path)
     );
   }
