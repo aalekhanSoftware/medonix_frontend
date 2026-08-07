@@ -37,6 +37,7 @@ export interface Product {
   remainingQuantity?: number;
   purchaseAmount?: number;
   saleAmount?: number;
+  mrp?: number;
   measurement?: string;
   status: 'A' | 'I';
   blockedQuantity?: number;
