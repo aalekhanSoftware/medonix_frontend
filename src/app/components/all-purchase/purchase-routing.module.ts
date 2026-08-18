@@ -6,9 +6,11 @@ import { QcPurchaseComponent } from './qc-purchase/qc-purchase.component';
 import { AddPurchaseReturnComponent } from './add-purchase-return/add-purchase-return.component';
 import { AddStandalonePurchaseReturnComponent } from './add-standalone-purchase-return/add-standalone-purchase-return.component';
 import { PurchaseReturnListComponent } from './purchase-return-list/purchase-return-list.component';
+import { PurchaseBillByProductComponent } from './purchase-bill-by-product/purchase-bill-by-product.component';
 
 const routes: Routes = [
   { path: '', component: PurchaseComponent },
+  { path: 'by-product', component: PurchaseBillByProductComponent },
   { path: 'create', component: AddPurchaseComponent },
   { path: 'edit/:id', component: AddPurchaseComponent },
   { path: 'qc/:id', component: QcPurchaseComponent },

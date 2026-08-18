@@ -27,6 +27,51 @@ export class DateUtils {
     }
   }
 
+  formatDateTime(dateString: string): string {
+    if (!dateString) return '';
+
+    const trimmed = dateString.trim();
+    if (!trimmed) return '';
+
+    let date: Date | null = null;
+    let hasTime = /[:T]/.test(trimmed);
+
+    const asDate = new Date(trimmed);
+    if (!isNaN(asDate.getTime())) {
+      date = asDate;
+    } else {
+      // DD-MM-YYYY or DD/MM/YYYY with optional HH:mm:ss
+      const dmy = trimmed.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+      if (dmy) {
+        const [, dd, mm, yyyy, hh, min, ss] = dmy;
+        hasTime = hasTime || !!hh;
+        date = new Date(+yyyy, +mm - 1, +dd, +(hh || 0), +(min || 0), +(ss || 0));
+      } else {
+        // YYYY-MM-DD with optional HH:mm:ss (space separator)
+        const ymd = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (ymd) {
+          const [, yyyy, mm, dd, hh, min, ss] = ymd;
+          hasTime = hasTime || !!hh;
+          date = new Date(+yyyy, +mm - 1, +dd, +(hh || 0), +(min || 0), +(ss || 0));
+        }
+      }
+    }
+
+    if (!date || isNaN(date.getTime())) return trimmed;
+
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mon = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const datePart = `${dd}-${mon}-${yyyy}`;
+
+    if (!hasTime) return datePart;
+
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    return `${datePart} ${hh}:${min}:${ss}`;
+  }
+
   formatDateForApi(dateStr: string, isStartDate: boolean = false): string {
     if (!dateStr) return '';
     

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { SaleService } from '../../../services/sale.service';
-import { Sale } from '../../../models/sale.model';
+import { PurchaseService } from '../../../services/purchase.service';
+import { Purchase } from '../../../models/purchase.model';
 import { ProductService } from '../../../services/product.service';
 import { CustomerService } from '../../../services/customer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
@@ -12,14 +12,14 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-sale-bill-by-product',
+  selector: 'app-purchase-bill-by-product',
   standalone: false,
-  templateUrl: './sale-bill-by-product.component.html',
-  styleUrl: './sale-bill-by-product.component.scss',
+  templateUrl: './purchase-bill-by-product.component.html',
+  styleUrl: './purchase-bill-by-product.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SaleBillByProductComponent implements OnInit, OnDestroy {
-  sales: Sale[] = [];
+export class PurchaseBillByProductComponent implements OnInit, OnDestroy {
+  purchases: Purchase[] = [];
   searchForm!: FormGroup;
   isLoading = false;
 
@@ -35,13 +35,13 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
   isLoadingProducts = false;
   customers: any[] = [];
   isLoadingCustomers = false;
-  canManageSales = false;
+  canManagePurchases = false;
   isDealerUser = false;
   exportingPdfId: number | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
-    private saleService: SaleService,
+    private purchaseService: PurchaseService,
     private productService: ProductService,
     private customerService: CustomerService,
     private fb: FormBuilder,
@@ -55,10 +55,10 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.canManageSales = this.authService.isAdmin() || this.authService.isStaffAdmin();
+    this.canManagePurchases = this.authService.isAdmin() || this.authService.isStaffAdmin();
     this.isDealerUser = this.authService.hasRole(UserRole.DEALER);
     this.loadProducts();
-    if (this.canManageSales) {
+    if (this.canManagePurchases) {
       this.loadCustomers();
     }
   }
@@ -79,13 +79,13 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
       return;
     }
     this.currentPage = 0;
-    this.loadSales();
+    this.loadPurchases();
   }
 
   resetForm(): void {
     this.searchForm.reset();
     this.currentPage = 0;
-    this.sales = [];
+    this.purchases = [];
     this.totalPages = 0;
     this.totalElements = 0;
     this.cdr.markForCheck();
@@ -93,13 +93,13 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number): void {
     this.currentPage = page;
-    this.loadSales();
+    this.loadPurchases();
   }
 
   onPageSizeChange(newSize: number): void {
     this.pageSize = newSize;
     this.currentPage = 0;
-    this.loadSales();
+    this.loadPurchases();
   }
 
   private mapProducts(products: any[]): any[] {
@@ -149,7 +149,7 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
   }
 
   private loadCustomers(): void {
-    if (!this.canManageSales) {
+    if (!this.canManagePurchases) {
       return;
     }
     this.isLoadingCustomers = true;
@@ -170,7 +170,7 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadSales(): void {
+  loadPurchases(): void {
     const productId = this.searchForm.value.productId;
     if (!productId) {
       return;
@@ -197,11 +197,11 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
       params.endDate = this.dateUtils.formatDate(formValue.endDate);
     }
 
-    this.saleService.searchSaleBillsByProduct(params)
+    this.purchaseService.searchPurchaseBillsByProduct(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          this.sales = response.content;
+          this.purchases = response.content;
           this.totalPages = response.totalPages;
           this.totalElements = response.totalElements;
           this.startIndex = this.currentPage * this.pageSize;
@@ -210,7 +210,7 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (error) => {
-          this.snackbar.error(error.error?.message || 'Failed to load sale bills');
+          this.snackbar.error(error.error?.message || 'Failed to load purchase bills');
           this.isLoading = false;
           this.cdr.markForCheck();
         }
@@ -223,7 +223,7 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
     }
     this.exportingPdfId = id;
     this.cdr.markForCheck();
-    this.saleService.generatePdf(id)
+    this.purchaseService.generatePdf(id)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -233,7 +233,7 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: ({ blob, filename }) => {
-          const pdfFilename = invoiceNumber ? `sale-${invoiceNumber}.pdf` : filename;
+          const pdfFilename = invoiceNumber ? `purchase-${invoiceNumber}.pdf` : filename;
           this.downloadFile(blob, pdfFilename);
           this.snackbar.success('PDF downloaded successfully');
         },
@@ -255,7 +255,7 @@ export class SaleBillByProductComponent implements OnInit, OnDestroy {
   }
 
   getEditRoute(id: number): string[] {
-    return ['/sale/edit', this.encryptionService.encrypt(id.toString())];
+    return ['/purchase/edit', this.encryptionService.encrypt(id.toString())];
   }
 
   formatDate(date: string): string {

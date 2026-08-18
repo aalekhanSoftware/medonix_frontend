@@ -11,18 +11,21 @@ import { QcPurchaseComponent } from './qc-purchase/qc-purchase.component';
 import { AddPurchaseReturnComponent } from './add-purchase-return/add-purchase-return.component';
 import { AddStandalonePurchaseReturnComponent } from './add-standalone-purchase-return/add-standalone-purchase-return.component';
 import { PurchaseReturnListComponent } from './purchase-return-list/purchase-return-list.component';
+import { PurchaseBillByProductComponent } from './purchase-bill-by-product/purchase-bill-by-product.component';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { TransactionLabelPipe } from '../../shared/pipes/transaction-label.pipe';
 import { SerialNumberPipe } from '../../shared/pipes/serial-number.pipe';
+import { IndianNumberPipe } from '../../shared/pipes/indian-number.pipe';
 
 @NgModule({
   declarations: [
     QcPurchaseComponent,
     AddPurchaseReturnComponent,
     AddStandalonePurchaseReturnComponent,
-    PurchaseReturnListComponent
+    PurchaseReturnListComponent,
+    PurchaseBillByProductComponent
   ],
   imports: [
     CommonModule,
@@ -34,7 +37,8 @@ import { SerialNumberPipe } from '../../shared/pipes/serial-number.pipe';
     SearchableSelectComponent,
     PaginationComponent,
     TransactionLabelPipe,
-    SerialNumberPipe
+    SerialNumberPipe,
+    IndianNumberPipe
   ]
 })
 export class PurchaseModule { }

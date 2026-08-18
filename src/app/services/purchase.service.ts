@@ -19,6 +19,10 @@ export class PurchaseService {
     return this.http.post<PurchaseResponse>(`${this.apiUrl}/searchPurchase`, params);
   }
 
+  searchPurchaseBillsByProduct(params: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/searchPurchaseByProduct`, params);
+  }
+
   /**
    * Recent purchases for quick selection (append PO items into an existing Purchase).
    * API: `GET /api/purchases/last-6-months`

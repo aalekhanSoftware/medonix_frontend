@@ -38,7 +38,7 @@
             <i class="fas fa-th-large"></i> Master
             <i class="fas fa-chevron-down"></i>
           </a>
-          <ul class="dropdown-menu" [class.show]="showMasterMenu">
+          <ul class="dropdown-menu" [class.show]="showMasterMenu" [ngStyle]="dropdownStyles['master']">
             <li *ngIf="permissions.canViewCategory">
               <a routerLink="/category" routerLinkActive="active" (click)="closeAllMenus()">
                 <i class="fas fa-tags"></i> Category
@@ -114,7 +114,7 @@
             <i class="fas fa-exchange-alt"></i> Transaction
             <i class="fas fa-chevron-down"></i>
           </a>
-          <ul class="dropdown-menu" [class.show]="showTransactionMenu">
+          <ul class="dropdown-menu" [class.show]="showTransactionMenu" [ngStyle]="dropdownStyles['transaction']">
             <li *ngIf="permissions.canViewPurchase || permissions.canViewSale">
               <a routerLink="/transaction/reports" routerLinkActive="active" (click)="closeAllMenus()">
                 <i class="fas fa-chart-bar"></i> Reports
@@ -134,6 +134,11 @@
               <a routerLink="/purchase" routerLinkActive="active" (click)="closeAllMenus()">
                 <i class="fas fa-shopping-cart"></i> {{ 'Purchase' | txLabel }}
               </a>  
+            </li>
+            <li *ngIf="permissions.canViewPurchase">
+              <a routerLink="/purchase/by-product" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-box"></i> Purchase By Product
+              </a>
             </li>
             <li *ngIf="permissions.canViewPurchase">
               <a routerLink="/purchase-challan" routerLinkActive="active" (click)="closeAllMenus()">
@@ -189,7 +194,7 @@
             <i class="fas fa-exchange-alt"></i> Dispatch Order
             <i class="fas fa-chevron-down"></i>
           </a>
-          <ul class="dropdown-menu" [class.show]="showDispatchQuotationMenu">            
+          <ul class="dropdown-menu" [class.show]="showDispatchQuotationMenu" [ngStyle]="dropdownStyles['dispatchQuotation']">            
             <li *ngIf="permissions.canViewQuotation">
               <a routerLink="/quotation" routerLinkActive="active" (click)="closeAllMenus()">
                 <i class="fas fa-hand-holding-usd"></i> Order

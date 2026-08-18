@@ -23,6 +23,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isMobileMenuOpen: boolean = false;
   clientName: string = '';
   clientLogoImage: string | null = null;
+  dropdownStyles: { [key: string]: any } = {};
   private authSubscription: Subscription;
   private destroy$ = new Subject<void>();
   permissions: MenuPermissions = {
@@ -199,6 +200,38 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(): void {
+    if (this.showMasterMenu || this.showTransactionMenu || this.showQuotationMenu ||
+        this.showDispatchQuotationMenu || this.showEmployeeMenu || this.showPendingItemMenu) {
+      this.closeAllMenus();
+    }
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onWindowResize(): void {
+    if (this.showMasterMenu || this.showTransactionMenu || this.showQuotationMenu ||
+        this.showDispatchQuotationMenu || this.showEmployeeMenu || this.showPendingItemMenu) {
+      this.closeAllMenus();
+    }
+  }
+
+  private positionDropdown(key: string, event: Event): void {
+    const anchor = event.currentTarget as HTMLElement;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const menuWidth = 240;
+    const spacing = 4;
+    let left = rect.left;
+    if (left + menuWidth > window.innerWidth - spacing) {
+      left = Math.max(spacing, window.innerWidth - menuWidth - spacing);
+    }
+    this.dropdownStyles[key] = {
+      top: `${rect.bottom + spacing}px`,
+      left: `${left}px`
+    };
+  }
+
   toggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
@@ -206,6 +239,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleMasterMenu(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    this.positionDropdown('master', event);
     this.showMasterMenu = !this.showMasterMenu;
     this.showTransactionMenu = false;
     this.showQuotationMenu = false;
@@ -217,6 +251,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleTransactionMenu(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    this.positionDropdown('transaction', event);
     this.showTransactionMenu = !this.showTransactionMenu;
     this.showMasterMenu = false;
     this.showQuotationMenu = false;
@@ -228,6 +263,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleQuotationMenu(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    this.positionDropdown('quotation', event);
     this.showQuotationMenu = !this.showQuotationMenu;
     this.showMasterMenu = false;
     this.showTransactionMenu = false;
@@ -239,6 +275,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleDispatchQuotationMenu(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    this.positionDropdown('dispatchQuotation', event);
     this.showDispatchQuotationMenu = !this.showDispatchQuotationMenu;
     this.showMasterMenu = false;
     this.showTransactionMenu = false;
@@ -250,6 +287,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleEmployeeMenu(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    this.positionDropdown('employee', event);
     this.showEmployeeMenu = !this.showEmployeeMenu;
     this.showMasterMenu = false;
     this.showTransactionMenu = false;
@@ -279,7 +317,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   isTransactionActive(): boolean {
     const currentUrl = this.router.url;
-    return ['/purchase', '/purchase-challan', '/sale', '/profit', '/daily-profit', '/transaction/reports', '/transaction/chart', '/transaction/unpaid-sales', '/sale/by-product'].some(path => 
+    return ['/purchase', '/purchase/by-product', '/purchase-challan', '/sale', '/profit', '/daily-profit', '/transaction/reports', '/transaction/chart', '/transaction/unpaid-sales', '/sale/by-product'].some(path => 
       currentUrl.includes(path)
     );
   }
