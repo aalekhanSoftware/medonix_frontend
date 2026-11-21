@@ -108,4 +108,26 @@ export class ProductService {
       responseType: 'blob'
     });
   }
+
+  exportProductsExcel(params: any): Observable<{ blob: Blob; filename: string }> {
+    return this.http.post(`${this.apiUrl}/export-excel`, params, {
+      responseType: 'blob',
+      observe: 'response'
+    }).pipe(
+      map(response => {
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filename = contentDisposition?.split('filename=')[1]?.replace(/"/g, '') || 'products.xlsx';
+        const blob = new Blob([response.body!], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        return { blob, filename };
+      })
+    );
+  }
+
+  importStockExcel(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<any>(`${this.apiUrl}/import-stock-excel`, formData);
+  }
 }

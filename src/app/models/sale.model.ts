@@ -27,6 +27,8 @@ export interface Sale {
   hasCreditNote?: boolean;
   paymentDoneAmount?: number;
   isFullPaymentDone?: boolean;
+  doctorName?: string;
+  patientName?: string;
   products?: SaleProduct[];
 }
 

@@ -764,7 +764,9 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       totalSaleDiscountPercentage: [0, [Validators.min(0), Validators.max(100)]],
       products: this.fb.array([]),
       isBlack: [false, Validators.required],
-      packagingAndForwadingCharges: [0, [Validators.required, Validators.min(0)]]
+      packagingAndForwadingCharges: [0, [Validators.required, Validators.min(0)]],
+      doctorName: [''],
+      patientName: ['']
     });
 
     // Add initial product form group
@@ -1482,6 +1484,8 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       packagingAndForwadingCharges: Number(formValue.packagingAndForwadingCharges || 0),
       totalAmount: this.getGrandTotal(),
       isBlack: Boolean(formValue.isBlack),
+      doctorName: formValue.doctorName || '',
+      patientName: formValue.patientName || '',
       products: formValue.products.map((product: ProductForm, index: number) => {
         const itemId = this.productsFormArray.at(index).get('id')?.value;
         const price = this.productsFormArray.at(index).get('price')?.value || 0; // Original subtotal
@@ -1660,7 +1664,9 @@ export class AddSaleComponent implements OnInit, OnDestroy {
       invoiceNumber: data.invoiceNumber ?? data.invoice_number ?? '',
       totalSaleDiscountPercentage: data.totalSaleDiscountPercentage != null ? data.totalSaleDiscountPercentage : (data.total_sale_discount_percentage ?? 0),
       isBlack: data.isBlack != null ? data.isBlack : data.is_black || false,
-      packagingAndForwadingCharges: data.packagingAndForwadingCharges != null ? data.packagingAndForwadingCharges : (data.packaging_and_forwading_charges ?? 0)
+      packagingAndForwadingCharges: data.packagingAndForwadingCharges != null ? data.packagingAndForwadingCharges : (data.packaging_and_forwading_charges ?? 0),
+      doctorName: data.doctorName != null ? data.doctorName : (data.doctor_name ?? ''),
+      patientName: data.patientName != null ? data.patientName : (data.patient_name ?? '')
     });
 
     this.productsFormArray.clear();

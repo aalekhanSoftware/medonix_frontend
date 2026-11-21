@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { CategoryService } from '../../services/category.service';
@@ -40,11 +40,14 @@ import { takeUntil } from 'rxjs/operators';
   ]
 })
 export class ProductComponent implements OnInit, OnDestroy {
+  @ViewChild('stockFileInput') stockFileInput?: ElementRef<HTMLInputElement>;
   products: Product[] = [];
   categories: Category[] = [];
   productForm!: FormGroup;
   searchForm!: FormGroup;
   isLoading = false;
+  isExcelExporting = false;
+  isStockImporting = false;
   isEditing = false;
   editingId?: number;
 
@@ -417,6 +420,109 @@ export class ProductComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.snackbarService.error('Failed to export products');
+        }
+      });
+  }
+
+  exportProductsExcel(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (this.isExcelExporting) {
+      return;
+    }
+
+    const searchParams = { ...this.searchForm.value };
+    delete searchParams.pageSize;
+    delete searchParams.currentPage;
+
+    this.isExcelExporting = true;
+
+    this.productService.exportProductsExcel(searchParams)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ blob, filename }) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename || 'products.xlsx';
+          // Avoid navigation on mobile browsers; trigger download only.
+          link.rel = 'noopener';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          this.snackbarService.success('Excel file downloaded successfully');
+          this.isExcelExporting = false;
+        },
+        error: () => {
+          this.snackbarService.error('Failed to export products to Excel');
+          this.isExcelExporting = false;
+        }
+      });
+  }
+
+  onImportStockClick(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (this.isStockImporting) {
+      return;
+    }
+    const input = this.stockFileInput?.nativeElement;
+    if (!input) {
+      return;
+    }
+    input.value = '';
+    input.click();
+  }
+
+  onStockFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.xls')) {
+      this.snackbarService.error('Please choose an Excel file (.xlsx or .xls).');
+      return;
+    }
+    if (this.isStockImporting) {
+      return;
+    }
+    this.isStockImporting = true;
+
+    this.productService.importStockExcel(file)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.isStockImporting = false;
+          if (response?.success === false) {
+            this.snackbarService.error(response?.message || 'Stock import failed');
+            return;
+          }
+          const data = response?.data;
+          const extra = data != null && typeof data === 'object'
+            ? ` Updated ${data.updatedRowCount ?? 0} product(s), ${data.batchStockUpsertCount ?? 0} batch row(s).`
+            : '';
+          this.snackbarService.success((response?.message || data?.summaryMessage || 'Stock import completed') + extra);
+          if (data?.notFoundProductCodes?.length) {
+            const preview = data.notFoundProductCodes.slice(0, 5).join(', ');
+            this.snackbarService.error(`Not found (${data.notFoundProductCodes.length}): ${preview}${data.notFoundProductCodes.length > 5 ? ', …' : ''}`);
+          }
+          this.productService.refreshProducts()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: () => {},
+              error: () => {}
+            });
+          this.loadProducts();
+        },
+        error: (error) => {
+          this.snackbarService.error(error?.error?.message || 'Could not import stock file. Please try again.');
+          this.isStockImporting = false;
         }
       });
   }

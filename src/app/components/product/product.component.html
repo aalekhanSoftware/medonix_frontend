@@ -7,9 +7,26 @@
         <p class="support-text">Filter by keyword, product code, material, or status.</p>
       </div>
       <div class="search-header-actions">
-        <button type="button" class="btn btn-outline btn-icon-only" (click)="exportProducts()">
+        <button type="button" class="btn btn-outline btn-icon-only" (click)="exportProducts()" aria-label="Download PDF">
           <i class="fas fa-file-pdf"></i>
           <span>Export</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-icon-only" (click)="exportProductsExcel($event)" [disabled]="isExcelExporting" aria-label="Download Excel">
+          <i class="fas" [ngClass]="isExcelExporting ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+          <span>{{ isExcelExporting ? 'Exporting...' : 'Excel' }}</span>
+        </button>
+        <input
+          #stockFileInput
+          type="file"
+          hidden
+          accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+          (change)="onStockFileSelected($event)"
+          aria-hidden="true"
+          tabindex="-1"
+        />
+        <button type="button" class="btn btn-outline btn-icon-only" (click)="onImportStockClick($event)" [disabled]="isStockImporting" aria-label="Import stock from Excel">
+          <i class="fas" [ngClass]="isStockImporting ? 'fa-spinner fa-spin' : 'fa-file-upload'"></i>
+          <span>{{ isStockImporting ? 'Importing...' : 'Import' }}</span>
         </button>
         <button class="btn btn-sm btn-primary" (click)="openCreateDialog()">
           <i class="fas fa-plus"></i>
