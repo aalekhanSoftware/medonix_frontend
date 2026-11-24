@@ -1,0 +1,157 @@
+<!-- TOP_CUSTOMER_CHART -->
+<div class="top-customer-chart-container">
+  <app-loader [show]="isLoading"></app-loader>
+
+  <section class="search-section card" aria-labelledby="top-customer-filters-heading">
+    <div class="section-heading">
+      <h2 id="top-customer-filters-heading">
+        Top 10 Customers - {{ 'Sales' | txLabel }} / {{ 'Sale Return' | txLabel }} / {{ 'Purchase' | txLabel }} / {{ 'Purchase Return' | txLabel }}
+      </h2>
+      <p>Top 10 customers by amount for the selected period. Excel export contains every customer.</p>
+    </div>
+
+    <form
+      [formGroup]="chartForm"
+      (ngSubmit)="onSearch($event)"
+      aria-label="Top customers chart filter form"
+    >
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="top-customer-report-type">
+            Report Type <span class="required">*</span>
+          </label>
+          <select
+            id="top-customer-report-type"
+            class="form-control"
+            formControlName="reportType"
+            (change)="onReportTypeChange()"
+            (touchstart)="$event.stopPropagation()"
+          >
+            <option value="SALES">{{ 'Sales Report' | txLabel }}</option>
+            <option value="SALE_RETURN">{{ 'Sale Return' | txLabel }} Report</option>
+            <option value="PURCHASE">{{ 'Purchase' | txLabel }} Report</option>
+            <option value="PURCHASE_RETURN">{{ 'Purchase Return' | txLabel }} Report</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="top-customer-start-date">
+            Start Date <span class="required">*</span>
+          </label>
+          <input
+            id="top-customer-start-date"
+            type="date"
+            formControlName="startDate"
+            class="form-control"
+            aria-label="Start date"
+            (touchstart)="$event.stopPropagation()"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="top-customer-end-date">
+            End Date <span class="required">*</span>
+          </label>
+          <input
+            id="top-customer-end-date"
+            type="date"
+            formControlName="endDate"
+            class="form-control"
+            aria-label="End date"
+            (touchstart)="$event.stopPropagation()"
+          />
+        </div>
+
+        <div class="form-group" *ngIf="canShowCustomerFilter" (touchstart)="$event.stopPropagation()">
+          <label for="top-customer-customer-select">Customer</label>
+          <div class="select-wrapper">
+            <app-searchable-select
+              id="top-customer-customer-select"
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Customers', value: '' }"
+              [searchPlaceholder]="'Search customers...'"
+              [allowClear]="true"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button
+            type="submit"
+            class="search-btn btn btn-sm btn-primary"
+            [disabled]="isLoading"
+            aria-label="Search top customers"
+          >
+            <i class="fas fa-search"></i> Search
+          </button>
+
+          <button
+            type="button"
+            class="search-btn btn btn-sm btn-secondary"
+            (click)="resetForm()"
+            [disabled]="isLoading"
+            aria-label="Reset filters"
+          >
+            <i class="fas fa-undo"></i> Reset
+          </button>
+
+          <button
+            type="button"
+            class="search-btn btn btn-sm btn-success export-btn"
+            (click)="onExportExcel()"
+            [disabled]="isLoading || isExporting"
+            aria-label="Download all customers excel"
+          >
+            <i class="fas fa-file-excel"></i>
+            {{ isExporting ? 'Downloading...' : 'Download Excel' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="results-section card" aria-labelledby="top-customer-results-heading">
+    <h2 id="top-customer-results-heading">Top 10 Customers Bar Chart</h2>
+
+    <div class="chart-stats" *ngIf="!isLoading && points.length > 0">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-coins" aria-hidden="true"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Top 10 Total Amount</span>
+          <span class="stat-value">₹{{ chartTotal | indianNumber }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users" aria-hidden="true"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Customers Shown</span>
+          <span class="stat-value">{{ points.length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="chart-wrapper"
+      [class.chart-wrapper--hidden]="isLoading || points.length === 0"
+    >
+      <canvas #topCustomerChartCanvas></canvas>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && points.length === 0">
+      <i class="fas fa-info-circle" aria-hidden="true"></i>
+      <span *ngIf="hasSearched; else notSearched">
+        No data found for the selected filters. Try adjusting the date range or customer.
+      </span>
+      <ng-template #notSearched>
+        Select filters and click Search to load the top 10 customers chart.
+      </ng-template>
+    </div>
+  </section>
+</div>

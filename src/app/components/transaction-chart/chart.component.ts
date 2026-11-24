@@ -13,8 +13,11 @@ import { SnackbarService } from '../../shared/services/snackbar.service';
 import { LoaderComponent } from '../../shared/components/loader/loader.component';
 import { SearchableSelectComponent } from '../../shared/components/searchable-select/searchable-select.component';
 import { MonthWiseTransactionChartService, MonthWiseTransactionChartSearchPayload, MonthWiseChartPoint } from '../../services/month-wise-transaction-chart.service';
+// TOP_CUSTOMER_CHART (existing-chart-extension)
+import { TopCustomerChartComponent } from './top-customer-chart.component';
 
-type ReportType = 'SALES' | 'PURCHASE' | 'PAYMENT_DONE';
+// TOP_CUSTOMER_CHART (existing-chart-extension)
+type ReportType = 'SALES' | 'SALE_RETURN' | 'PURCHASE' | 'PURCHASE_RETURN' | 'PAYMENT_DONE';
 
 @Component({
   selector: 'app-transaction-chart',
@@ -26,7 +29,9 @@ type ReportType = 'SALES' | 'PURCHASE' | 'PAYMENT_DONE';
     ReactiveFormsModule,
     LoaderComponent,
     SearchableSelectComponent,
-    TransactionLabelPipe
+    TransactionLabelPipe,
+    // TOP_CUSTOMER_CHART
+    TopCustomerChartComponent
   ]
 })
 export class ChartComponent implements OnInit, OnDestroy {
@@ -50,7 +55,10 @@ export class ChartComponent implements OnInit, OnDestroy {
   private readonly reportColors: Record<ReportType, { bar: string; border: string }> = {
     SALES: { bar: 'rgba(41, 182, 246, 0.6)', border: 'rgba(41, 182, 246, 1)' },
     PURCHASE: { bar: 'rgba(253, 120, 35, 0.55)', border: 'rgba(253, 120, 35, 1)' },
-    PAYMENT_DONE: { bar: 'rgba(76, 175, 80, 0.55)', border: 'rgba(76, 175, 80, 1)' }
+    PAYMENT_DONE: { bar: 'rgba(76, 175, 80, 0.55)', border: 'rgba(76, 175, 80, 1)' },
+    // TOP_CUSTOMER_CHART (existing-chart-extension)
+    SALE_RETURN: { bar: 'rgba(156, 39, 176, 0.55)', border: 'rgba(156, 39, 176, 1)' },
+    PURCHASE_RETURN: { bar: 'rgba(229, 57, 53, 0.55)', border: 'rgba(229, 57, 53, 1)' }
   };
   private readonly paymentDoneColors = {
     received: { bar: 'rgba(33, 150, 243, 0.55)', border: 'rgba(33, 150, 243, 1)' },
@@ -165,7 +173,12 @@ export class ChartComponent implements OnInit, OnDestroy {
         ? this.chartService.searchSalesMonthWise(payload)
         : reportType === 'PURCHASE'
           ? this.chartService.searchPurchaseMonthWise(payload)
-          : this.chartService.searchPaymentDoneMonthWise(payload);
+          // TOP_CUSTOMER_CHART (existing-chart-extension)
+          : reportType === 'SALE_RETURN'
+            ? this.chartService.searchSaleReturnMonthWise(payload)
+            : reportType === 'PURCHASE_RETURN'
+              ? this.chartService.searchPurchaseReturnMonthWise(payload)
+              : this.chartService.searchPaymentDoneMonthWise(payload);
 
     request$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
@@ -387,6 +400,9 @@ export class ChartComponent implements OnInit, OnDestroy {
   private getReportTypeLabel(reportType: ReportType): string {
     if (reportType === 'SALES') return this.txLabel.swap('Sales Report');
     if (reportType === 'PURCHASE') return this.txLabel.swap('Purchase Report');
+    // TOP_CUSTOMER_CHART (existing-chart-extension)
+    if (reportType === 'SALE_RETURN') return this.txLabel.swap('Sale Return Report');
+    if (reportType === 'PURCHASE_RETURN') return this.txLabel.swap('Purchase Return Report');
     return 'Payment Done Report';
   }
 

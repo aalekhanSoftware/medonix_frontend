@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export type MonthWiseTransactionChartReportType = 'SALES' | 'PURCHASE' | 'PAYMENT_DONE';
+export type MonthWiseTransactionChartReportType = 'SALES' | 'SALE_RETURN' | 'PURCHASE' | 'PURCHASE_RETURN' | 'PAYMENT_DONE';
 
 export interface MonthWiseTransactionChartSearchPayload {
   startDate: string; // yyyy-MM-dd
@@ -29,6 +29,9 @@ export class MonthWiseTransactionChartService {
   private readonly salesUrl = `${environment.apiUrl}/api/sales/report/month-wise`;
   private readonly purchaseUrl = `${environment.apiUrl}/api/purchases/report/month-wise`;
   private readonly paymentDoneUrl = `${environment.apiUrl}/api/reports/payment-done/month-wise`;
+  // TOP_CUSTOMER_CHART (existing-chart-extension)
+  private readonly saleReturnUrl = `${environment.apiUrl}/api/sales/report/sale-return/month-wise`;
+  private readonly purchaseReturnUrl = `${environment.apiUrl}/api/purchases/report/purchase-return/month-wise`;
 
   constructor(private http: HttpClient) {}
 
@@ -42,6 +45,16 @@ export class MonthWiseTransactionChartService {
 
   searchPaymentDoneMonthWise(payload: MonthWiseTransactionChartSearchPayload): Observable<MonthWiseChartApiResponse> {
     return this.http.post<MonthWiseChartApiResponse>(this.paymentDoneUrl, this.buildBody(payload));
+  }
+
+  // TOP_CUSTOMER_CHART (existing-chart-extension)
+  searchSaleReturnMonthWise(payload: MonthWiseTransactionChartSearchPayload): Observable<MonthWiseChartApiResponse> {
+    return this.http.post<MonthWiseChartApiResponse>(this.saleReturnUrl, this.buildBody(payload));
+  }
+
+  // TOP_CUSTOMER_CHART (existing-chart-extension)
+  searchPurchaseReturnMonthWise(payload: MonthWiseTransactionChartSearchPayload): Observable<MonthWiseChartApiResponse> {
+    return this.http.post<MonthWiseChartApiResponse>(this.purchaseReturnUrl, this.buildBody(payload));
   }
 
   private buildBody(payload: MonthWiseTransactionChartSearchPayload): Record<string, unknown> {

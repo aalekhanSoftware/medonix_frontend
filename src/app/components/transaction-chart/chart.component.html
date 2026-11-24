@@ -34,7 +34,10 @@
             (touchstart)="$event.stopPropagation()"
           >
             <option value="SALES">{{ 'Sales Report' | txLabel }}</option>
+            <!-- TOP_CUSTOMER_CHART (existing-chart-extension) -->
+            <option value="SALE_RETURN">{{ 'Sale Return' | txLabel }} Report</option>
             <option value="PURCHASE">{{ 'Purchase' | txLabel }} Report</option>
+            <option value="PURCHASE_RETURN">{{ 'Purchase Return' | txLabel }} Report</option>
             <option value="PAYMENT_DONE">Payment Done Report</option>
           </select>
         </div>
@@ -162,5 +165,8 @@
       </ng-template>
     </div>
   </section>
+
+  <!-- TOP_CUSTOMER_CHART -->
+  <app-top-customer-chart></app-top-customer-chart>
 </div>
 
