@@ -165,6 +165,34 @@ export class QuotationService {
     return this.http.post<any>(`${this.quotationItemsApiUrl}/pending-item/search`, params);
   }
 
+  // Method for exporting pending items to Excel (non-paginated)
+  // Uses the existing /pending-item/search API with export=true flag
+  exportPendingItemsExcel(params: {
+    customerId?: number;
+    productId?: number;
+    sortBy?: string;
+    sortDir?: string;
+  }): Observable<{ blob: Blob; filename: string }> {
+    // Add export flag to the params
+    const exportParams = {
+      ...params,
+      export: true
+    };
+
+    return this.http.post(
+      `${this.quotationItemsApiUrl}/pending-item/search`,
+      exportParams,
+      { responseType: 'blob', observe: 'response' }
+    ).pipe(
+      map(response => {
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filename = contentDisposition?.split('filename=')[1]?.replace(/"/g, '') || 'pending-quotation-items.xlsx';
+        const blob = new Blob([response.body as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        return { blob, filename };
+      })
+    );
+  }
+
   // Method for getting status chart data
   getStatusChartData(params: {
     startDate: string;

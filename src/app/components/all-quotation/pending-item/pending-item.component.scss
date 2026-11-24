@@ -144,6 +144,24 @@
         transform: scale(0.98);
       }
     }
+
+    &.btn-success {
+      background-color: #217346;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: darken(#217346, 10%);
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
   }
 }
 

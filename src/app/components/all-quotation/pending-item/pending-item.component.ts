@@ -83,6 +83,7 @@ export class PendingItemComponent implements OnInit, OnDestroy {
   totalItems = 0;
   perPageRecord = 10;
   loading = false;
+  exporting = false;
   customers: any[] = [];
   isLoadingCustomers = false;
   products: any[] = [];
@@ -245,6 +246,42 @@ export class PendingItemComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number): void {
     this.loadPendingItems(page);
+  }
+
+  exportPendingItemsExcel(): void {
+    if (this.exporting) {
+      return;
+    }
+    this.exporting = true;
+
+    const formValue = this.searchForm.value;
+    const request = {
+      customerId: formValue.customerId ? Number(formValue.customerId) : undefined,
+      productId: formValue.productId ? Number(formValue.productId) : undefined
+    };
+
+    this.quotationService.exportPendingItemsExcel(request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ blob, filename }) => {
+          // Trigger the browser download
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename || 'pending-quotation-items.xlsx';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          this.exporting = false;
+          this.snackbar.success('Excel downloaded successfully');
+        },
+        error: (error) => {
+          console.error('Error exporting pending items:', error);
+          this.exporting = false;
+          this.snackbar.error('Failed to download Excel file');
+        }
+      });
   }
 
   editQuotation(quotationId: number): void {

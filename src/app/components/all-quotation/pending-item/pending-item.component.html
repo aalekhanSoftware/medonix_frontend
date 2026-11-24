@@ -61,6 +61,10 @@
       <button type="button" class="btn btn-primary" (click)="onSubmit($event)" [disabled]="loading" (touchstart)="$event.preventDefault()">
         {{ loading ? 'Searching...' : 'Search' }}
       </button>
+      <button type="button" class="btn btn-success" (click)="exportPendingItemsExcel()" [disabled]="exporting || loading" (touchstart)="$event.preventDefault()">
+        <i class="fas" [ngClass]="exporting ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+        {{ exporting ? 'Downloading...' : 'Download All Pending Excel' }}
+      </button>
     </div>
   </div>
 
