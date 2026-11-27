@@ -307,6 +307,12 @@ const routes: Routes = [
     data: { preload: true, roles: ['ADMIN', 'STAFF_ADMIN', 'DEALER', 'SALES_AND_MARKETING', 'REPORTER'] }
   },
   {
+    path: 'report/ar-fifo',
+    loadComponent: () => import('./components/reports/ar-fifo/ar-fifo-report.component').then(m => m.ArFifoReportComponent),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { preload: true, roles: ['ADMIN', 'STAFF_ADMIN', 'DEALER', 'SALES_AND_MARKETING', 'REPORTER'] }
+  },
+  {
     path: '**',
     redirectTo: '/purchase',
     pathMatch: 'full'

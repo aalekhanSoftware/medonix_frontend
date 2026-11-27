@@ -213,6 +213,21 @@
           </ul>
         </li>
 
+        <!-- Report Menu -->
+        <li class="dropdown" *ngIf="hasReportMenuItems()">
+          <a (click)="toggleReportMenu($event)" [class.active]="isReportActive()">
+            <i class="fas fa-chart-pie"></i> Report
+            <i class="fas fa-chevron-down"></i>
+          </a>
+          <ul class="dropdown-menu" [class.show]="showReportMenu" [ngStyle]="dropdownStyles['report']">
+            <li>
+              <a routerLink="/report/ar-fifo" routerLinkActive="active" (click)="closeAllMenus()">
+                <i class="fas fa-file-invoice-dollar"></i> A/c Receivable (FIFO)
+              </a>
+            </li>
+          </ul>
+        </li>
+
         <!-- Employee Menu -->
         <!-- <li class="dropdown" *ngIf="hasEmployeeMenuItems()">
           <a (click)="toggleEmployeeMenu($event)" [class.active]="isEmployeeActive()">

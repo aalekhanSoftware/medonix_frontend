@@ -19,6 +19,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   showQuotationMenu: boolean = false;
   showDispatchQuotationMenu: boolean = false;
   showPendingItemMenu: boolean = false;
+  showReportMenu: boolean = false;
   showEmployeeMenu: boolean = false;
   isMobileMenuOpen: boolean = false;
   clientName: string = '';
@@ -194,6 +195,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.showDispatchQuotationMenu = false;
       this.showEmployeeMenu = false;
       this.showPendingItemMenu = false;
+      this.showReportMenu = false;
       if (!target.closest('.nav-links')) {
         this.isMobileMenuOpen = false;
       }
@@ -203,7 +205,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @HostListener('window:scroll', ['$event'])
   onWindowScroll(): void {
     if (this.showMasterMenu || this.showTransactionMenu || this.showQuotationMenu ||
-        this.showDispatchQuotationMenu || this.showEmployeeMenu || this.showPendingItemMenu) {
+        this.showDispatchQuotationMenu || this.showEmployeeMenu || this.showPendingItemMenu ||
+        this.showReportMenu) {
       this.closeAllMenus();
     }
   }
@@ -211,7 +214,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @HostListener('window:resize', ['$event'])
   onWindowResize(): void {
     if (this.showMasterMenu || this.showTransactionMenu || this.showQuotationMenu ||
-        this.showDispatchQuotationMenu || this.showEmployeeMenu || this.showPendingItemMenu) {
+        this.showDispatchQuotationMenu || this.showEmployeeMenu || this.showPendingItemMenu ||
+        this.showReportMenu) {
       this.closeAllMenus();
     }
   }
@@ -246,6 +250,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.showDispatchQuotationMenu = false;
     this.showEmployeeMenu = false;
     this.showPendingItemMenu = false;
+    this.showReportMenu = false;
   }
 
   toggleTransactionMenu(event: Event): void {
@@ -258,6 +263,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.showDispatchQuotationMenu = false;
     this.showEmployeeMenu = false;
     this.showPendingItemMenu = false;
+    this.showReportMenu = false;
   }
 
   toggleQuotationMenu(event: Event): void {
@@ -270,6 +276,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.showDispatchQuotationMenu = false;
     this.showEmployeeMenu = false;
     this.showPendingItemMenu = false;
+    this.showReportMenu = false;
   }
 
   toggleDispatchQuotationMenu(event: Event): void {
@@ -282,6 +289,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.showQuotationMenu = false;
     this.showEmployeeMenu = false;
     this.showPendingItemMenu = false;
+    this.showReportMenu = false;
   }
 
   toggleEmployeeMenu(event: Event): void {
@@ -294,6 +302,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.showQuotationMenu = false;
     this.showDispatchQuotationMenu = false;
     this.showPendingItemMenu = false;
+    this.showReportMenu = false;
   }
 
   isMasterActive(): boolean {
@@ -343,6 +352,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
     );
   }
 
+  toggleReportMenu(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.positionDropdown('report', event);
+    this.showReportMenu = !this.showReportMenu;
+    this.showMasterMenu = false;
+    this.showTransactionMenu = false;
+    this.showQuotationMenu = false;
+    this.showDispatchQuotationMenu = false;
+    this.showEmployeeMenu = false;
+    this.showPendingItemMenu = false;
+  }
+
+  isReportActive(): boolean {
+    const currentUrl = this.router.url;
+    return ['/report'].some(path =>
+      currentUrl.includes(path)
+    );
+  }
+
   closeAllMenus(): void {
     this.showMasterMenu = false;
     this.showTransactionMenu = false;
@@ -350,6 +379,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.showDispatchQuotationMenu = false;
     this.showEmployeeMenu = false;
     this.showPendingItemMenu = false;
+    this.showReportMenu = false;
   }
 
   hasMasterMenuItems(): boolean {
@@ -366,6 +396,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   hasDispatchQuotationMenuItems(): boolean {
     return this.roleService.hasDispatchQuotationMenuItems();
+  }
+
+  hasReportMenuItems(): boolean {
+    return this.authService.hasAnyRole([
+      'ADMIN',
+      'STAFF_ADMIN',
+      'DEALER',
+      'SALES_AND_MARKETING',
+      'REPORTER'
+    ]);
   }
 
   hasEmployeeMenuItems(): boolean {

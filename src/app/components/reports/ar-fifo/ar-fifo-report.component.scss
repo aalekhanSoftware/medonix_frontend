@@ -1,0 +1,434 @@
+.ar-fifo-container {
+  padding: 1rem;
+
+  .page-header {
+    margin-bottom: 1rem;
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+
+      .header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 58, 88, 0.08);
+        color: var(--primary);
+        font-size: 1.1rem;
+        flex: 0 0 auto;
+      }
+
+      .header-text {
+        h1 {
+          margin: 0;
+          font-size: 1.25rem;
+          color: var(--text-primary);
+        }
+
+        p {
+          margin: 0.25rem 0 0;
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  .search-section {
+    margin-bottom: 1rem;
+
+    .filter-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+
+      h2 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+      }
+
+      .as-on-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.65rem;
+        border-radius: 999px;
+        background: #eef4f8;
+        color: var(--primary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+    }
+
+    .search-controls {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.2fr) minmax(220px, 1.2fr) 170px 130px auto;
+      gap: 0.75rem;
+      align-items: start;
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 0;
+
+        label {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+
+        .hint {
+          font-size: 0.72rem;
+          color: var(--text-secondary);
+          line-height: 1.2;
+        }
+      }
+
+      .select-group.inline {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        width: 100%;
+      }
+
+      .refresh-btn {
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+
+      .button-group {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        align-items: center;
+        padding-top: 1.4rem;
+      }
+    }
+  }
+
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .summary-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+
+      .label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+
+      .value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &.outstanding {
+        border-left: 3px solid var(--primary);
+
+        .value {
+          color: var(--primary);
+        }
+      }
+    }
+  }
+
+  .results-section {
+    h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      background: var(--neutral-lightest);
+      color: var(--text-secondary);
+    }
+  }
+
+  .ar-fifo-table {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    border-collapse: collapse;
+
+    thead th {
+      background: #f4f6f8;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      border-bottom: 2px solid #dfe4e8;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody td {
+      vertical-align: middle;
+      border-color: #edf0f2;
+    }
+
+    .text-end {
+      text-align: right;
+    }
+
+    .party-row td {
+      padding: 0.55rem 0.5rem;
+      background: #fbfcfd;
+      border-top: 2px solid #c62828;
+    }
+
+    .party-name {
+      color: #c62828;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      font-size: 0.82rem;
+    }
+
+    .party-meta {
+      margin-left: 0.6rem;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: none;
+      font-weight: 500;
+
+      &.inactive {
+        color: #b26a00;
+      }
+    }
+
+    .prev-row td {
+      color: #555;
+      font-style: italic;
+      background: #fafafa;
+    }
+
+    .bill-row {
+      &:hover td {
+        background: #f8fbfd;
+      }
+
+      td {
+        padding: 0.4rem 0.5rem;
+      }
+    }
+
+    .bill-no {
+      font-weight: 600;
+      color: #1f3b4d;
+      white-space: nowrap;
+    }
+
+    .cumulative {
+      font-weight: 700;
+      color: #102a3a;
+    }
+
+    .overdue {
+      color: #c62828;
+      font-weight: 700;
+    }
+
+    .party-total-row td {
+      padding: 0.45rem 0.5rem;
+      background: #f4f8fb;
+      border-top: 1px solid #cfdbe3;
+      border-bottom: 2px solid #cfdbe3;
+      font-weight: 700;
+    }
+  }
+
+  .mobile-cards {
+    display: none;
+  }
+
+  @media (max-width: 1100px) {
+    .search-section .search-controls {
+      grid-template-columns: 1fr 1fr;
+
+      .button-group {
+        grid-column: span 2;
+        justify-content: flex-end;
+        padding-top: 0;
+        flex-wrap: wrap;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+
+    .summary-strip {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .search-section .search-controls {
+      grid-template-columns: 1fr;
+
+      .button-group {
+        grid-column: span 1;
+        justify-content: flex-start;
+      }
+    }
+
+    .desktop-table {
+      display: none;
+    }
+
+    .mobile-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+
+      .party-card {
+        border: 1px solid #e1e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .party-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.6rem;
+        padding: 0.65rem 0.75rem;
+        background: #fbfcfd;
+        border-bottom: 2px solid #c62828;
+
+        .party-card-title {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+          min-width: 0;
+        }
+
+        .party-name {
+          color: #c62828;
+          font-weight: 800;
+          text-transform: uppercase;
+          font-size: 0.8rem;
+          line-height: 1.25;
+        }
+
+        .party-meta {
+          font-size: 0.72rem;
+          color: var(--text-secondary);
+        }
+
+        .party-card-total {
+          font-weight: 800;
+          color: #102a3a;
+          white-space: nowrap;
+          font-size: 0.9rem;
+        }
+      }
+
+      .mobile-prev,
+      .mobile-bill,
+      .mobile-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.45rem 0.75rem;
+        border-bottom: 1px solid #f0f3f5;
+        font-size: 0.8rem;
+      }
+
+      .mobile-prev {
+        color: #555;
+        font-style: italic;
+        background: #fafafa;
+      }
+
+      .mobile-bill {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+
+        .mobile-bill-head {
+          display: flex;
+          justify-content: space-between;
+          color: #1f3b4d;
+          font-size: 0.8rem;
+        }
+
+        .mobile-bill-body {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.4rem;
+          color: var(--text-secondary);
+          font-size: 0.74rem;
+        }
+      }
+
+      .mobile-total {
+        border-bottom: 0;
+        background: #f4f8fb;
+        font-weight: 700;
+      }
+
+      .cumulative {
+        font-weight: 700;
+        color: #102a3a;
+      }
+
+      .overdue {
+        color: #c62828;
+        font-weight: 700;
+      }
+    }
+  }
+
+  @media (max-width: 420px) {
+    .summary-strip {
+      grid-template-columns: 1fr;
+    }
+
+    .mobile-cards .mobile-bill-body {
+      flex-direction: column;
+    }
+  }
+}

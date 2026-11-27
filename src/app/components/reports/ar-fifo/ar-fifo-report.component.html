@@ -1,0 +1,256 @@
+<div class="ar-fifo-container">
+  <app-loader [show]="isLoading || isExporting"></app-loader>
+
+  <section class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+      </div>
+      <div class="header-text">
+        <h1>A/c Receivable (FIFO)</h1>
+        <p>Party-wise outstanding bills in FIFO order with running cumulative balances.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="search-section card" aria-labelledby="ar-fifo-filters-heading">
+    <div class="filter-head">
+      <h2 id="ar-fifo-filters-heading">Report Filters</h2>
+      <span class="as-on-chip">
+        <i class="fas fa-calendar-day" aria-hidden="true"></i>
+        As On: {{ asOnDisplay }}
+      </span>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSearch($event)" aria-label="Receivable FIFO filter form">
+      <div class="search-controls">
+        <div class="form-group">
+          <label for="ar-fifo-search">Party Search</label>
+          <input
+            id="ar-fifo-search"
+            type="text"
+            class="form-control"
+            formControlName="search"
+            placeholder="Search by party name or mobile"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="form-group" *ngIf="canShowCustomerFilter" (touchstart)="$event.stopPropagation()">
+          <label for="ar-fifo-customer">Party</label>
+          <div class="select-group inline">
+            <app-searchable-select
+              id="ar-fifo-customer"
+              formControlName="customerId"
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              [defaultOption]="{ label: 'All Parties', value: '' }"
+              [searchPlaceholder]="'Search parties...'"
+              [virtualScroll]="true"
+              [initialDisplayLimit]="100"
+              [allowClear]="true"
+              [focusWidthPx]="600"
+              [searchMode]="'filter'"
+            ></app-searchable-select>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-primary refresh-btn"
+              (click)="refreshCustomers()"
+              [disabled]="isLoadingCustomers"
+              title="Refresh parties"
+            >
+              <i class="fas" [ngClass]="isLoadingCustomers ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="ar-fifo-from">From Date</label>
+          <input
+            id="ar-fifo-from"
+            type="date"
+            class="form-control"
+            formControlName="fromDate"
+          >
+          <small class="hint">Bills before this date are merged into Prev Balance.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="ar-fifo-status">Status</label>
+          <select id="ar-fifo-status" class="form-control" formControlName="status">
+            <option value="">All</option>
+            <option value="A">Active</option>
+            <option value="I">Inactive</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="search-btn btn btn-sm btn-primary" [disabled]="isLoading || isExporting">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <button type="button" class="search-btn btn btn-sm btn-secondary" (click)="resetForm()" [disabled]="isLoading || isExporting">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+          <button
+            type="button"
+            class="search-btn btn btn-sm btn-success export-btn"
+            (click)="exportExcel()"
+            [disabled]="isLoading || isExporting"
+            title="Download report as Excel"
+          >
+            <i class="fas fa-file-excel"></i> Download Excel
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="summary-strip" *ngIf="parties.length > 0" aria-label="Report summary">
+    <div class="summary-card">
+      <span class="label">Parties (total)</span>
+      <span class="value">{{ totalElements }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">Parties on page</span>
+      <span class="value">{{ parties.length }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">Bills on page</span>
+      <span class="value">{{ pageBillCount }}</span>
+    </div>
+    <div class="summary-card outstanding">
+      <span class="label">Outstanding (page)</span>
+      <span class="value">₹ {{ pageTotalOutstanding | indianNumber }}</span>
+    </div>
+  </section>
+
+  <section class="results-section card" aria-labelledby="ar-fifo-results-heading">
+    <h2 id="ar-fifo-results-heading">A/c Receivable FIFO</h2>
+
+    <div class="table-responsive desktop-table" *ngIf="parties.length > 0; else emptyState">
+      <table class="table ar-fifo-table" role="table" aria-label="Accounts receivable FIFO report">
+        <thead>
+          <tr>
+            <th scope="col">Party Name</th>
+            <th scope="col">Bill No</th>
+            <th scope="col">Bill Date</th>
+            <th scope="col" class="text-end">Due Days</th>
+            <th scope="col" class="text-end">Bill Amount</th>
+            <!-- AR_FIFO: Balance Amt (Cumulative) column temporarily hidden. Uncomment this header to show it again. -->
+            <!-- <th scope="col" class="text-end">Balance Amt (Cumulative)</th> -->
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let party of parties; trackBy: trackByPartyId">
+            <tr class="party-row">
+              <!-- colspan="6" when the cumulative column is enabled -->
+              <td colspan="5">
+                <span class="party-name">{{ party.customerName }}</span>
+                <span class="party-meta" *ngIf="party.mobile">Mobile: {{ party.mobile }}</span>
+                <span class="party-meta inactive" *ngIf="party.status === 'I'">Inactive</span>
+              </td>
+            </tr>
+
+            <tr class="prev-row" *ngIf="party.prevBalance !== null && party.prevBalance !== undefined">
+              <td></td>
+              <td class="bill-no">Prev Balance</td>
+              <td></td>
+              <td class="text-end">{{ party.prevBalanceDueDays }}</td>
+              <td class="text-end"></td>
+              <!-- AR_FIFO: Balance Amt (Cumulative) column temporarily hidden -->
+              <!-- <td class="text-end cumulative">{{ party.prevBalance | indianNumber }}</td> -->
+            </tr>
+
+            <tr class="bill-row" *ngFor="let bill of party.bills; trackBy: trackByBillId">
+              <td></td>
+              <td class="bill-no">{{ bill.billNo }}</td>
+              <td>{{ bill.billDate }}</td>
+              <td class="text-end" [class.overdue]="(bill.dueDays || 0) > 90">{{ bill.dueDays }}</td>
+              <td class="text-end">{{ bill.billAmount | indianNumber }}</td>
+              <!-- AR_FIFO: Balance Amt (Cumulative) column temporarily hidden -->
+              <!-- <td class="text-end cumulative">{{ bill.cumulativeBalance | indianNumber }}</td> -->
+            </tr>
+
+            <!-- AR_FIFO: Party Total row only carried the Balance Amt (Cumulative)
+                 value, so it is temporarily hidden together with that column.
+                 Uncomment this whole block when the column is re-enabled. -->
+            <!--
+            <tr class="party-total-row">
+              <td></td>
+              <td class="bill-no">Party Total</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td class="text-end cumulative">{{ party.totalOutstanding | indianNumber }}</td>
+            </tr>
+            -->
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile / narrow-screen card layout -->
+    <div class="mobile-cards" *ngIf="parties.length > 0">
+      <div class="party-card" *ngFor="let party of parties; trackBy: trackByPartyId">
+        <div class="party-card-head">
+          <div class="party-card-title">
+            <span class="party-name">{{ party.customerName }}</span>
+            <span class="party-meta" *ngIf="party.mobile">{{ party.mobile }}</span>
+          </div>
+          <span class="party-card-total">{{ party.totalOutstanding | indianNumber }}</span>
+        </div>
+
+        <div class="mobile-prev" *ngIf="party.prevBalance !== null && party.prevBalance !== undefined">
+          <span class="bill-no">Prev Balance</span>
+          <span>{{ party.prevBalanceDueDays }} d</span>
+          <!-- AR_FIFO: Balance Amt (Cumulative) column temporarily hidden -->
+          <!-- <span class="cumulative">{{ party.prevBalance | indianNumber }}</span> -->
+        </div>
+
+        <div class="mobile-bill" *ngFor="let bill of party.bills; trackBy: trackByBillId">
+          <div class="mobile-bill-head">
+            <strong class="bill-no">{{ bill.billNo }}</strong>
+            <span>{{ bill.billDate }}</span>
+          </div>
+          <div class="mobile-bill-body">
+            <span [class.overdue]="(bill.dueDays || 0) > 90">Due {{ bill.dueDays }} d</span>
+            <span>Bill {{ bill.billAmount | indianNumber }}</span>
+            <!-- AR_FIFO: Balance Amt (Cumulative) column temporarily hidden -->
+            <!-- <span class="cumulative">Cum {{ bill.cumulativeBalance | indianNumber }}</span> -->
+          </div>
+        </div>
+
+        <!-- AR_FIFO: mobile Party Total row only carried the Balance Amt
+             (Cumulative) value (already shown in the card header), so it is
+             temporarily hidden. Uncomment with the column. -->
+        <!--
+        <div class="mobile-total">
+          <span>Party Total</span>
+          <span class="cumulative">{{ party.totalOutstanding | indianNumber }}</span>
+        </div>
+        -->
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <i class="fas fa-info-circle" aria-hidden="true"></i>
+        <span>No outstanding receivables found. Adjust filters and click Search.</span>
+      </div>
+    </ng-template>
+
+    <app-pagination
+      *ngIf="totalPages > 0"
+      [currentPage]="currentPage"
+      [pageSize]="pageSize"
+      [totalElements]="totalElements"
+      [pageSizeOptions]="pageSizeOptions"
+      [totalAmountSum]="pageTotalOutstanding"
+      totalAmountLabel="Page Outstanding"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  </section>
+</div>
